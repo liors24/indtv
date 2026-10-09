@@ -277,6 +277,30 @@
       ]);
       box.appendChild(origRow);
 
+      // Subtitle style with a live preview
+      box.appendChild(U.el('span', { class: 'field-label', text: t('subStyle') }));
+      var preview = U.el('div', { class: 'sub-preview' });
+      var pv = U.el('div', { class: 'live-subs' }, [U.el('div', { class: 'live-sub-line', text: t('subPreview') })]);
+      preview.appendChild(pv);
+      UI.applySubStyle(pv);
+      box.appendChild(preview);
+      [
+        ['subSize', 'subSize', [['s', 'sizeS'], ['m', 'sizeMd'], ['l', 'sizeLg'], ['xl', 'sizeXl']]],
+        ['subBg', 'subBg', [['none', 'bgNone'], ['semi', 'bgSemi'], ['solid', 'bgSolid']]],
+        ['subColor', 'subColor', [['white', 'colWhite'], ['yellow', 'colYellow'], ['cyan', 'colCyan'], ['green', 'colGreen']]],
+        ['subPos', 'subPos', [['bottom', 'posBottom'], ['top', 'posTop']]]
+      ].forEach(function (grp) {
+        var row = U.el('div', { class: 'set-row sub-opts' }, [U.el('span', { class: 'sub-opt-label', text: t(grp[1]) })]);
+        grp[2].forEach(function (opt) {
+          var on = cfg[grp[0]] === opt[0];
+          row.appendChild(UI.button(t(opt[1]), on ? 'check' : null, function () {
+            var patch = {}; patch[grp[0]] = opt[0];
+            LT.saveConfig(patch); rebuild('tr:' + grp[0] + ':' + opt[0]);
+          }, { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:' + grp[0] + ':' + opt[0] }));
+        });
+        box.appendChild(row);
+      });
+
       var adv = U.el('div', { class: 'set-form', hidden: cfg.provider !== 'custom' && !Settings._trAdvanced });
       var baseIn = U.el('input', { class: 'fx field', id: 'tr-base', type: 'url', dir: 'ltr', value: cfg.base, dataset: { key: 'tr:base' } });
       var sttIn = U.el('input', { class: 'fx field', id: 'tr-stt', type: 'text', dir: 'ltr', value: cfg.stt, dataset: { key: 'tr:stt' } });

@@ -86,7 +86,11 @@
       translateHint: 'INDTV listens to the programme sound, recognises any language and shows subtitles in the language you choose, about 8–10 seconds behind the picture. Get a free key at console.groq.com → API Keys (free quota is a few hours a day). Tip: type the key from your phone with the Google TV app keyboard.',
       translateListening: 'Listening…', translateLimit: 'Free quota reached. Translation resumes in a minute.',
       translateUnsupported: 'This stream cannot be translated on this device.', translateModels: 'Models (advanced)', translateBase: 'Server address',
-      translateError: 'Translation paused: the service did not answer.', detected: 'Detected', save2: 'Save'
+      translateError: 'Translation paused: the service did not answer.', detected: 'Detected', save2: 'Save',
+      subStyle: 'Subtitle style', subSize: 'Size', subBg: 'Background', subColor: 'Text colour', subPos: 'Position',
+      sizeS: 'Small', sizeMd: 'Medium', sizeLg: 'Large', sizeXl: 'Huge', bgNone: 'No box (outline)', bgSemi: 'See-through', bgSolid: 'Black box',
+      colWhite: 'White', colYellow: 'Yellow', colCyan: 'Cyan', colGreen: 'Green', posBottom: 'Bottom', posTop: 'Top',
+      subPreview: 'This is how subtitles will look'
     },
     he: {
       home: 'דף הבית', live: 'שידור חי', movies: 'סרטים', shows: 'תוכניות', kids: 'ילדים', news: 'חדשות',
@@ -167,7 +171,11 @@
       translateHint: 'INDTV מאזין לשמע של התוכנית, מזהה כל שפה ומציג כתוביות בשפה שבחרתם, בפיגור של כ-8–10 שניות מהתמונה. מפתח חינמי: console.groq.com ← API Keys (המכסה החינמית היא כמה שעות ביום). טיפ: אפשר להקליד את המפתח מהטלפון דרך המקלדת של אפליקציית Google TV.',
       translateListening: 'מאזין…', translateLimit: 'המכסה החינמית נוצלה. התרגום יחזור בעוד דקה.',
       translateUnsupported: 'אי אפשר לתרגם את השידור הזה במכשיר הזה.', translateModels: 'מודלים (מתקדם)', translateBase: 'כתובת השרת',
-      translateError: 'התרגום הושהה: השירות לא ענה.', detected: 'זוהתה', save2: 'שמור'
+      translateError: 'התרגום הושהה: השירות לא ענה.', detected: 'זוהתה', save2: 'שמור',
+      subStyle: 'סגנון כתוביות', subSize: 'גודל', subBg: 'רקע', subColor: 'צבע טקסט', subPos: 'מיקום',
+      sizeS: 'קטן', sizeMd: 'בינוני', sizeLg: 'גדול', sizeXl: 'ענק', bgNone: 'בלי רקע (מסגרת)', bgSemi: 'שקוף למחצה', bgSolid: 'קופסה שחורה',
+      colWhite: 'לבן', colYellow: 'צהוב', colCyan: 'תכלת', colGreen: 'ירוק', posBottom: 'למטה', posTop: 'למעלה',
+      subPreview: 'כך ייראו הכתוביות'
     }
   };
 

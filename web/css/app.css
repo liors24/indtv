@@ -759,25 +759,40 @@ html.is-native .ctl[data-key="ctl:fs"] { display: none; }
 /* ===================== Live translation ===================== */
 .live-subs {
   position: absolute; left: 8%; right: 8%; bottom: 4.5rem; z-index: 3; display: flex; flex-direction: column; align-items: center;
-  pointer-events: none; transition: bottom 260ms var(--ease);
+  pointer-events: none; transition: bottom 260ms var(--ease), top 260ms var(--ease);
+  --sub-size: 2.6rem; --sub-color: #fff; --sub-bg: rgba(0, 0, 0, 0.62);
 }
-.player.osd-on .live-subs { bottom: 19rem; }
+.player.osd-on .live-subs[data-pos="bottom"], .player.osd-on .live-subs:not([data-pos]) { bottom: 19rem; }
+.live-subs[data-pos="top"] { bottom: auto; top: 9.5rem; }
+.player.osd-on .live-subs[data-pos="top"] { top: 11.5rem; }
+.live-subs[data-size="s"] { --sub-size: 1.75rem; }
+.live-subs[data-size="m"] { --sub-size: 2.15rem; }
+.live-subs[data-size="l"] { --sub-size: 2.6rem; }
+.live-subs[data-size="xl"] { --sub-size: 3.25rem; }
+.live-subs[data-color="yellow"] { --sub-color: #FFE45C; }
+.live-subs[data-color="cyan"] { --sub-color: #7DF3FF; }
+.live-subs[data-color="green"] { --sub-color: #A6FF8F; }
+.live-subs[data-bg="solid"] { --sub-bg: #000; }
+.live-subs[data-bg="none"] { --sub-bg: transparent; }
 .live-sub-line {
-  max-width: 100%; text-align: center; font-size: 2.3rem; font-weight: 600; line-height: 1.35; color: #fff;
-  background: rgba(0, 0, 0, 0.72); padding: 0.35rem 1.1rem; border-radius: 0.4rem; text-wrap: balance;
-  text-shadow: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.8);
-  animation: sub-in 220ms var(--ease) both;
+  max-width: 100%; text-align: center; font-size: var(--sub-size); font-weight: 600; line-height: 1.32; color: var(--sub-color);
+  background: var(--sub-bg); padding: 0.3rem 1rem; border-radius: 0.35rem; text-wrap: balance;
+  text-shadow: 0 0.08rem 0.25rem rgba(0, 0, 0, 0.85);
+  animation: sub-in 160ms var(--ease) both;
 }
-.live-sub-orig { margin-top: 0.4rem; font-size: 1.35rem; font-weight: 500; color: rgba(255, 255, 255, 0.82); background: rgba(0, 0, 0, 0.55); padding: 0.2rem 0.8rem; border-radius: 0.3rem; text-align: center; max-width: 100%; }
-@keyframes sub-in { from { opacity: 0; transform: translateY(0.4rem); } to { opacity: 1; transform: none; } }
-.live-sub-status {
-  position: absolute; top: 9rem; right: 3.6rem; z-index: 3; display: flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 2rem;
-  background: rgba(5, 6, 9, 0.78); box-shadow: inset 0 0 0 0.07rem var(--line-2); font-size: 1rem; color: var(--text-2); pointer-events: none;
+.live-subs[data-bg="none"] .live-sub-line, .live-subs[data-bg="none"] .live-sub-orig {
+  text-shadow: -0.1rem -0.1rem 0 #000, 0.1rem -0.1rem 0 #000, -0.1rem 0.1rem 0 #000, 0.1rem 0.1rem 0 #000, 0 0 0.6rem rgba(0, 0, 0, 0.9);
 }
-html[dir="rtl"] .live-sub-status { right: auto; left: 3.6rem; }
-.live-sub-status .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--orange); margin-inline-end: 0.55rem; animation: pulse 1.6s ease-in-out infinite; }
-.live-sub-status.is-error .dot { background: var(--live); animation: none; }
-@keyframes pulse { 50% { opacity: 0.3; } }
+.live-sub-orig {
+  margin-top: 0.35rem; font-size: calc(var(--sub-size) * 0.58); font-weight: 500; color: rgba(255, 255, 255, 0.85);
+  background: var(--sub-bg); padding: 0.15rem 0.7rem; border-radius: 0.3rem; text-align: center; max-width: 100%;
+}
+@keyframes sub-in { from { opacity: 0; } to { opacity: 1; } }
+/* preview in Settings */
+.sub-preview { position: relative; height: 9rem; margin: 0.6rem 0 0.4rem; border-radius: 0.6rem; overflow: hidden;
+  background: linear-gradient(120deg, #3a2a1a, #12324a 55%, #1e4a2a); box-shadow: inset 0 0 0 0.07rem var(--line-2); }
+.sub-preview .live-subs, .sub-preview .live-subs[data-pos] { position: absolute; left: 5%; right: 5%; top: auto; bottom: 1.2rem; }
+.sub-preview .live-subs[data-pos="top"] { top: 1.2rem; bottom: auto; }
 .ctl.is-on { color: var(--orange); }
 .set-status.is-bad { color: var(--orange-warm); }
 
@@ -790,3 +805,5 @@ html[dir="rtl"] .hero-title, html[dir="rtl"] .hero-desc, html[dir="rtl"] .card-n
 html[dir="rtl"] .wide-name, html[dir="rtl"] .wide-prog, html[dir="rtl"] .row-name, html[dir="rtl"] .row-sub,
 html[dir="rtl"] .detail-name, html[dir="rtl"] .guide-title, html[dir="rtl"] .guide-desc, html[dir="rtl"] .cat-name { text-align: right; }
 .hero-count { direction: ltr; unicode-bidi: isolate; }
+.sub-opts { margin-top: 0.3rem; }
+.sub-opt-label { min-width: 9rem; font-size: 1.1rem; color: var(--text-2); }

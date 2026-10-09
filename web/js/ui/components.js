@@ -187,8 +187,17 @@
     ]);
   }
 
+  /** Subtitle look from Settings → Live translation (size, background, colour, position). */
+  function applySubStyle(el) {
+    var c = INDTV.LiveTranslate.config();
+    el.setAttribute('data-size', c.subSize);
+    el.setAttribute('data-bg', c.subBg);
+    el.setAttribute('data-color', c.subColor);
+    el.setAttribute('data-pos', c.subPos);
+  }
+
   INDTV.UI = {
     logo: logo, liveBadge: liveBadge, channelCard: channelCard, rail: rail, emptyState: emptyState,
-    button: button, toast: toast, trails: trails, monogram: monogram, showCard: showCard, nowLine: nowLine
+    button: button, toast: toast, trails: trails, monogram: monogram, showCard: showCard, nowLine: nowLine, applySubStyle: applySubStyle
   };
 })(typeof window !== 'undefined' ? window : globalThis);

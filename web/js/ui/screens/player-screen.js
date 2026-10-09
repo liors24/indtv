@@ -26,9 +26,7 @@
       el.appendChild(PS.top);
 
       PS.subs = U.el('div', { class: 'live-subs', 'aria-live': 'polite' });
-      PS.subStatus = U.el('div', { class: 'live-sub-status', hidden: true });
       el.appendChild(PS.subs);
-      el.appendChild(PS.subStatus);
       PS.status = U.el('div', { class: 'player-status', 'aria-live': 'polite' });
       el.appendChild(PS.status);
 
@@ -310,17 +308,11 @@
       if (!PS.subs) return;
       PS.btn.tr.classList.toggle('is-on', !!ts.on);
       PS.btn.tr.setAttribute('aria-label', ts.on ? t('translateOn') : t('liveTranslate'));
+      INDTV.UI.applySubStyle(PS.subs);
       PS.subs.innerHTML = '';
-      PS.subStatus.hidden = !ts.on;
-      if (!ts.on) return;
-      PS.subStatus.className = 'live-sub-status' + (ts.error ? ' is-error' : '');
-      PS.subStatus.innerHTML = '<span class="dot"></span><span></span>';
-      PS.subStatus.lastChild.textContent = ts.error ? ts.error :
-        t('liveTranslate') + ' → ' + ts.targetName + (ts.detected ? ' · ' + t('detected') + ': ' + ts.detected : '') + (ts.text ? '' : ' · ' + t('translateListening'));
-      if (ts.text) {
-        PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.text }));
-        if (ts.showOriginal && ts.orig && ts.orig !== ts.text) PS.subs.appendChild(U.el('div', { class: 'live-sub-orig', dir: 'auto', text: ts.orig }));
-      }
+      if (!ts.on || !ts.text) return;
+      PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.text }));
+      if (ts.showOriginal && ts.orig && ts.orig !== ts.text) PS.subs.appendChild(U.el('div', { class: 'live-sub-orig', dir: 'auto', text: ts.orig }));
     }
   };
 

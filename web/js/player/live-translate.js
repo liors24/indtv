@@ -14,7 +14,13 @@
   var INDTV = root.INDTV = root.INDTV || {};
   var Store = INDTV.Store, t = function (k) { return INDTV.I18n.t(k); };
 
-  var CHUNK_MS = 8000;
+  // Phrase detection and pacing
+  var VOICE_LEVEL = 0.015;   // RMS above this counts as sound worth transcribing
+  var PAUSE_MS = 280;        // a short pause ends a phrase
+  var MIN_SEG = 1100;        // shortest phrase sent
+  var MAX_SEG = 4000;        // continuous speech is cut here
+  // Minimum time between requests per service (Groq free tier allows 20 per minute).
+  var PACE = { groq: 3100, openai: 900, custom: 1500 };
   var PROVIDERS = {
     groq: { base: 'https://api.groq.com/openai/v1', stt: 'whisper-large-v3-turbo', llm: 'llama-3.3-70b-versatile', api: 'chat' },
     openai: { base: 'https://api.openai.com/v1', stt: 'whisper-1', llm: 'gpt-6-luna', api: 'responses' },
@@ -36,7 +42,8 @@
     c = c && typeof c === 'object' ? c : {};
     var prov = PROVIDERS[c.provider] ? c.provider : 'groq';
     return {
-      provider: prov, key: c.key || '', target: c.target || 'he', showOriginal: c.showOriginal !== false,
+      provider: prov, key: c.key || '', target: c.target || 'he', showOriginal: c.showOriginal === true,
+      subSize: c.subSize || 'l', subBg: c.subBg || 'semi', subColor: c.subColor || 'white', subPos: c.subPos || 'bottom',
       base: c.base || PROVIDERS[prov].base, stt: c.stt || PROVIDERS[prov].stt, llm: c.llm || PROVIDERS[prov].llm
     };
   }
@@ -158,10 +165,10 @@
     var url, body;
     if (PROVIDERS[cfg.provider].api === 'responses') {
       url = cfg.base.replace(/\/$/, '') + '/responses';
-      body = { model: cfg.llm, instructions: instructions, input: userText, max_output_tokens: 300 };
+      body = { model: cfg.llm, instructions: instructions, input: userText, max_output_tokens: 160 };
     } else {
       url = cfg.base.replace(/\/$/, '') + '/chat/completions';
-      body = { model: cfg.llm, temperature: 0.2, max_tokens: 300, messages: [{ role: 'system', content: instructions }, { role: 'user', content: userText }] };
+      body = { model: cfg.llm, temperature: 0.1, max_tokens: 160, messages: [{ role: 'system', content: instructions }, { role: 'user', content: userText }] };
     }
     return http('POST', url, { Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json', Accept: 'application/json' }, enc(JSON.stringify(body)))
       .then(function (res) {
@@ -262,7 +269,7 @@
   var LT = {
     TARGETS: TARGETS, PROVIDERS: PROVIDERS,
     state: new INDTV.StateFlow({ on: false, text: '', orig: '', detected: null, error: null, targetName: '', showOriginal: true }),
-    _run: 0, _busy: false, _prev: '', _pauseUntil: 0, _peak: 0, _levelTimer: null, _rec: null, _cycle: null,
+    _run: 0, _prev: '', _pauseUntil: 0, _rec: null, _vad: null, _seq: 0, _shown: 0, _inFlight: 0, _lastSent: 0, _minGap: 3100,
 
     config: loadCfg,
     saveConfig: function (patch) {
@@ -300,49 +307,65 @@
       var run = ++LT._run;
       LT._prev = '';
       LT._pauseUntil = 0;
+      LT._seq = 0; LT._shown = 0; LT._inFlight = 0; LT._lastSent = 0;
+      LT._minGap = PACE[cfg.provider] || PACE.custom;
       LT.state.set({ on: true, text: '', orig: '', detected: null, error: null, targetName: LT.targetName(), showOriginal: cfg.showOriginal });
-      clearInterval(LT._levelTimer);
-      LT._levelTimer = setInterval(function () { LT._peak = Math.max(LT._peak, level()); }, 150);
       LT._record(run);
     },
 
     stop: function () {
       LT._run++;
-      clearInterval(LT._levelTimer);
-      clearTimeout(LT._cycle);
+      clearInterval(LT._vad);
+      clearTimeout(LT._clear);
       if (LT._rec && LT._rec.state !== 'inactive') { try { LT._rec.stop(); } catch (e) { /* ignore */ } }
       LT._rec = null;
       if (LT.state.get().on) LT.state.set({ on: false, text: '', orig: '', detected: null, error: null, targetName: '', showOriginal: true });
     },
 
-    /** Record one chunk, hand it off, immediately start the next. */
+    /**
+     * Record one phrase. A voice-activity detector ends the chunk at the first natural pause
+     * (or at MAX_SEG during continuous speech), so subtitles follow the speech phrase by phrase.
+     * The next recorder starts immediately; requests are paced to stay inside the service's
+     * per-minute limit, and results are shown strictly in order.
+     */
     _record: function (run) {
       if (run !== LT._run) return;
       var mime = pickMime();
-      var rec;
-      var stream = currentStream();
+      var rec, stream = currentStream();
       try { rec = mime ? new root.MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 }) : new root.MediaRecorder(stream); }
       catch (e) { INDTV.UI.toast(t('translateUnsupported')); LT.stop(); return; }
       var parts = [];
-      LT._peak = 0;
+      var started = Date.now(), lastVoice = 0, voiced = 0;
       rec.ondataavailable = function (ev) { if (ev.data && ev.data.size) parts.push(ev.data); };
       rec.onstop = function () {
         if (run !== LT._run) return;
-        var loud = LT._peak > 0.012;
         var blob = new Blob(parts, { type: rec.mimeType || mime || 'audio/webm' });
+        var speech = voiced >= 3;
         LT._record(run);                                  // keep listening without gaps
-        if (loud && blob.size > 2000) LT._process(run, blob);
+        if (speech && blob.size > 1500) LT._send(run, blob);
       };
       LT._rec = rec;
       rec.start();
-      LT._cycle = setTimeout(function () { if (rec.state !== 'inactive') rec.stop(); }, CHUNK_MS);
+      clearInterval(LT._vad);
+      LT._vad = setInterval(function () {
+        if (run !== LT._run || rec.state === 'inactive') { clearInterval(LT._vad); return; }
+        var now = Date.now(), lv = level();
+        if (lv > VOICE_LEVEL) { lastVoice = now; voiced++; }
+        var elapsed = now - started;
+        var paused = voiced >= 3 && now - lastVoice >= PAUSE_MS;
+        var paced = now - LT._lastSent >= LT._minGap;
+        var cut = (paused && elapsed >= MIN_SEG && paced) || (elapsed >= Math.max(MAX_SEG, LT._minGap) && paced) ||
+          (!voiced && elapsed >= 6000);             // nothing said: start a fresh, small chunk
+        if (cut) { clearInterval(LT._vad); try { rec.stop(); } catch (e) { /* ignore */ } }
+      }, 80);
     },
 
-    _process: function (run, blob) {
-      // Live subtitles: if the previous chunk is still being processed, drop this one rather than fall behind.
-      if (LT._busy || Date.now() < LT._pauseUntil) return;
+    _send: function (run, blob) {
+      if (Date.now() < LT._pauseUntil || LT._inFlight >= 3) return;
       var cfg = loadCfg();
-      LT._busy = true;
+      var seq = ++LT._seq;
+      LT._lastSent = Date.now();
+      LT._inFlight++;
       transcribe(cfg, blob).then(function (tr) {
         if (run !== LT._run) return null;
         var text = tr.text.replace(/\s+/g, ' ').trim();
@@ -352,21 +375,37 @@
         var same = detected && (detected === target.code || detected === target.en.toLowerCase());
         var p = same ? Promise.resolve(text) : translate(cfg, text, LT._prev);
         return p.then(function (out) {
-          if (run !== LT._run) return;
+          if (run !== LT._run || seq < LT._shown) return;   // a newer line is already on screen
           out = (out || '').replace(/^["“”']+|["“”']+$/g, '').trim();
           if (!out) return;
+          LT._shown = seq;
           LT._prev = text;
           LT.state.update({ text: out, orig: text, detected: detected, error: null });
           clearTimeout(LT._clear);
-          LT._clear = setTimeout(function () { if (LT.state.get().text === out) LT.state.update({ text: '', orig: '' }); }, 14000);
+          var keep = Math.min(9000, Math.max(3500, out.length * 90));
+          LT._clear = setTimeout(function () { if (LT.state.get().text === out) LT.state.update({ text: '', orig: '' }); }, keep);
         });
       }).catch(function (e) {
         if (run !== LT._run) return;
-        if (e && e.status === 429) { LT._pauseUntil = Date.now() + 60000; LT.state.update({ error: t('translateLimit') }); }
-        else if (e && (e.status === 401 || e.status === 403)) { LT.state.update({ error: t('translateFail') }); LT._pauseUntil = Date.now() + 5 * 60000; }
-        else { LT.state.update({ error: describe(e) }); LT._pauseUntil = Date.now() + 15000; }
+        var msg;
+        if (e && e.status === 429) {
+          // over the per-minute quota: slow down a little and pause briefly
+          LT._minGap = Math.min(9000, Math.round(LT._minGap * 1.4));
+          LT._pauseUntil = Date.now() + 20000;
+          msg = t('translateLimit');
+        } else if (e && (e.status === 401 || e.status === 403)) { LT._pauseUntil = Date.now() + 5 * 60000; msg = t('translateFail'); }
+        else { LT._pauseUntil = Date.now() + 8000; msg = describe(e); }
+        LT._notify(msg);
         if (root.console) console.warn('[INDTV translate]', e && e.status, e && e.step, e && e.detail);
-      }).then(function () { LT._busy = false; });
+      }).then(function () { LT._inFlight = Math.max(0, LT._inFlight - 1); });
+    },
+
+    /** Problems appear once as a short notice, never as a permanent banner over the picture. */
+    _notify: function (msg) {
+      var now = Date.now();
+      if (msg === LT._lastNote && now - LT._lastNoteAt < 60000) return;
+      LT._lastNote = msg; LT._lastNoteAt = now;
+      INDTV.UI.toast(msg, 'error');
     },
 
     /** Settings "Save": checks the key, speech recognition and translation, and reports each step. */
