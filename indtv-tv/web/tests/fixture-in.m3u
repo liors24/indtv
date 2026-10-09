@@ -1,0 +1,40 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="4TVNews.in@SD" tvg-logo="https://i.imgur.com/fixture4tv.png" group-title="News",4TV News (576p)
+https://cdn-4.pishow.tv/live/1007/master.m3u8
+#EXTINF:-1 tvg-id="6TVTelugu.in@SD" tvg-logo="https://i.imgur.com/fixture6tv.png" group-title="News",6 TV Telugu (576p)
+https://cdn-1.pishow.tv/live/232/master.m3u8
+#EXTINF:-1 tvg-id="7SMusic.in@SD" tvg-logo="https://i.imgur.com/fixture7s.png" group-title="Music",7S Music (576p)
+https://mumt03.tangotv.in/Dsly5z3H7SMUSIC/index.m3u8
+#EXTINF:-1 tvg-id="9XJalwa.in@SD" tvg-logo="https://i.imgur.com/fixture9xj.png" group-title="Music",9X Jalwa (1080p)
+https://b.jsrdn.com/strm/channels/9xjalwa/master.m3u8
+#EXTINF:-1 tvg-id="9XM.in@SD" tvg-logo="https://i.imgur.com/fixture9xm.png" group-title="Music",9XM (1080p)
+https://9xjio.wiseplayout.com/9XM/master.m3u8
+#EXTINF:-1 tvg-id="10TV.in@SD" tvg-logo="https://i.imgur.com/fixture10tv.png" group-title="News",10 TV (720p)
+https://mumbai-edge.smartplaytv.in/10TV/index.m3u8
+#EXTINF:-1 tvg-id="AajTak.in@SD" tvg-logo="https://i.imgur.com/fixtureaaj.png" group-title="News",Aaj Tak (720p)
+https://example-aaj-a.test/live/index.m3u8
+#EXTINF:-1 tvg-id="AajTak.in@HD" tvg-logo="https://i.imgur.com/fixtureaaj-hd.png" group-title="News",Aaj Tak HD (1080p) [Geo-blocked]
+https://example-aaj-b.test/live/index.m3u8
+#EXTINF:-1 tvg-id="B4UHitz.in@SD" tvg-logo="" group-title="Music",B4U Hitz (576p)
+http://example-b4u.test/hitz.m3u8
+#EXTINF:-1 tvg-id="ShemarooBhakti.in@SD" tvg-logo="https://i.imgur.com/fixtureshem.png" group-title="Religious",Shemaroo Bhakti (1080p) [Not 24/7]
+#EXTVLCOPT:http-referrer=https://example.test/
+#EXTVLCOPT:http-user-agent=Mozilla/5.0
+https://example-shem.test/live.m3u8
+#EXTINF:-1 tvg-id="ChuChuTV.in@SD" tvg-logo="https://i.imgur.com/fixturechuchu.png" group-title="Kids;Animation",ChuChu TV (1080p)
+https://example-chu.test/master.m3u8
+#EXTINF:-1 tvg-id="DDNational.in@SD" tvg-logo="https://i.imgur.com/fixturedd.png" group-title="General",DD National (576p)
+https://example-dd.test/dd.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Comma, Channel" tvg-logo="https://i.imgur.com/fixturecomma.png" group-title="Entertainment",Comma, Channel
+https://example-comma.test/live.m3u8
+#EXTINF:-1 tvg-id="BadUrl.in@SD" group-title="Undefined",Bad Url Channel
+javascript:alert(1)
+#EXTINF:-1 tvg-id="RtmpOnly.in@SD" group-title="Movies",Rtmp Only
+rtmp://example.test/live
+#EXTINF:-1 tvg-id="MovieChannel.in@SD" tvg-logo="https://i.imgur.com/fixturemov.png" group-title="Movies",Movie Channel One (720p)
+https://example-mov.test/m.m3u8
+#EXTINF:-1 tvg-id="Dangling.in@SD" group-title="News",No URL after this
+#EXTINF:-1 tvg-logo="https://i.imgur.com/fixtureni.png" group-title="Entertainment",No Id Channel
+https://example-noid.test/a.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/fixtureni2.png" group-title="Entertainment",No Id Channel (1080p)
+https://example-noid.test/b.m3u8

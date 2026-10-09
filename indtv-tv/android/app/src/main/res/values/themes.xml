@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="indtv_bg">#050609</color>
+    <style name="Theme.INDTV" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@color/indtv_bg</item>
+        <item name="android:colorBackground">@color/indtv_bg</item>
+    </style>
+</resources>
