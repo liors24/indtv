@@ -24,7 +24,9 @@
   var PROVIDERS = {
     groq: { base: 'https://api.groq.com/openai/v1', stt: 'whisper-large-v3-turbo', llm: 'llama-3.3-70b-versatile', api: 'chat' },
     openai: { base: 'https://api.openai.com/v1', stt: 'whisper-1', llm: 'gpt-6-luna', api: 'responses' },
-    custom: { base: '', stt: 'whisper-1', llm: '', api: 'chat' }
+    custom: { base: '', stt: 'whisper-1', llm: '', api: 'chat' },
+    // Streaming: speech recognition and translation in one live connection, word by word.
+    soniox: { base: 'wss://stt-rt.soniox.com/transcribe-websocket', stt: 'stt-rt-v5', llm: '-', api: 'stream' }
   };
   var TARGETS = [
     { code: 'he', name: 'עברית', en: 'Hebrew' }, { code: 'en', name: 'English', en: 'English' },
@@ -291,7 +293,8 @@
       var tg = TARGETS.filter(function (x) { return x.code === c.target; })[0] || TARGETS[0];
       return tg.name;
     },
-    isConfigured: function () { var c = loadCfg(); return !!(c.key && c.base && c.stt && c.llm); },
+    isConfigured: function () { var c = loadCfg(); return !!(c.key && c.base && c.stt && (c.llm || c.provider === 'soniox')); },
+    isStreaming: function () { return PROVIDERS[loadCfg().provider].api === 'stream'; },
     isOn: function () { return LT.state.get().on; },
 
     toggle: function (video) { return LT.isOn() ? LT.stop() : LT.start(video); },
@@ -310,11 +313,98 @@
       LT._seq = 0; LT._shown = 0; LT._inFlight = 0; LT._lastSent = 0;
       LT._minGap = PACE[cfg.provider] || PACE.custom;
       LT.state.set({ on: true, text: '', orig: '', detected: null, error: null, targetName: LT.targetName(), showOriginal: cfg.showOriginal });
-      LT._record(run);
+      if (PROVIDERS[cfg.provider].api === 'stream') LT._stream(run, cfg);
+      else LT._record(run);
+    },
+
+    /* ---------- streaming mode (word by word) ----------
+     * The programme sound is sent continuously (200 ms pieces) over one WebSocket; the service
+     * returns recognised words and their translation as they are spoken. Words still being heard
+     * are shown immediately and corrected in place; finished sentences roll up like live captions. */
+    _stream: function (run, cfg) {
+      var mime = pickMime();
+      var sx = LT._sx = { ws: null, rec: null, lines: [], cur: '', curNon: '', orig: '', origNon: '', retry: 0, watch: null };
+      function show() {
+        var current = (sx.cur + sx.curNon).trim();
+        var lines = sx.lines.slice(-1);
+        if (current) lines.push(current);
+        var text = lines.map(function (l) { return l.length > 90 ? '…' + l.slice(-88) : l; }).join('\n').trim();
+        var orig = (sx.orig + sx.origNon).trim();
+        if (orig.length > 90) orig = '…' + orig.slice(-88);
+        LT.state.update({ text: text, orig: orig, error: null });
+        clearTimeout(LT._clear);
+        LT._clear = setTimeout(function () { if (run === LT._run) { sx.lines = []; LT.state.update({ text: '', orig: '' }); } }, 6000);
+      }
+      function startRecorder() {
+        var stream = currentStream();
+        var rec;
+        try { rec = mime ? new root.MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 48000 }) : new root.MediaRecorder(stream); }
+        catch (e) { INDTV.UI.toast(t('translateUnsupported')); LT.stop(); return; }
+        rec.ondataavailable = function (ev) {
+          if (run === LT._run && ev.data && ev.data.size && sx.ws && sx.ws.readyState === 1) sx.ws.send(ev.data);
+        };
+        sx.rec = rec;
+        rec.start(200);
+      }
+      function open() {
+        if (run !== LT._run) return;
+        var ws;
+        try { ws = new WebSocket(cfg.base); } catch (e) { LT._notify(describe(e)); return; }
+        sx.ws = ws;
+        ws.onopen = function () {
+          ws.send(JSON.stringify({
+            api_key: cfg.key, model: cfg.stt, audio_format: 'auto',
+            language_hints: ['hi', 'en'], enable_endpoint_detection: true,
+            translation: { type: 'one_way', target_language: cfg.target }
+          }));
+          sx.retry = 0;
+          startRecorder();
+        };
+        ws.onmessage = function (ev) {
+          if (run !== LT._run) return;
+          var m;
+          try { m = JSON.parse(ev.data); } catch (e) { return; }
+          if (m.error_code || m.error_message) {
+            var err = new Error(m.error_message || 'error'); err.status = m.error_code; err.step = 'stt'; err.detail = m.error_message;
+            LT._notify(err.status === 401 ? t('translateFail') : describe(err));
+            sx.fatal = err.status === 401 || err.status === 402 || /api key|balance|credit|model/i.test(m.error_message || '');
+            return;
+          }
+          var trNon = '', orNon = '', ended = false;
+          (m.tokens || []).forEach(function (tk) {
+            if (tk.text === '<end>') { if (tk.is_final) ended = true; return; }
+            if (tk.translation_status === 'translation') { if (tk.is_final) sx.cur += tk.text; else trNon += tk.text; }
+            else { if (tk.is_final) sx.orig += tk.text; else orNon += tk.text; if (tk.language) LT.state.update({ detected: tk.language }); }
+          });
+          sx.curNon = trNon; sx.origNon = orNon;
+          if (ended && sx.cur.trim()) { sx.lines.push(sx.cur.trim()); sx.lines = sx.lines.slice(-2); sx.cur = ''; sx.orig = ''; }
+          if ((m.tokens || []).length) show();
+        };
+        ws.onclose = function () {
+          if (sx.rec && sx.rec.state !== 'inactive') { try { sx.rec.stop(); } catch (e) { /* ignore */ } }
+          if (run !== LT._run || sx.fatal) return;
+          sx.retry++;
+          setTimeout(open, Math.min(5000, 400 * sx.retry));    // reconnect quickly (channel change, network blip)
+        };
+        ws.onerror = function () { if (sx.retry > 2) LT._notify(describe({ step: 'stt' })); };
+      }
+      open();
+      // A channel change replaces the audio track: restart the session on the new sound.
+      sx.watch = setInterval(function () {
+        if (run !== LT._run) { clearInterval(sx.watch); return; }
+        var live = audio.stream && audio.stream.getAudioTracks().some(function (tr) { return tr.readyState === 'live'; });
+        if (!live && sx.ws) { try { attach(audio.video); } catch (e) { /* keep */ } try { sx.ws.close(); } catch (e2) { /* ignore */ } }
+      }, 700);
     },
 
     stop: function () {
       LT._run++;
+      if (LT._sx) {
+        clearInterval(LT._sx.watch);
+        if (LT._sx.rec && LT._sx.rec.state !== 'inactive') { try { LT._sx.rec.stop(); } catch (e) { /* ignore */ } }
+        if (LT._sx.ws) { try { LT._sx.ws.send(''); LT._sx.ws.close(); } catch (e) { /* ignore */ } }
+        LT._sx = null;
+      }
       clearInterval(LT._vad);
       clearTimeout(LT._clear);
       if (LT._rec && LT._rec.state !== 'inactive') { try { LT._rec.stop(); } catch (e) { /* ignore */ } }
@@ -411,6 +501,7 @@
     /** Settings "Save": checks the key, speech recognition and translation, and reports each step. */
     test: function () {
       var cfg = loadCfg();
+      if (PROVIDERS[cfg.provider].api === 'stream') return LT._testStream(cfg);
       var he = INDTV.I18n.lang() === 'he';
       var report = { ok: false, lines: [] };
       return http('GET', cfg.base.replace(/\/$/, '') + '/models', { Authorization: 'Bearer ' + cfg.key, Accept: 'application/json' }, null)
@@ -433,6 +524,27 @@
           return report;
         });
     }
+  };
+
+  LT._testStream = function (cfg) {
+    var he = INDTV.I18n.lang() === 'he';
+    return new Promise(function (resolve) {
+      var done = false, ws;
+      function finish(ok, line) { if (done) return; done = true; try { ws.close(); } catch (e) { /* ignore */ } resolve({ ok: ok, lines: [line] }); }
+      try { ws = new WebSocket(cfg.base); } catch (e) { finish(false, '✗ ' + describe(e)); return; }
+      var timer = setTimeout(function () { finish(false, '✗ ' + (he ? 'אין תשובה מהשירות' : 'No answer from the service')); }, 12000);
+      ws.onopen = function () {
+        ws.send(JSON.stringify({ api_key: cfg.key, model: cfg.stt, audio_format: 'auto', translation: { type: 'one_way', target_language: cfg.target } }));
+        ws.send(testWav());
+        ws.send('');
+      };
+      ws.onmessage = function (ev) {
+        var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+        if (m.error_code || m.error_message) { clearTimeout(timer); finish(false, '✗ ' + (m.error_code === 401 ? t('translateFail') : (he ? 'השירות החזיר שגיאה ' : 'Service error ') + (m.error_code || '') + ' — ' + (m.error_message || ''))); }
+        else if (m.finished) { clearTimeout(timer); finish(true, he ? '✓ חיבור רציף פעיל (' + cfg.stt + ') · התרגום יופיע מילה אחרי מילה' : '✓ Streaming connection works (' + cfg.stt + ')'); }
+      };
+      ws.onerror = function () { clearTimeout(timer); finish(false, '✗ ' + (he ? 'החיבור לשירות נכשל' : 'Could not connect to the service')); };
+    });
   };
 
   INDTV.LiveTranslate = LT;

@@ -58,6 +58,8 @@
     focus: function (el, opts) {
       if (!el) return false;
       opts = opts || {};
+      // page text fields are read-only while highlighted, so the TV keyboard only opens on OK
+      if (INDTV.EditDock && INDTV.EditDock.isTextField(el) && !(INDTV.EditDock.el && INDTV.EditDock.el.contains(el))) el.readOnly = true;
       try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
       var g = el.closest('[data-fgroup]');
       if (g) Focus._memory[g.getAttribute('data-fgroup')] = el;
@@ -211,7 +213,7 @@
     onKeyDown: function (e) {
       var top = Focus.handlers[Focus.handlers.length - 1];
       var t = e.target;
-      var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') && t.type !== 'checkbox' && t.type !== 'range' && t.type !== 'file';
+      var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') && !t.readOnly && t.type !== 'checkbox' && t.type !== 'range' && t.type !== 'file';
 
       if (match(e, KEY.BACK) || (e.keyCode === 8 && !typing)) {
         e.preventDefault();
@@ -250,6 +252,7 @@
         if (cur) {
           e.preventDefault();
           if (cur.tagName === 'INPUT' && (cur.type === 'checkbox')) { cur.click(); return; }
+          if (INDTV.EditDock && INDTV.EditDock.isTextField(cur)) { INDTV.EditDock.open(cur); return; }
           if (cur.tagName === 'INPUT' || cur.tagName === 'TEXTAREA' || cur.tagName === 'SELECT') { cur.focus(); return; }
           cur.click();
         } else {

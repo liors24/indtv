@@ -247,15 +247,16 @@
 
       box.appendChild(U.el('span', { class: 'field-label', text: t('translateProvider') }));
       var provRow = U.el('div', { class: 'set-row' });
-      [['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
+      [['soniox', 'provSoniox'], ['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
         var on = cfg.provider === pv[0];
         provRow.appendChild(UI.button(t(pv[1]), on ? 'check' : null, function () { LT.saveConfig({ provider: pv[0] }); rebuild('tr:prov:' + pv[0]); },
           { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:prov:' + pv[0] }));
       });
       box.appendChild(provRow);
+      box.appendChild(U.el('p', { class: 'set-status', text: cfg.provider === 'soniox' ? t('sonioxHint') : cfg.provider === 'groq' ? t('groqHint') : '' }));
 
       var keyIn = U.el('input', { class: 'fx field', id: 'tr-key', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
-        placeholder: cfg.provider === 'groq' ? 'gsk_…' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
+        placeholder: cfg.provider === 'groq' ? 'gsk_…' : cfg.provider === 'soniox' ? 'Soniox API key' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
       box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key', text: t('translateKey') }));
       box.appendChild(keyIn);
 
@@ -309,8 +310,10 @@
       adv.appendChild(baseIn);
       adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-stt', text: INDTV.I18n.lang() === 'he' ? 'מודל זיהוי דיבור' : 'Speech-to-text model' }));
       adv.appendChild(sttIn);
-      adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-llm', text: INDTV.I18n.lang() === 'he' ? 'מודל תרגום' : 'Translation model' }));
-      adv.appendChild(llmIn);
+      if (cfg.provider !== 'soniox') {
+        adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-llm', text: INDTV.I18n.lang() === 'he' ? 'מודל תרגום' : 'Translation model' }));
+        adv.appendChild(llmIn);
+      }
 
       var msg = U.el('p', { class: 'set-status', 'aria-live': 'polite' });
       box.appendChild(U.el('div', { class: 'set-row' }, [

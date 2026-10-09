@@ -775,7 +775,7 @@ html.is-native .ctl[data-key="ctl:fs"] { display: none; }
 .live-subs[data-bg="solid"] { --sub-bg: #000; }
 .live-subs[data-bg="none"] { --sub-bg: transparent; }
 .live-sub-line {
-  max-width: 100%; text-align: center; font-size: var(--sub-size); font-weight: 600; line-height: 1.32; color: var(--sub-color);
+  max-width: 100%; text-align: center; font-size: var(--sub-size); font-weight: 600; line-height: 1.32; color: var(--sub-color); white-space: pre-line;
   background: var(--sub-bg); padding: 0.3rem 1rem; border-radius: 0.35rem; text-wrap: balance;
   text-shadow: 0 0.08rem 0.25rem rgba(0, 0, 0, 0.85);
   animation: sub-in 160ms var(--ease) both;
@@ -807,3 +807,24 @@ html[dir="rtl"] .detail-name, html[dir="rtl"] .guide-title, html[dir="rtl"] .gui
 .hero-count { direction: ltr; unicode-bidi: isolate; }
 .sub-opts { margin-top: 0.3rem; }
 .sub-opt-label { min-width: 9rem; font-size: 1.1rem; color: var(--text-2); }
+
+/* ===================== Typing dock (zoomed field above the TV keyboard) ===================== */
+.edit-dock { position: fixed; inset: 0; z-index: 120; background: rgba(5, 6, 9, 0.72); display: flex; justify-content: center; align-items: flex-start; }
+.edit-panel {
+  margin-top: 4.5rem; width: 72rem; max-width: 92%; padding: 1.8rem 2.2rem 1.4rem; border-radius: 1rem;
+  background: var(--surface); box-shadow: inset 0 0 0 0.09rem rgba(255, 128, 24, 0.45), 0 2rem 4rem rgba(0, 0, 0, 0.6);
+  animation: dock-in 200ms var(--ease) both;
+}
+@keyframes dock-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+.edit-label { font-size: 1.5rem; color: var(--text-2); margin-bottom: 0.8rem; }
+.edit-input {
+  width: 100%; height: 5.6rem; border-radius: 0.7rem; border: 0.12rem solid var(--orange); background: var(--bg-2); color: var(--text);
+  font: inherit; font-size: 2.6rem; padding: 0 1.4rem; box-shadow: 0 0 0 0.25rem rgba(255, 128, 24, 0.18);
+}
+.edit-area { height: 15rem; padding: 1rem 1.4rem; font-size: 1.5rem; font-family: ui-monospace, Menlo, Consolas, monospace; line-height: 1.5; resize: none; }
+.edit-actions { display: flex; margin-top: 1.2rem; }
+.edit-actions > * + * { margin-inline-start: 1rem; }
+.edit-actions .btn-primary { height: 3.8rem; min-width: 0; font-size: 1.35rem; padding: 0 2rem; }
+.edit-hint { margin-top: 0.8rem; font-size: 1.05rem; color: var(--muted); }
+/* page fields look like buttons you open, not text you type into */
+input.fx[readonly], textarea.fx[readonly] { cursor: pointer; caret-color: transparent; }

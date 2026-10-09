@@ -36,6 +36,7 @@
     INDTV.I18n.applyDir();
     INDTV.Display.apply();
     INDTV.Focus.start();
+    INDTV.EditDock.start();
     INDTV.Router.start();
     registerScreens();
 
