@@ -293,7 +293,7 @@
         UI.button(t('save2'), 'check', function () {
           LT.saveConfig({ key: keyIn.value.trim(), base: baseIn.value.trim() || cfg.base, stt: sttIn.value.trim() || cfg.stt, llm: llmIn.value.trim() || cfg.llm });
           msg.textContent = t('statusLoading') + '…';
-          LT.test().then(function (ok) { msg.textContent = ok ? t('translateOk') : t('translateFail'); });
+          LT.test().then(function (r) { msg.textContent = r.lines.join('  ·  '); msg.classList.toggle('is-bad', !r.ok); });
         }, { cls: 'btn-primary', key: 'tr:save' }),
         UI.button(t('translateModels'), 'settings', function () { Settings._trAdvanced = !Settings._trAdvanced; adv.hidden = !adv.hidden; }, { cls: 'btn-ghost', key: 'tr:adv' })
       ]));

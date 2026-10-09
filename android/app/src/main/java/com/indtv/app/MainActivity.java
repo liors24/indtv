@@ -180,6 +180,7 @@ public class MainActivity extends Activity {
                         c.setConnectTimeout(15000);
                         c.setReadTimeout(40000);
                         c.setRequestMethod("POST".equalsIgnoreCase(method) ? "POST" : "GET");
+                        c.setRequestProperty("User-Agent", "INDTV-AndroidTV/1.0 (Android TV)");
                         if (headersJson != null && !headersJson.isEmpty()) {
                             JSONObject h = new JSONObject(headersJson);
                             Iterator<String> keys = h.keys();

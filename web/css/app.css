@@ -766,3 +766,4 @@ html[dir="rtl"] .live-sub-status { right: auto; left: 3.6rem; }
 .live-sub-status.is-error .dot { background: var(--live); animation: none; }
 @keyframes pulse { 50% { opacity: 0.3; } }
 .ctl.is-on { color: var(--orange); }
+.set-status.is-bad { color: var(--orange-warm); }

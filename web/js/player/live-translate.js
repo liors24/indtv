@@ -56,7 +56,16 @@
     for (var i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
     return btoa(s);
   }
-  function http(method, url, headers, bodyU8) {
+  function http(method, url, headers, bodyU8, retried) {
+    return httpOnce(method, url, headers, bodyU8).then(function (res) {
+      if (res.status === 0 && !retried) return http(method, url, headers, bodyU8, true);
+      return res;
+    }, function (err) {
+      if (!retried) return http(method, url, headers, bodyU8, true);
+      throw err;
+    });
+  }
+  function httpOnce(method, url, headers, bodyU8) {
     if (root.INDTVNative && root.INDTVNative.httpRequest) {
       return new Promise(function (resolve, reject) {
         var id = 'r' + (++seq);
@@ -69,6 +78,15 @@
       .then(function (r) { return r.text().then(function (txt) { return { status: r.status, text: txt }; }); });
   }
   function enc(s) { return new TextEncoder().encode(s); }
+  function blobBytes(blob) {
+    if (blob.arrayBuffer) return blob.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+    return new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(new Uint8Array(fr.result)); };
+      fr.onerror = function () { reject(fr.error || new Error('read')); };
+      fr.readAsArrayBuffer(blob);
+    });
+  }
   function multipart(fields, file) {
     var boundary = '----indtv' + Math.random().toString(16).slice(2);
     var parts = [];
@@ -83,29 +101,55 @@
     parts.forEach(function (p) { out.set(p, off); off += p.length; });
     return { body: out, type: 'multipart/form-data; boundary=' + boundary };
   }
-  function apiError(res) {
-    var e = new Error('HTTP ' + res.status);
+  function apiError(res, step) {
+    var msg = '';
+    try { var j = JSON.parse(res.text); msg = (j.error && (j.error.message || j.error.code)) || j.message || ''; } catch (x) { msg = (res.text || '').slice(0, 120); }
+    var e = new Error(msg || ('HTTP ' + res.status));
     e.status = res.status;
+    e.step = step;
+    e.detail = String(msg || '').replace(/\s+/g, ' ').slice(0, 140);
     return e;
+  }
+  /** One line the viewer can read (and send us) when something fails. */
+  function describe(e) {
+    var he = INDTV.I18n.lang() === 'he';
+    var step = e && e.step === 'stt' ? (he ? 'זיהוי דיבור' : 'speech recognition') : e && e.step === 'llm' ? (he ? 'תרגום' : 'translation') : (he ? 'חיבור' : 'connection');
+    if (!e || !e.status) return (he ? 'אין תשובה מהשירות (' : 'No answer from the service (') + step + (e && e.message ? ': ' + String(e.message).slice(0, 80) : '') + ')';
+    return (he ? 'השירות החזיר שגיאה ' : 'Service error ') + e.status + ' · ' + step + (e.detail ? ' — ' + e.detail : '');
   }
 
   /* ---------- speech-to-text + translation ---------- */
-  function transcribe(cfg, blob) {
-    return blob.arrayBuffer().then(function (buf) {
-      var type = blob.type || 'audio/webm';
-      var ext = /ogg/.test(type) ? 'ogg' : /mp4|m4a/.test(type) ? 'm4a' : 'webm';
-      var fields = { model: cfg.stt, response_format: 'verbose_json', temperature: '0' };
-      var mp = multipart(fields, { name: 'chunk.' + ext, type: type.split(';')[0], bytes: new Uint8Array(buf) });
+  var STT_FALLBACK = { groq: ['whisper-large-v3-turbo', 'whisper-large-v3'], openai: ['whisper-1', 'gpt-4o-mini-transcribe'] };
+  var LLM_FALLBACK = { groq: ['llama-3.3-70b-versatile', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant', 'openai/gpt-oss-120b'], openai: [] };
+  function nextModel(list, current) {
+    var l = list || [];
+    var i = l.indexOf(current);
+    return i >= 0 && i + 1 < l.length ? l[i + 1] : (i < 0 && l.length && l[0] !== current ? l[0] : null);
+  }
+  function modelProblem(e) { return e && (e.status === 400 || e.status === 404) && /model|decommission|not.?found|does not exist|access/i.test(e.detail || ''); }
+
+  function transcribe(cfg, blob, attempt) {
+    var model = cfg.stt;
+    return blobBytes(blob).then(function (bytes) {
+      var type = (blob.type || 'audio/webm').split(';')[0];
+      var ext = /ogg/.test(type) ? 'ogg' : /mp4|m4a/.test(type) ? 'm4a' : /wav/.test(type) ? 'wav' : 'webm';
+      var fields = { model: model, response_format: /whisper/.test(model) ? 'verbose_json' : 'json', temperature: '0' };
+      var mp = multipart(fields, { name: 'chunk.' + ext, type: type, bytes: bytes });
       return http('POST', cfg.base.replace(/\/$/, '') + '/audio/transcriptions',
-        { Authorization: 'Bearer ' + cfg.key, 'Content-Type': mp.type }, mp.body);
+        { Authorization: 'Bearer ' + cfg.key, 'Content-Type': mp.type, Accept: 'application/json' }, mp.body);
     }).then(function (res) {
-      if (res.status !== 200) throw apiError(res);
+      if (res.status !== 200) throw apiError(res, 'stt');
       var j = JSON.parse(res.text);
       return { text: String(j.text || '').trim(), language: j.language || null };
+    }).catch(function (e) {
+      if (e && !e.step) e.step = 'stt';
+      var alt = modelProblem(e) && !attempt ? nextModel(STT_FALLBACK[cfg.provider], model) : null;
+      if (alt) { LT.saveConfig({ stt: alt }); return transcribe(Object.assign({}, cfg, { stt: alt }), blob, 1); }
+      throw e;
     });
   }
 
-  function translate(cfg, text, previous) {
+  function translate(cfg, text, previous, attempt) {
     var target = TARGETS.filter(function (x) { return x.code === cfg.target; })[0] || TARGETS[0];
     var instructions = 'You translate live TV subtitles into ' + target.en + '. Output only the translation of the new line, ' +
       'as natural, short subtitle text in ' + target.en + '. Keep names as they are. If the line is already in ' + target.en +
@@ -119,9 +163,9 @@
       url = cfg.base.replace(/\/$/, '') + '/chat/completions';
       body = { model: cfg.llm, temperature: 0.2, max_tokens: 300, messages: [{ role: 'system', content: instructions }, { role: 'user', content: userText }] };
     }
-    return http('POST', url, { Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json' }, enc(JSON.stringify(body)))
+    return http('POST', url, { Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json', Accept: 'application/json' }, enc(JSON.stringify(body)))
       .then(function (res) {
-        if (res.status !== 200) throw apiError(res);
+        if (res.status !== 200) throw apiError(res, 'llm');
         var j = JSON.parse(res.text);
         if (j.choices) return String((j.choices[0].message || {}).content || '').trim();
         var out = '';
@@ -129,7 +173,25 @@
           (item.content || []).forEach(function (c) { if (c.type === 'output_text') out += c.text; });
         });
         return (out || j.output_text || '').trim();
+      }).catch(function (e) {
+        if (e && !e.step) e.step = 'llm';
+        // the chosen model may be retired or not enabled for this key: try the next one and remember it
+        var tries = attempt || 0;
+        var alt = modelProblem(e) && tries < 3 ? nextModel(LLM_FALLBACK[cfg.provider], cfg.llm) : null;
+        if (alt) { LT.saveConfig({ llm: alt }); return translate(Object.assign({}, cfg, { llm: alt }), text, previous, tries + 1); }
+        throw e;
       });
+  }
+
+  /** A one-second test tone as WAV, to check the whole pipeline from Settings. */
+  function testWav() {
+    var rate = 16000, n = rate, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    function str(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+    str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVE'); str(12, 'fmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, n * 2, true);
+    for (var i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.sin(i / rate * 2 * Math.PI * 440) * 6000, true);
+    return new Blob([buf], { type: 'audio/wav' });
   }
 
   /* ---------- audio capture ---------- */
@@ -269,15 +331,35 @@
         if (run !== LT._run) return;
         if (e && e.status === 429) { LT._pauseUntil = Date.now() + 60000; LT.state.update({ error: t('translateLimit') }); }
         else if (e && (e.status === 401 || e.status === 403)) { LT.state.update({ error: t('translateFail') }); LT._pauseUntil = Date.now() + 5 * 60000; }
-        else { LT.state.update({ error: t('translateError') }); LT._pauseUntil = Date.now() + 15000; }
+        else { LT.state.update({ error: describe(e) }); LT._pauseUntil = Date.now() + 15000; }
+        if (root.console) console.warn('[INDTV translate]', e && e.status, e && e.step, e && e.detail);
       }).then(function () { LT._busy = false; });
     },
 
-    /** Settings "Test key": lists models with the saved key. */
+    /** Settings "Save": checks the key, speech recognition and translation, and reports each step. */
     test: function () {
       var cfg = loadCfg();
-      return http('GET', cfg.base.replace(/\/$/, '') + '/models', { Authorization: 'Bearer ' + cfg.key }, null)
-        .then(function (res) { return res.status === 200; }, function () { return false; });
+      var he = INDTV.I18n.lang() === 'he';
+      var report = { ok: false, lines: [] };
+      return http('GET', cfg.base.replace(/\/$/, '') + '/models', { Authorization: 'Bearer ' + cfg.key, Accept: 'application/json' }, null)
+        .then(function (res) {
+          if (res.status !== 200) throw apiError(res, 'key');
+          report.lines.push((he ? '✓ המפתח תקין' : '✓ Key accepted'));
+          return transcribe(loadCfg(), testWav());
+        })
+        .then(function () {
+          report.lines.push((he ? '✓ זיהוי דיבור (' : '✓ Speech recognition (') + loadCfg().stt + ')');
+          return translate(loadCfg(), 'नमस्ते, आप कैसे हैं?', '');
+        })
+        .then(function (out) {
+          report.lines.push((he ? '✓ תרגום (' : '✓ Translation (') + loadCfg().llm + '): ' + (out || '—'));
+          report.ok = true;
+          return report;
+        })
+        .catch(function (e) {
+          report.lines.push('✗ ' + (e && e.status === 401 ? t('translateFail') : describe(e)));
+          return report;
+        });
     }
   };
 
