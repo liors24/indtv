@@ -57,7 +57,7 @@
       var state = CR.state.get();
       Live.el.querySelector('.screen-title').textContent = t('live');
       Live.el.querySelector('.col-title').textContent = t('categories');
-      Live.countEl.textContent = state.channels.length ? state.channels.length + ' ' + t('channels') + ' · ' + INDTV.Config.BUILTIN_NAME : '';
+      Live.countEl.textContent = state.channels.length ? state.channels.length + ' ' + t('channels') + ' · ' + INDTV.Config.sourcesLabel() : '';
       var activeKey = document.activeElement && Live.el.contains(document.activeElement) ? document.activeElement.getAttribute('data-key') : null;
 
       Live.cats.innerHTML = '';
@@ -140,6 +140,18 @@
       return row;
     },
 
+    _showFavButton: function (prog, ch) {
+      var on = INDTV.ShowFavorites.has(prog.title);
+      var b = U.el('button', { class: 'fx prog-fav' + (on ? ' is-on' : ''), type: 'button', dataset: { key: 'detail:showfav' } });
+      b.innerHTML = INDTV.icon(on ? 'heartFill' : 'heart') + '<span>' + U.escapeHtml(on ? t('removeShow') : t('addShow')) + '</span>';
+      b.addEventListener('click', function () {
+        var added = INDTV.ShowFavorites.toggle(prog, ch);
+        UI.toast(added ? t('showAdded') : t('showRemoved'));
+        Live.showDetail(ch.id);
+      });
+      return b;
+    },
+
     showDetail: function (id) {
       var ch = CR.get(id);
       if (!ch) return;
@@ -166,7 +178,8 @@
             U.el('span', { class: 'guide-title', text: epg.now.title }),
             U.el('span', { class: 'guide-time', text: U.formatTime(epg.now.start, lang) + '–' + U.formatTime(epg.now.stop, lang) }),
             U.el('span', { class: 'progress' }, [U.el('span', { class: 'progress-fill', style: 'width:' + Math.round(epg.progress * 100) + '%' })]),
-            epg.now.desc ? U.el('p', { class: 'guide-desc', text: epg.now.desc }) : null
+            epg.now.desc ? U.el('p', { class: 'guide-desc', text: epg.now.desc }) : null,
+            Live._showFavButton(epg.now, ch)
           ]));
         }
         if (epg.next) {

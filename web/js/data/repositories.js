@@ -10,10 +10,30 @@
     id: 'builtin-in', name: 'India Built-in', type: 'builtin', kind: 'live',
     url: BUILTIN_URL, enabled: true
   };
+  /* Extra free, public sources. Official broadcaster CDN streams (NDTV, ABP, TV9, News18 …);
+   * they merge into the same channels as extra, preferred stream sources. */
+  var BUILTINS = [BUILTIN, {
+    id: 'builtin-freetv-in', name: 'Free-TV India', type: 'builtin', kind: 'live',
+    url: 'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_india.m3u8',
+    enabled: true, preferred: true, ignoreGroups: true
+  }, {
+    // iptv-org by language: more feeds of the same channels (extra fallback sources) and Indian channels broadcast abroad.
+    id: 'builtin-iptv-lang', name: 'iptv-org Indian languages', type: 'builtin', kind: 'live', enabled: true,
+    url: 'https://iptv-org.github.io/iptv/languages/hin.m3u',
+    urls: ['hin', 'ben', 'tam', 'tel', 'mar', 'mal', 'kan', 'guj', 'pan'].map(function (l) { return 'https://iptv-org.github.io/iptv/languages/' + l + '.m3u'; })
+  }];
+  function builtinById(id) { return BUILTINS.filter(function (b) { return b.id === id; })[0] || null; }
   var AUTO_REFRESH_MIN_AGE = 10 * 60 * 1000;   // cold start refresh unless refreshed in the last 10 min
   var BACKGROUND_INTERVAL = 6 * 60 * 60 * 1000; // while the page stays open
 
-  INDTV.Config = { BUILTIN_URL: BUILTIN_URL, BUILTIN_NAME: BUILTIN.name };
+  INDTV.Config = {
+    BUILTIN_URL: BUILTIN_URL, BUILTIN_NAME: BUILTIN.name,
+    /** "2 sources" style label of the live playlists in use. */
+    sourcesLabel: function () {
+      var n = SourcesRepository.all().filter(function (s) { return s.enabled && s.kind === 'live' && s.count; }).length;
+      return n <= 1 ? BUILTIN.name : n + ' ' + INDTV.I18n.t('sourcesWord');
+    }
+  };
 
   /* =========================================================
    * SourcesRepository — which playlists are configured
@@ -23,16 +43,16 @@
     load: function () {
       return Store.get('sources').then(function (saved) {
         var list = Array.isArray(saved) ? saved.filter(function (s) { return s && s.id; }) : [];
-        var builtin = list.filter(function (s) { return s.id === BUILTIN.id; })[0];
-        // Built-in URL is canonical and cannot be edited.
-        var merged = Object.assign({}, BUILTIN, builtin ? {
-          enabled: builtin.enabled !== false, status: builtin.status, lastRefresh: builtin.lastRefresh,
-          lastAttempt: builtin.lastAttempt, error: builtin.error, count: builtin.count, stats: builtin.stats
-        } : {});
-        merged.url = BUILTIN_URL;
-        merged.name = BUILTIN.name;
-        var users = list.filter(function (s) { return s.id !== BUILTIN.id; });
-        SourcesRepository.state.set([merged].concat(users));
+        // Built-in URLs and names are canonical and cannot be edited.
+        var builtins = BUILTINS.map(function (def) {
+          var b = list.filter(function (s) { return s.id === def.id; })[0];
+          return Object.assign({}, def, b ? {
+            enabled: b.enabled !== false, status: b.status, lastRefresh: b.lastRefresh,
+            lastAttempt: b.lastAttempt, error: b.error, count: b.count, stats: b.stats
+          } : {});
+        });
+        var users = list.filter(function (s) { return !builtinById(s.id); });
+        SourcesRepository.state.set(builtins.concat(users));
         return SourcesRepository.state.get();
       });
     },
@@ -63,7 +83,7 @@
       return SourcesRepository.persist().then(function () { return rec; });
     },
     remove: function (id) {
-      if (id === BUILTIN.id) return Promise.resolve();
+      if (builtinById(id)) return Promise.resolve();
       SourcesRepository.state.set(SourcesRepository.all().filter(function (s) { return s.id !== id; }));
       return Promise.all([SourcesRepository.persist(), Store.del('entries:' + id), Store.del('raw:' + id)]);
     }
@@ -108,15 +128,19 @@
    * Channel(id, tvgId, name, logoUrl, groupName, groups, sources: StreamSource[])
    * StreamSource(id, url, sourceName, priority, quality, geoBlocked, notAlways, userAgent, referrer)
    */
-  function buildCatalog(entryLists) {
+  function buildCatalog(entryLists, preferredFlags) {
     var byKey = {};
+    var byName = {};   // normalized name -> channel key, so other playlists attach to existing channels
     var order = [];
     // In the Android TV app the native layer fetches streams, so http sources are not blocked there.
     var pageSecure = typeof location !== 'undefined' && location.protocol === 'https:' && !(typeof window !== 'undefined' && window.INDTVNative);
 
-    entryLists.forEach(function (list) {
+    entryLists.forEach(function (list, listIndex) {
+      var preferred = !!(preferredFlags && preferredFlags[listIndex]);
       list.forEach(function (e) {
         var key = Parser.identityOf(e);
+        var nameKey = Parser.nameKeyOf(e);
+        if (!byKey[key] && nameKey && byName[nameKey]) key = byName[nameKey];
         var ch = byKey[key];
         if (!ch) {
           ch = byKey[key] = {
@@ -135,6 +159,7 @@
             _urls: {}
           };
           order.push(key);
+          if (nameKey && !byName[nameKey]) byName[nameKey] = key;
         } else {
           if (!ch.logoUrl && e.logoUrl) ch.logoUrl = e.logoUrl;
           e.groups.forEach(function (g) { if (ch.groups.indexOf(g) < 0) ch.groups.push(g); });
@@ -155,6 +180,7 @@
           geoBlocked: e.geoBlocked,
           notAlways: e.notAlways,
           insecure: insecure,
+          preferred: preferred,
           userAgent: e.userAgent,
           referrer: e.referrer,
           _order: ch.sources.length
@@ -167,7 +193,7 @@
       delete ch._urls;
       // Priority: secure-for-this-page, not geo-blocked, 24/7, higher quality, then playlist order.
       ch.sources.sort(function (a, b) {
-        return (a.insecure - b.insecure) || (a.geoBlocked - b.geoBlocked) || (a.notAlways - b.notAlways) ||
+        return (a.insecure - b.insecure) || (a.geoBlocked - b.geoBlocked) || (b.preferred - a.preferred) || (a.notAlways - b.notAlways) ||
           (qRank(b.quality) - qRank(a.quality)) || (a._order - b._order);
       });
       ch.sources.forEach(function (s, i) { s.priority = i + 1; delete s._order; });
@@ -190,7 +216,7 @@
     rebuild: function () {
       var sources = SourcesRepository.all().filter(function (s) { return s.enabled && s.kind === 'live'; });
       var lists = sources.map(function (s) { return ChannelRepository._entriesBySource[s.id] || []; });
-      var built = buildCatalog(lists);
+      var built = buildCatalog(lists, sources.map(function (s) { return !!s.preferred; }));
       var byId = {};
       built.channels.forEach(function (c) { byId[c.id] = c; });
       var cur = ChannelRepository.state.get();
@@ -248,6 +274,16 @@
         return raw;
       });
     }
+    if (src.urls && src.urls.length > 1) {
+      // several playlists that form one source: join the ones that answer
+      return Promise.all(src.urls.map(function (u) {
+        return U.fetchText(u, { timeoutMs: 25000 }).then(function (txt) { return Parser.classify(txt) === 'channels' ? txt : ''; }, function () { return ''; });
+      })).then(function (texts) {
+        var ok = texts.filter(Boolean);
+        if (!ok.length) throw Object.assign(new Error('network'), { code: (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'offline' : 'network' });
+        return ok.map(function (txt, i) { return i ? txt.replace(/^\uFEFF?#EXTM3U[^\n]*\n?/, '') : txt; }).join('\n');
+      });
+    }
     return U.fetchText(src.url, { timeoutMs: 25000 });
   }
 
@@ -258,7 +294,7 @@
       var kind = Parser.classify(text);
       if (kind === 'hls') { var e1 = new Error('hls'); e1.code = 'hls'; throw e1; }
       if (kind !== 'channels') { var e2 = new Error('not_m3u'); e2.code = 'not_m3u'; throw e2; }
-      var result = Parser.parse(text, { id: src.id, name: src.name });
+      var result = Parser.parse(text, { id: src.id, name: src.name, ignoreGroups: !!src.ignoreGroups });
       if (!result.entries.length) { var e3 = new Error('empty'); e3.code = 'empty'; throw e3; }
       ChannelRepository._entriesBySource[src.id] = result.entries;
       return Store.set('entries:' + src.id, result.entries).then(function () {

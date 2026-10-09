@@ -76,23 +76,33 @@
       Settings.renderSources();
       Settings.renderAdd();
 
-      // EPG
+      // Programme guide (automatic + optional extra URL)
       var epg = INDTV.EpgRepository.state.get();
-      Settings.epgInput = U.el('input', { class: 'fx field', id: 'epg-url', type: 'url', placeholder: 'https://…/guide.xml.gz', value: epg.url || '', dataset: { key: 'epg:url' }, 'aria-label': t('epgUrl'), dir: 'ltr' });
+      var autoRow = U.el('div', { class: 'set-row', 'data-fgroup': 'set-epg-auto' }, [
+        UI.button(t('on'), epg.auto ? 'check' : null, function () { INDTV.EpgRepository.setAuto(true); Settings.build(); INDTV.Focus.restore('epg:auto:on', Settings.el); }, { cls: 'btn-choice' + (epg.auto ? ' is-on' : ''), key: 'epg:auto:on' }),
+        UI.button(t('off'), !epg.auto ? 'check' : null, function () { INDTV.EpgRepository.setAuto(false); Settings.build(); INDTV.Focus.restore('epg:auto:off', Settings.el); }, { cls: 'btn-choice' + (!epg.auto ? ' is-on' : ''), key: 'epg:auto:off' })
+      ]);
+      Settings.epgInput = U.el('input', { class: 'fx field', id: 'epg-url', type: 'url', placeholder: 'https://…/guide.xml.gz', value: epg.url || '', dataset: { key: 'epg:url' }, 'aria-label': t('epgCustom'), dir: 'ltr' });
       Settings.epgStatus = U.el('p', { class: 'set-status' });
       var epgRow = U.el('div', { class: 'set-form', 'data-fgroup': 'set-epg' }, [
-        U.el('label', { class: 'field-label', for: 'epg-url', text: t('epgUrl') }),
+        U.el('span', { class: 'field-label', text: t('epgAuto') }),
+        autoRow,
+        U.el('p', { class: 'set-status', text: t('epgAutoBody') }),
+        U.el('label', { class: 'field-label', for: 'epg-url', text: t('epgCustom') }),
         Settings.epgInput,
         U.el('div', { class: 'set-row' }, [
           UI.button(t('save'), 'check', function () {
             INDTV.EpgRepository.setUrl(Settings.epgInput.value.trim()).catch(function () { UI.toast(t('invalidUrl'), 'error'); });
           }, { cls: 'btn-primary', key: 'epg:save' }),
-          UI.button(t('refresh'), 'refresh', function () { INDTV.EpgRepository.refresh(); }, { cls: 'btn-ghost', key: 'epg:refresh' })
+          UI.button(t('refresh'), 'refresh', function () { INDTV.EpgRepository.refresh({ force: true }); }, { cls: 'btn-ghost', key: 'epg:refresh' })
         ]),
         Settings.epgStatus
       ]);
       s.appendChild(Settings.section(t('epgTitle'), epgRow));
       Settings.renderEpgStatus();
+
+      // Live translation
+      s.appendChild(Settings.section(t('liveTranslate'), Settings.translateForm()));
 
       // Data + about
       var clearBtn = UI.button(t('clearCache'), 'trash', function () {
@@ -220,15 +230,80 @@
       if (!Settings.epgStatus) return;
       var st = INDTV.EpgRepository.state.get();
       var txt;
-      if (!st.url) txt = t('epgNone');
+      if (!st.auto && !st.url) txt = t('epgNone');
       else if (st.status === 'loading') txt = t('statusLoading') + '…';
       else if (st.status === 'error') txt = t('statusError') + ': ' + (st.error === 'not_xmltv' ? 'XMLTV?' : errText(st.error));
-      else txt = st.count + ' ' + t('epgLoaded') + ' · ' + t('lastRefresh') + ': ' + U.timeAgo(st.fetchedAt, INDTV.I18n.lang());
+      else if (st.status === 'ok') txt = st.matched + ' ' + t('epgMatched') + ' · ' + st.count + ' ' + t('epgLoaded') + ' · ' + t('lastRefresh') + ': ' + U.timeAgo(st.fetchedAt, INDTV.I18n.lang());
+      else txt = t('statusIdle');
       Settings.epgStatus.textContent = t('epgStatus') + ': ' + txt;
     },
 
+    translateForm: function () {
+      var LT = INDTV.LiveTranslate;
+      var cfg = LT.config();
+      var box = U.el('div', { class: 'set-form', 'data-fgroup': 'set-tr' });
+      box.appendChild(U.el('p', { class: 'set-status', text: t('translateHint') }));
+      function rebuild(key) { var parent = box.parentNode; parent.replaceChild(Settings.translateForm(), box); if (key) INDTV.Focus.restore(key, Settings.el); }
+
+      box.appendChild(U.el('span', { class: 'field-label', text: t('translateProvider') }));
+      var provRow = U.el('div', { class: 'set-row' });
+      [['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
+        var on = cfg.provider === pv[0];
+        provRow.appendChild(UI.button(t(pv[1]), on ? 'check' : null, function () { LT.saveConfig({ provider: pv[0] }); rebuild('tr:prov:' + pv[0]); },
+          { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:prov:' + pv[0] }));
+      });
+      box.appendChild(provRow);
+
+      var keyIn = U.el('input', { class: 'fx field', id: 'tr-key', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
+        placeholder: cfg.provider === 'groq' ? 'gsk_…' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
+      box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key', text: t('translateKey') }));
+      box.appendChild(keyIn);
+
+      box.appendChild(U.el('span', { class: 'field-label', text: t('translateTo') }));
+      var tgRow = U.el('div', { class: 'set-row' });
+      LT.TARGETS.forEach(function (tg) {
+        var on = cfg.target === tg.code;
+        var b = UI.button(tg.name, on ? 'check' : null, function () { LT.saveConfig({ target: tg.code }); rebuild('tr:tg:' + tg.code); },
+          { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:tg:' + tg.code });
+        b.setAttribute('lang', tg.code);
+        tgRow.appendChild(b);
+      });
+      box.appendChild(tgRow);
+
+      var origRow = U.el('div', { class: 'set-row' }, [
+        UI.button(t('translateShowOriginal') + ': ' + (cfg.showOriginal ? t('on') : t('off')), cfg.showOriginal ? 'check' : null, function () {
+          LT.saveConfig({ showOriginal: !cfg.showOriginal }); rebuild('tr:orig');
+        }, { cls: 'btn-choice' + (cfg.showOriginal ? ' is-on' : ''), key: 'tr:orig' })
+      ]);
+      box.appendChild(origRow);
+
+      var adv = U.el('div', { class: 'set-form', hidden: cfg.provider !== 'custom' && !Settings._trAdvanced });
+      var baseIn = U.el('input', { class: 'fx field', id: 'tr-base', type: 'url', dir: 'ltr', value: cfg.base, dataset: { key: 'tr:base' } });
+      var sttIn = U.el('input', { class: 'fx field', id: 'tr-stt', type: 'text', dir: 'ltr', value: cfg.stt, dataset: { key: 'tr:stt' } });
+      var llmIn = U.el('input', { class: 'fx field', id: 'tr-llm', type: 'text', dir: 'ltr', value: cfg.llm, dataset: { key: 'tr:llm' } });
+      adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-base', text: t('translateBase') }));
+      adv.appendChild(baseIn);
+      adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-stt', text: INDTV.I18n.lang() === 'he' ? 'מודל זיהוי דיבור' : 'Speech-to-text model' }));
+      adv.appendChild(sttIn);
+      adv.appendChild(U.el('label', { class: 'field-label', for: 'tr-llm', text: INDTV.I18n.lang() === 'he' ? 'מודל תרגום' : 'Translation model' }));
+      adv.appendChild(llmIn);
+
+      var msg = U.el('p', { class: 'set-status', 'aria-live': 'polite' });
+      box.appendChild(U.el('div', { class: 'set-row' }, [
+        UI.button(t('save2'), 'check', function () {
+          LT.saveConfig({ key: keyIn.value.trim(), base: baseIn.value.trim() || cfg.base, stt: sttIn.value.trim() || cfg.stt, llm: llmIn.value.trim() || cfg.llm });
+          msg.textContent = t('statusLoading') + '…';
+          LT.test().then(function (ok) { msg.textContent = ok ? t('translateOk') : t('translateFail'); });
+        }, { cls: 'btn-primary', key: 'tr:save' }),
+        UI.button(t('translateModels'), 'settings', function () { Settings._trAdvanced = !Settings._trAdvanced; adv.hidden = !adv.hidden; }, { cls: 'btn-ghost', key: 'tr:adv' })
+      ]));
+      box.appendChild(adv);
+      box.appendChild(msg);
+      return box;
+    },
+
     clearAll: function () {
-      var keys = ['favorites', 'recent', 'health', 'epg:meta', 'epg:data', 'vod:progress'];
+      var keys = ['favorites', 'recent', 'health', 'epg:meta', 'epg:data', 'epg:guide', 'epg:settings', 'shows', 'vod:progress'];
       SR.all().forEach(function (s) { keys.push('entries:' + s.id, 'raw:' + s.id); });
       keys.push('sources');
       Promise.all(keys.map(function (k) { return INDTV.Store.del(k); })).then(function () {

@@ -74,7 +74,7 @@
   });
 
   INDTV.FavoritesScreen = ChannelGrid({
-    elId: 'screen-favorites', titleKey: 'favorites', events: ['catalog', 'lang', 'favorites', 'recent'],
+    elId: 'screen-favorites', titleKey: 'favorites', events: ['catalog', 'lang', 'favorites', 'recent', 'shows', 'epg'],
     select: function () { return INDTV.FavoritesRepository.channels(); },
     empty: function () {
       return {
@@ -83,13 +83,31 @@
       };
     },
     extraTop: function () {
+      var wrap = U.el('div');
+      // My Shows: watch / remove each favorite programme
+      var shows = INDTV.ShowFavorites.all();
+      wrap.appendChild(U.el('div', { class: 'rail-head', 'data-row': '' }, [U.el('h2', { class: 'rail-title', text: t('myShows') })]));
+      if (!shows.length) {
+        wrap.appendChild(U.el('p', { class: 'set-status show-list', text: t('noShowsTitle') + ' — ' + t('noShowsBody') }));
+      } else {
+        var list = U.el('div', { class: 'show-list', 'data-fgroup': 'fav-shows', 'data-fmemory': '' });
+        shows.forEach(function (f) {
+          list.appendChild(U.el('div', { class: 'show-row', 'data-row': '' }, [
+            UI.showCard(f, { keyPrefix: 'fshow' }),
+            UI.button(t('removeShow'), 'trash', function () { INDTV.ShowFavorites.remove(f.key); UI.toast(t('showRemoved')); }, { cls: 'btn-ghost btn-danger', key: 'fshow-rm:' + f.key })
+          ]));
+        });
+        wrap.appendChild(list);
+      }
       var recent = INDTV.RecentRepository.channels();
-      if (!recent.length) return null;
-      var ids = recent.map(function (c) { return c.id; });
-      return UI.rail({
-        title: t('recentlyWatched'), group: 'fav-recent', items: recent,
-        render: function (c) { return UI.channelCard(c, ids, { variant: 'pop', keyPrefix: 'favrec' }); }
-      });
+      if (recent.length) {
+        var ids = recent.map(function (c) { return c.id; });
+        wrap.appendChild(UI.rail({
+          title: t('recentlyWatched'), group: 'fav-recent', items: recent,
+          render: function (c) { return UI.channelCard(c, ids, { variant: 'pop', keyPrefix: 'favrec' }); }
+        }));
+      }
+      return wrap;
     }
   });
 

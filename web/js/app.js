@@ -36,14 +36,16 @@
       INDTV.PlaylistRepository.init(),
       INDTV.FavoritesRepository.load(),
       INDTV.RecentRepository.load(),
-      INDTV.EpgRepository.load()
+      INDTV.EpgRepository.load(),
+      INDTV.ShowFavorites.load()
     ]).then(function () { return INDTV.VodRepository.load(); });
 
     withTimeout(local, 900).then(function () {
       // 2. Start the playlist refresh in the background; the splash does not wait for it.
       if (INDTV.PlaylistRepository.shouldAutoRefresh()) INDTV.PlaylistRepository.refresh();
-      var st = INDTV.EpgRepository.state.get();
-      if (st.url && Date.now() - (st.fetchedAt || 0) > 6 * 3600000) INDTV.EpgRepository.refresh();
+      // Programme guide: downloaded and parsed in the background once Home is up (never blocks the UI).
+      setTimeout(function () { INDTV.EpgRepository.ensureFresh(); }, 3500);
+      INDTV.ShowFavorites.startWatcher();
       INDTV.PlaylistRepository.startBackgroundPolicy();
 
       // 3. Build the shell under the splash so Home is ready the moment it lifts.

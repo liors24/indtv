@@ -130,6 +130,11 @@
       if (!pending) continue;
       var rawUrl = U.cleanText(line, LIMITS.url);
       var url = U.safeHttpUrl(rawUrl, LIMITS.url);
+      if (url && /^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(url)) {
+        stats.unsupportedScheme++;   // a YouTube page, not a stream the player can open
+        pending = null;
+        continue;
+      }
       if (!url) {
         if (/^(rtmp|rtsp|udp|rtp|mms|srt):/i.test(rawUrl)) stats.unsupportedScheme++;
         else stats.skippedBadUrl++;
@@ -159,7 +164,7 @@
         logoUrl: logo,
         rawLogo: a['tvg-logo'] || null,
         groupTitle: groupRaw ? U.cleanText(groupRaw, 200) : null,
-        groups: splitGroups(groupRaw),
+        groups: sourceMeta.ignoreGroups ? [] : splitGroups(groupRaw),
         language: a['tvg-language'] ? U.cleanText(a['tvg-language'], 80) : null,
         country: a['tvg-country'] ? U.cleanText(a['tvg-country'], 80) : null,
         quality: pending.title.quality,
@@ -183,9 +188,10 @@
 
   /** Stable logical identity: tvg-id (feed suffix removed) → normalized tvg-name → normalized name. */
   function identityOf(entry) {
-    if (entry.tvgId) {
-      var base = entry.tvgId.split('@')[0].toLowerCase();
-      if (base) return 'id:' + base;
+    // Only ids in iptv-org form ("AajTak.in", "AajTak.in@HD") identify a channel. Other playlists
+    // reuse ids like "News18.com" for several channels, so those fall back to the channel name.
+    if (entry.tvgId && /^[A-Za-z0-9][A-Za-z0-9&+\-]*\.[a-z]{2}(@[A-Za-z0-9]+)?$/.test(entry.tvgId)) {
+      return 'id:' + entry.tvgId.split('@')[0].toLowerCase();
     }
     var n = U.normalizeName(entry.tvgName || '');
     if (n) return 'nm:' + n;
@@ -194,5 +200,11 @@
     return 'url:' + U.hash(entry.url);
   }
 
-  INDTV.M3UParser = { parse: parse, classify: classify, identityOf: identityOf, parseTitle: parseTitle };
+  /** Name-based identity, used to attach another playlist's stream to a channel we already have. */
+  function nameKeyOf(entry) {
+    var n = U.normalizeName(entry.name || entry.tvgName || '');
+    return n ? 'nm:' + n : null;
+  }
+
+  INDTV.M3UParser = { parse: parse, classify: classify, identityOf: identityOf, nameKeyOf: nameKeyOf, parseTitle: parseTitle };
 })(typeof window !== 'undefined' ? window : globalThis);

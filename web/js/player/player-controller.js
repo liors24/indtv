@@ -40,6 +40,64 @@
     return 'SD';
   }
 
+  /* ---------- best-source selection ----------
+   * Probes every stream of a channel in parallel (manifest only, ~3 s budget) and orders them by:
+   * answers → highest resolution → highest bitrate → fastest answer. Results are cached for 20 min.
+   * Sources that fail later still fall through to the next one. */
+  var Ranker = {
+    cache: {},
+    TTL: 20 * 60000,
+    probe: function (src) {
+      var started = Date.now();
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 3200);
+      return fetch(src.url, { signal: ctrl ? ctrl.signal : undefined, credentials: 'omit', cache: 'no-store' }).then(function (r) {
+        if (!r.ok) return { src: src, state: 'failed' };
+        return r.text().then(function (txt) {
+          clearTimeout(timer);
+          var ms = Date.now() - started;
+          if (txt.slice(0, 200).indexOf('#EXTM3U') < 0 && typeOf(src.url) === 'hls') return { src: src, state: 'failed' };
+          var height = 0, bw = 0, m;
+          var re = /RESOLUTION=\d+x(\d+)/g;
+          while ((m = re.exec(txt))) height = Math.max(height, +m[1]);
+          var rb = /[^-]BANDWIDTH=(\d+)/g;
+          while ((m = rb.exec(txt))) bw = Math.max(bw, +m[1]);
+          if (!height && src.quality) height = parseInt(src.quality, 10) || 0;
+          return { src: src, state: 'ok', height: height, bw: bw, ms: ms };
+        });
+      }).catch(function () {
+        clearTimeout(timer);
+        // In a browser a CORS refusal looks like a network error; that is "unknown", not "dead".
+        return { src: src, state: root.INDTVNative ? 'failed' : 'unknown', height: parseInt(src.quality, 10) || 0 };
+      });
+    },
+    rank: function (channel, sources) {
+      var hit = Ranker.cache[channel.id];
+      if (hit && Date.now() - hit.at < Ranker.TTL) {
+        var byId = {};
+        sources.forEach(function (s) { byId[s.id] = s; });
+        var ordered = hit.order.map(function (id) { return byId[id]; }).filter(Boolean);
+        sources.forEach(function (s) { if (ordered.indexOf(s) < 0) ordered.push(s); });
+        return Promise.resolve({ sources: ordered, bestLabel: hit.bestLabel });
+      }
+      var candidates = sources.filter(function (s) { return !s.insecure; }).slice(0, 8);
+      var rest = sources.filter(function (s) { return candidates.indexOf(s) < 0; });
+      return Promise.all(candidates.map(Ranker.probe)).then(function (results) {
+        function score(r) {
+          if (r.state === 'failed') return -1e9 + (r.src.priority ? -r.src.priority : 0);
+          var base = r.state === 'ok' ? 1e8 : 5e7;
+          return base + (r.height || 0) * 1e4 + Math.min(r.bw || 0, 2e7) / 1e4 - (r.ms || 1500) + (r.src.preferred ? 500 : 0);
+        }
+        results.sort(function (a, b) { return score(b) - score(a) || (a.src.priority - b.src.priority); });
+        var ordered = results.map(function (r) { return r.src; }).concat(rest);
+        var top = results[0];
+        var bestLabel = top && top.state === 'ok' ? qualityLabel(top.height) : null;
+        Ranker.cache[channel.id] = { at: Date.now(), order: ordered.map(function (s) { return s.id; }), bestLabel: bestLabel };
+        return { sources: ordered, bestLabel: bestLabel };
+      });
+    }
+  };
+
   var P = {
     video: null,
     token: 0,
@@ -59,6 +117,9 @@
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
       video.preload = 'auto';
+      // In the app every stream is fetched by the native layer with CORS headers, so the picture/sound
+      // stay readable for features like live translation.
+      if (root.INDTVNative) video.crossOrigin = 'anonymous';
       video.addEventListener('playing', function () { P._onPlaying(P.token); });
       video.addEventListener('pause', function () { if (P.state.get().phase === 'playing') P.state.update({ paused: true }); });
       video.addEventListener('play', function () { P.state.update({ paused: false }); });
@@ -103,7 +164,18 @@
         muted: P.video.muted, paused: false, canSeek: ref.kind === 'vod', currentTime: 0, duration: 0, buffering: false
       });
       Bus.emit('player-open', { kind: ref.kind, id: item.id });
-      P._attempt(token, 0);                // 5–6. prepare and autoplay B
+      if (ref.kind === 'channel' && sources.length > 1) {
+        // Several streams carry this channel: measure them and start with the best one.
+        P.state.update({ checking: true });
+        Ranker.rank(item, sources).then(function (ranked) {
+          if (token !== P.token) return;        // user already moved on
+          P._sources = ranked.sources;
+          P.state.update({ checking: false, sourceCount: ranked.sources.length, quality: ranked.bestLabel || P.state.get().quality });
+          P._attempt(token, 0);
+        });
+      } else {
+        P._attempt(token, 0);                  // 5–6. prepare and autoplay B
+      }
       return token;
     },
 
@@ -153,7 +225,8 @@
     _startHls: function (token, src) {
       var Hls = root.Hls;
       var hls = new Hls({
-        enableWorker: true, lowLatencyMode: false, backBufferLength: 30,
+        enableWorker: true, lowLatencyMode: false, backBufferLength: 30, capLevelToPlayerSize: false,
+        abrEwmaDefaultEstimate: 6000000, startFragPrefetch: true,
         manifestLoadingTimeOut: 12000, manifestLoadingMaxRetry: 1, levelLoadingTimeOut: 12000, fragLoadingTimeOut: 20000
       });
       P.hls = hls;
@@ -326,5 +399,6 @@
   };
 
   INDTV.Player = P;
+  INDTV._ranker = Ranker;
   INDTV._playerTypeOf = typeOf;
 })(typeof window !== 'undefined' ? window : globalThis);

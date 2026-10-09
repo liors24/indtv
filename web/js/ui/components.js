@@ -65,6 +65,10 @@
       ]));
     }
     if (INDTV.FavoritesRepository.has(ch.id)) card.appendChild(U.el('span', { class: 'card-fav', html: INDTV.icon('heartFill') }));
+    if (opts.variant === 'pop' || opts.variant === 'grid' || opts.variant === 'std') {
+      var nl = nowLine(ch);
+      if (nl) { card.appendChild(nl); card.classList.add('has-now'); }
+    }
     card.addEventListener('click', function () {
       INDTV.Router.openPlayer({ kind: 'channel', id: ch.id }, { list: ctx || [ch.id] });
     });
@@ -140,8 +144,51 @@
     return wrap;
   }
 
+  /** "My Shows" card: the show title with where/when it is on, from the programme guide. */
+  function showCard(fav, opts) {
+    opts = opts || {};
+    var st = INDTV.ShowFavorites.status(fav);
+    var ch = st ? st.channel : (fav.channelId ? INDTV.ChannelRepository.get(fav.channelId) : null);
+    var lang = INDTV.I18n.lang();
+    var line;
+    if (st && st.live) line = t('airingNow') + ' · ' + st.channel.name;
+    else if (st) line = t('airsAt') + ' ' + U.formatTime(st.programme.start, lang) + ' · ' + st.channel.name;
+    else line = t('notInGuide');
+    var card = U.el('button', {
+      class: 'fx card card-wide card-show' + (st && st.live ? ' is-live' : ''), type: 'button',
+      dataset: { key: (opts.keyPrefix || 'show') + ':' + fav.key }, 'aria-label': fav.title + ', ' + line
+    });
+    card.appendChild(U.el('span', { class: 'wide-logo' }, [ch ? logo(ch, { showName: false }) : U.el('span', { class: 'show-star', html: INDTV.icon('kids') })]));
+    var info = U.el('span', { class: 'wide-info' }, [
+      U.el('span', { class: 'wide-top' }, [st && st.live ? liveBadge() : U.el('span', { class: 'tag tag-accent', text: '★' })]),
+      U.el('span', { class: 'wide-name', text: fav.title }),
+      U.el('span', { class: 'wide-prog', text: line })
+    ]);
+    if (st && st.live) {
+      var pr = (Date.now() - st.programme.start) / (st.programme.stop - st.programme.start);
+      info.appendChild(U.el('span', { class: 'progress' }, [U.el('span', { class: 'progress-fill', style: 'width:' + Math.round(pr * 100) + '%' })]));
+    }
+    card.appendChild(info);
+    card.addEventListener('click', function () {
+      var target = st ? st.channel : ch;
+      if (target) INDTV.Router.openPlayer({ kind: 'channel', id: target.id }, { list: [target.id] });
+      else toast(t('notInGuide'));
+    });
+    return card;
+  }
+
+  /** Small "what's on now" line under a channel card when the guide knows it. */
+  function nowLine(ch) {
+    var e = INDTV.EpgRepository.nowNext(ch);
+    if (!e || !e.now) return null;
+    return U.el('span', { class: 'card-now' }, [
+      U.el('span', { class: 'card-now-title', text: e.now.title }),
+      U.el('span', { class: 'card-now-bar' }, [U.el('span', { style: 'width:' + Math.round(e.progress * 100) + '%' })])
+    ]);
+  }
+
   INDTV.UI = {
     logo: logo, liveBadge: liveBadge, channelCard: channelCard, rail: rail, emptyState: emptyState,
-    button: button, toast: toast, trails: trails, monogram: monogram
+    button: button, toast: toast, trails: trails, monogram: monogram, showCard: showCard, nowLine: nowLine
   };
 })(typeof window !== 'undefined' ? window : globalThis);

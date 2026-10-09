@@ -58,4 +58,23 @@ const b4u = cat.channels.find((c) => c.name === 'B4U Hitz');
 assert.ok(b4u.sources[0].insecure, 'http source flagged on https page');
 assert.strictEqual(new Set(cat.channels.map((c) => c.id)).size, cat.channels.length);
 console.log('channels', cat.channels.length, 'groups', cat.groups.map((g) => g.name + ':' + g.count).join(', '));
+// second playlist (Free-TV style): attaches to existing channels by name, never merges by shared domain ids
+const free = P.parse(`#EXTM3U x-tvg-url="https://example.test/epg.xml.gz"
+#EXTINF:-1 tvg-id="4tvnews.com" tvg-name="4TV News" tvg-logo="https://example.test/4tv.png" group-title="India",4TV News
+https://official-cdn.test/4tv/master.m3u8
+#EXTINF:-1 tvg-id="News18.com" tvg-logo="" group-title="India",News18 Telugu
+https://official-cdn.test/n18te.m3u8
+#EXTINF:-1 tvg-id="News18.com" tvg-logo="" group-title="India",News18 Marathi
+https://official-cdn.test/n18mr.m3u8
+#EXTINF:-1 tvg-id="DDNational.in" group-title="India",DD National
+https://www.youtube.com/watch?v=abc
+`, { id: 'builtin-freetv-in', name: 'Free-TV India' });
+assert.strictEqual(free.kind, 'channels', '.m3u8 channel list with attributes is a catalog');
+assert.strictEqual(free.entries.length, 3, 'YouTube page links are skipped');
+const cat2 = globalThis.INDTV._buildCatalog([e, free.entries], [false, true]);
+const tv4 = cat2.channels.find((c) => c.name === '4TV News');
+assert.strictEqual(tv4.sources.length, 2, 'Free-TV stream attaches to the existing 4TV News channel');
+assert.ok(tv4.sources[0].preferred && tv4.sources[0].url.includes('official-cdn'), 'official stream tried first');
+assert.strictEqual(tv4.logoUrl, 'https://i.imgur.com/fixture4tv.png', 'canonical logo stays the first tvg-logo');
+assert.ok(cat2.channels.find((c) => c.name === 'News18 Telugu') && cat2.channels.find((c) => c.name === 'News18 Marathi'), 'shared non-iptv-org ids do not merge different channels');
 console.log('ALL PARSER TESTS PASSED');

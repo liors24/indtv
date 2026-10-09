@@ -25,6 +25,10 @@
       PS.top.appendChild(PS.badges);
       el.appendChild(PS.top);
 
+      PS.subs = U.el('div', { class: 'live-subs', 'aria-live': 'polite' });
+      PS.subStatus = U.el('div', { class: 'live-sub-status', hidden: true });
+      el.appendChild(PS.subs);
+      el.appendChild(PS.subStatus);
       PS.status = U.el('div', { class: 'player-status', 'aria-live': 'polite' });
       el.appendChild(PS.status);
 
@@ -50,6 +54,10 @@
       main.appendChild(ctl('next', 'next', t('nextChannel'), function () { P.step(1); }));
       main.appendChild(ctl('fw', 'forward10', t('forward'), function () { if (!P.seekBy(10)) PS.flash(PS.btn.fw); }));
       var secondary = U.el('div', { class: 'osd-secondary', 'data-fgroup': 'osd-secondary' });
+      secondary.appendChild(ctl('tr', 'translate', t('liveTranslate'), function () {
+        if (!INDTV.LiveTranslate.isConfigured()) { UI.toast(t('translateSetup')); return; }
+        INDTV.LiveTranslate.toggle(PS.video);
+      }, 'ctl-sm'));
       secondary.appendChild(ctl('mute', 'volume', t('mute'), function () { P.toggleMute(); }, 'ctl-sm'));
       secondary.appendChild(ctl('stop', 'stop', t('stop'), function () { P.stop(); }, 'ctl-sm'));
       secondary.appendChild(ctl('fs', 'fullscreen', t('fullscreen'), function () { PS.toggleFullscreen(); }, 'ctl-sm'));
@@ -60,10 +68,12 @@
       el.appendChild(bottom);
 
       P.init(PS.video);
+      if (PS._wired) setTimeout(function () { PS.renderSubs(INDTV.LiveTranslate.state.get()); }, 0);
       PS._renderedItemId = null;
       el.addEventListener('mousemove', function () { if (PS._open) PS.showOsd(); });
       if (PS._wired) return;
       PS._wired = true;
+      INDTV.LiveTranslate.state.subscribe(function (ts) { PS.renderSubs(ts); }, false);
       P.state.subscribe(PS.render, false);
       INDTV.Bus.on('epg', function () { if (PS._open) PS.renderProgramme(); });
       // Labels are rebuilt for the new language while the player is closed (it covers the language toggle).
@@ -91,6 +101,7 @@
     close: function (opts) {
       if (!PS._open) return;
       PS._open = false;
+      INDTV.LiveTranslate.stop();
       P.close();
       clearTimeout(PS._osdTimer);
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
@@ -224,7 +235,7 @@
       // status panel (center)
       PS.status.innerHTML = '';
       if (st.phase === 'loading' || (st.phase === 'playing' && st.buffering)) {
-        var srcLine = st.phase === 'loading' && st.sourceCount ? t('tryingSource') + ' ' + (st.sourceIndex + 1) + ' ' + t('of') + ' ' + st.sourceCount : t('buffering');
+        var srcLine = st.checking ? t('checkingSources') : st.phase === 'loading' && st.sourceCount ? t('tryingSource') + ' ' + (st.sourceIndex + 1) + ' ' + t('of') + ' ' + st.sourceCount : t('buffering');
         PS.status.appendChild(U.el('div', { class: 'status-card status-loading' }, [
           U.el('span', { class: 'status-bar' }, [U.el('span')]),
           U.el('span', { class: 'status-text', text: srcLine })
@@ -251,28 +262,64 @@
 
     renderProgramme: function () {
       var st = P.state.get();
+      var focusKey = PS.prog.contains(document.activeElement) ? document.activeElement.getAttribute('data-key') : null;
       PS.prog.innerHTML = '';
       if (!st.item) return;
       if (st.kind !== 'channel') {
         PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [U.el('span', { class: 'osd-now-title', text: st.item.title })]));
         return;
       }
-      var epg = INDTV.EpgRepository.nowNext(st.item);
+      var ch = st.item;
+      var epg = INDTV.EpgRepository.nowNext(ch);
       var lang = INDTV.I18n.lang();
-      if (epg && (epg.now || epg.next)) {
-        if (epg.now) PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [
-          U.el('span', { class: 'osd-label', text: t('nowPlaying') }),
-          U.el('span', { class: 'osd-now-title', text: epg.now.title })
+      if (epg && epg.now) {
+        var prog = epg.now;
+        var fav = INDTV.ShowFavorites.has(prog.title);
+        var heart = U.el('button', { class: 'fx prog-fav' + (fav ? ' is-on' : ''), type: 'button', dataset: { key: 'osd:showfav' } });
+        heart.innerHTML = INDTV.icon(fav ? 'heartFill' : 'heart') + '<span>' + U.escapeHtml(fav ? t('removeShow') : t('addShow')) + '</span>';
+        heart.addEventListener('click', function () {
+          var added = INDTV.ShowFavorites.toggle(prog, ch);
+          UI.toast(added ? t('showAdded') : t('showRemoved'));
+          PS.renderProgramme();
+          PS.showOsd();
+        });
+        PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [
+          U.el('span', { class: 'osd-label', text: t('nowPlaying') + ' · ' + U.formatTime(prog.start, lang) + '–' + U.formatTime(prog.stop, lang) }),
+          U.el('span', { class: 'osd-now-row' }, [U.el('span', { class: 'osd-now-title', text: prog.title }), heart])
         ]));
         if (epg.next) PS.prog.appendChild(U.el('div', { class: 'osd-next' }, [
           U.el('span', { class: 'osd-label', text: t('upNext') + ' · ' + U.formatTime(epg.next.start, lang) }),
           U.el('span', { class: 'osd-next-title', text: epg.next.title })
+        ]));
+      } else if (epg && epg.next) {
+        PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [
+          U.el('span', { class: 'osd-label', text: t('upNext') + ' · ' + U.formatTime(epg.next.start, lang) }),
+          U.el('span', { class: 'osd-now-title', text: epg.next.title })
         ]));
       } else {
         PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [
           U.el('span', { class: 'osd-label', text: t('nowPlaying') }),
           U.el('span', { class: 'osd-now-title', text: t('liveBroadcast') })
         ]));
+      }
+      if (focusKey) INDTV.Focus.restore(focusKey, PS.prog);
+    },
+
+    /* ---------- live translation overlay ---------- */
+    renderSubs: function (ts) {
+      if (!PS.subs) return;
+      PS.btn.tr.classList.toggle('is-on', !!ts.on);
+      PS.btn.tr.setAttribute('aria-label', ts.on ? t('translateOn') : t('liveTranslate'));
+      PS.subs.innerHTML = '';
+      PS.subStatus.hidden = !ts.on;
+      if (!ts.on) return;
+      PS.subStatus.className = 'live-sub-status' + (ts.error ? ' is-error' : '');
+      PS.subStatus.innerHTML = '<span class="dot"></span><span></span>';
+      PS.subStatus.lastChild.textContent = ts.error ? ts.error :
+        t('liveTranslate') + ' → ' + ts.targetName + (ts.detected ? ' · ' + t('detected') + ': ' + ts.detected : '') + (ts.text ? '' : ' · ' + t('translateListening'));
+      if (ts.text) {
+        PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.text }));
+        if (ts.showOriginal && ts.orig && ts.orig !== ts.text) PS.subs.appendChild(U.el('div', { class: 'live-sub-orig', dir: 'auto', text: ts.orig }));
       }
     }
   };

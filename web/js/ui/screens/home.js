@@ -16,7 +16,7 @@
       Home.el.appendChild(Home.scroller);
       Home.render();
       var rerender = U.debounce(function () { if (Home.mounted) Home.render(); }, 250);
-      ['catalog', 'favorites', 'recent', 'epg', 'vod', 'vod-progress', 'lang'].forEach(function (evt) { INDTV.Bus.on(evt, rerender); });
+      ['catalog', 'favorites', 'recent', 'epg', 'vod', 'vod-progress', 'lang', 'shows'].forEach(function (evt) { INDTV.Bus.on(evt, rerender); });
       INDTV.Bus.on('catalog-status', function () { if (!CR.all().length) rerender(); });
       // Rails reorder as Recently Watched changes; do that while the player covers Home, not under the user's focus.
       INDTV.Bus.off('recent', rerender);
@@ -65,6 +65,17 @@
         title: t('popularChannels'), group: 'home-popular', items: popular, cls: 'rail-pop',
         render: function (c) { return UI.channelCard(c, popIds, { variant: 'pop', keyPrefix: 'pop' }); }
       }));
+
+      // My Shows: favorite programmes, where and when they are on (from the guide)
+      var shows = INDTV.ShowFavorites.all();
+      if (shows.length) {
+        var sorted = shows.map(function (f) { return { f: f, st: INDTV.ShowFavorites.status(f) }; })
+          .sort(function (a, b) { return (b.st && b.st.live ? 1 : 0) - (a.st && a.st.live ? 1 : 0) || ((a.st ? a.st.programme.start : 9e15) - (b.st ? b.st.programme.start : 9e15)); });
+        Home.scroller.appendChild(UI.rail({
+          title: t('myShows'), group: 'home-shows', items: sorted, cls: 'rail-wide',
+          render: function (x) { return UI.showCard(x.f, { keyPrefix: 'hshow' }); }
+        }));
+      }
 
       // Movies: user VOD first (if any), then live movie channels from the playlist's own "Movies" group.
       var vod = INDTV.VodRepository.state.get();
@@ -306,14 +317,16 @@
       var left = U.el('div', { class: 'promo-panels promo-left', 'aria-hidden': 'true' });
       var right = U.el('div', { class: 'promo-panels promo-right', 'aria-hidden': 'true' });
       picks.forEach(function (c, i) {
-        var panel = U.el('span', { class: 'promo-panel p' + (i % 3) }, [UI.logo(c, { showName: false })]);
+        var nn = INDTV.EpgRepository.nowNext(c);
+        var panel = U.el('span', { class: 'promo-panel p' + (i % 3) }, [UI.logo(c, { showName: false }),
+          nn && nn.now ? U.el('span', { class: 'promo-cap', text: nn.now.title }) : null]);
         (i < 3 ? left : right).appendChild(panel);
       });
       sec.appendChild(left);
       sec.appendChild(U.el('div', { class: 'promo-center' }, [
         U.el('div', { class: 'promo-wordmark', html: INDTV.wordmark('wm-xl') }),
         U.el('div', { class: 'promo-tag', text: 'INDIAN ENTERTAINMENT' }),
-        U.el('div', { class: 'promo-count', text: channels.length + ' ' + t('channels') + ' · ' + INDTV.Config.BUILTIN_NAME })
+        U.el('div', { class: 'promo-count', text: channels.length + ' ' + t('channels') + ' · ' + INDTV.Config.sourcesLabel() })
       ]));
       sec.appendChild(right);
       return sec;

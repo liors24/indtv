@@ -2,13 +2,13 @@
  * App shell: network first, cached copy when offline (so an update is picked up on the next load).
  * Channel logos (tvg-logo images): cache first, capped — the disk cache for logos.
  * Playlists, guide data and video streams are never touched here. */
-var SHELL = 'indtv-shell-v2';
+var SHELL = 'indtv-shell-v3';
 var LOGOS = 'indtv-logos-v1';
 var LOGO_LIMIT = 500;
 var SHELL_FILES = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'assets/icons/favicon.svg', 'assets/icons/icon-192.png',
   'js/core/util.js', 'js/core/store.js', 'js/core/i18n.js', 'js/data/m3u-parser.js', 'js/data/repositories.js',
-  'js/data/epg-vod.js', 'js/player/player-controller.js', 'js/ui/icons.js', 'js/ui/focus.js', 'js/ui/components.js',
+  'js/data/epg-vod.js', 'js/data/shows.js', 'js/player/player-controller.js', 'js/player/live-translate.js', 'js/ui/icons.js', 'js/ui/focus.js', 'js/ui/components.js',
   'js/ui/router.js', 'js/ui/screens/splash.js', 'js/ui/screens/home.js', 'js/ui/screens/live.js', 'js/ui/screens/grids.js',
   'js/ui/screens/search.js', 'js/ui/screens/settings.js', 'js/ui/screens/player-screen.js', 'js/app.js'
 ];

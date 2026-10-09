@@ -71,7 +71,22 @@
       notM3u: 'That file is not an M3U playlist. It must start with #EXTM3U.',
       removed: 'Source removed', refreshed: 'Channels refreshed', refreshFailed: 'Refresh failed',
       favAdded: 'Added to Favorites', favRemoved: 'Removed from Favorites',
-      categories: 'Categories', details: 'Channel details', quality: 'Quality'
+      categories: 'Categories', details: 'Channel details', quality: 'Quality', sourcesWord: 'sources',
+      epgAuto: 'Automatic guide', epgAutoBody: 'Downloads free public TV guides for India and matches them to your channels, so the player and Home show what is on now.',
+      epgMatched: 'channels with a guide', epgCustom: 'Extra guide URL (optional)', on: 'On', off: 'Off',
+      myShows: 'My Shows', addShow: 'Add show to favorites', removeShow: 'Remove show', showAdded: 'Show added to My Shows',
+      showRemoved: 'Show removed from My Shows', airingNow: 'On now', airsAt: 'Next at', notInGuide: 'Not in the guide for the next 36 hours',
+      showStarting: 'is starting now on ', noShowsTitle: 'No favorite shows yet',
+      noShowsBody: 'While watching, open the controls and press the heart next to the show name. INDTV tells you when it is on.',
+      watchNow: 'Watch now', bestSource: 'Best source', checkingSources: 'Choosing the best stream…',
+      liveTranslate: 'Live translation', translateOn: 'Translation on', translateOff: 'Translation off', translateTo: 'Translate to',
+      translateSetup: 'To turn on live translation, add a free API key under Settings → Live translation.',
+      translateKey: 'API key', translateProvider: 'Service', provGroq: 'Groq — free daily quota', provOpenai: 'OpenAI', provCustom: 'Other (OpenAI-compatible)',
+      translateShowOriginal: 'Show original text', translateTest: 'Test key', translateOk: 'The key works', translateFail: 'The key did not work',
+      translateHint: 'INDTV listens to the programme sound, recognises any language and shows subtitles in the language you choose, about 8–10 seconds behind the picture. Get a free key at console.groq.com → API Keys (free quota is a few hours a day). Tip: type the key from your phone with the Google TV app keyboard.',
+      translateListening: 'Listening…', translateLimit: 'Free quota reached. Translation resumes in a minute.',
+      translateUnsupported: 'This stream cannot be translated on this device.', translateModels: 'Models (advanced)', translateBase: 'Server address',
+      translateError: 'Translation paused: the service did not answer.', detected: 'Detected', save2: 'Save'
     },
     he: {
       home: 'דף הבית', live: 'שידור חי', movies: 'סרטים', shows: 'תוכניות', kids: 'ילדים', news: 'חדשות',
@@ -137,7 +152,22 @@
       notM3u: 'הקובץ הזה אינו רשימת M3U. הוא חייב להתחיל ב-‎#EXTM3U.',
       removed: 'המקור הוסר', refreshed: 'הערוצים רועננו', refreshFailed: 'הרענון נכשל',
       favAdded: 'נוסף למועדפים', favRemoved: 'הוסר מהמועדפים',
-      categories: 'קטגוריות', details: 'פרטי ערוץ', quality: 'איכות'
+      categories: 'קטגוריות', details: 'פרטי ערוץ', quality: 'איכות', sourcesWord: 'מקורות',
+      epgAuto: 'לוח שידורים אוטומטי', epgAutoBody: 'מוריד לוחות שידורים ציבוריים וחינמיים להודו ומתאים אותם לערוצים, כך שהנגן ודף הבית מציגים מה משודר עכשיו.',
+      epgMatched: 'ערוצים עם לוח שידורים', epgCustom: 'כתובת לוח שידורים נוסף (לא חובה)', on: 'פועל', off: 'כבוי',
+      myShows: 'התוכניות שלי', addShow: 'הוסף תוכנית למועדפים', removeShow: 'הסר תוכנית', showAdded: 'התוכנית נוספה ל"התוכניות שלי"',
+      showRemoved: 'התוכנית הוסרה מ"התוכניות שלי"', airingNow: 'משודרת עכשיו', airsAt: 'הבא ב-', notInGuide: 'לא מופיעה בלוח ב-36 השעות הקרובות',
+      showStarting: 'מתחילה עכשיו ב-', noShowsTitle: 'עדיין אין תוכניות מועדפות',
+      noShowsBody: 'בזמן צפייה, פתחו את הפקדים ולחצו על הלב שליד שם התוכנית. INDTV יודיע לכם כשהיא משודרת.',
+      watchNow: 'צפה עכשיו', bestSource: 'המקור הטוב ביותר', checkingSources: 'בוחר את השידור הטוב ביותר…',
+      liveTranslate: 'תרגום חי', translateOn: 'התרגום פועל', translateOff: 'התרגום כבוי', translateTo: 'תרגם ל',
+      translateSetup: 'כדי להפעיל תרגום חי, הוסיפו מפתח API חינמי בהגדרות ← תרגום חי.',
+      translateKey: 'מפתח API', translateProvider: 'שירות', provGroq: 'Groq — מכסה יומית חינמית', provOpenai: 'OpenAI', provCustom: 'אחר (תואם OpenAI)',
+      translateShowOriginal: 'הצג גם את הטקסט המקורי', translateTest: 'בדוק מפתח', translateOk: 'המפתח עובד', translateFail: 'המפתח לא עבד',
+      translateHint: 'INDTV מאזין לשמע של התוכנית, מזהה כל שפה ומציג כתוביות בשפה שבחרתם, בפיגור של כ-8–10 שניות מהתמונה. מפתח חינמי: console.groq.com ← API Keys (המכסה החינמית היא כמה שעות ביום). טיפ: אפשר להקליד את המפתח מהטלפון דרך המקלדת של אפליקציית Google TV.',
+      translateListening: 'מאזין…', translateLimit: 'המכסה החינמית נוצלה. התרגום יחזור בעוד דקה.',
+      translateUnsupported: 'אי אפשר לתרגם את השידור הזה במכשיר הזה.', translateModels: 'מודלים (מתקדם)', translateBase: 'כתובת השרת',
+      translateError: 'התרגום הושהה: השירות לא ענה.', detected: 'זוהתה', save2: 'שמור'
     }
   };
 

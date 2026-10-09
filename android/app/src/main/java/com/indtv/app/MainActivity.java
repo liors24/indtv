@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
@@ -20,6 +21,10 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.Iterator;
+import org.json.JSONObject;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -153,6 +158,68 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String platform() { return "android-tv"; }
+
+        /**
+         * Small HTTPS request made natively (used by live translation to reach the speech/translation
+         * service the viewer configured). Runs off the UI thread; the answer comes back through
+         * window.INDTVNativeResponse(id, status, base64Body).
+         */
+        @JavascriptInterface
+        public void httpRequest(final String id, final String method, final String url, final String headersJson, final String bodyBase64) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int status = 0;
+                    String body64 = "";
+                    HttpURLConnection c = null;
+                    try {
+                        URL target = new URL(url);
+                        String scheme = target.getProtocol();
+                        if (!"https".equals(scheme) && !"http".equals(scheme)) throw new IOException("scheme");
+                        c = (HttpURLConnection) target.openConnection();
+                        c.setConnectTimeout(15000);
+                        c.setReadTimeout(40000);
+                        c.setRequestMethod("POST".equalsIgnoreCase(method) ? "POST" : "GET");
+                        if (headersJson != null && !headersJson.isEmpty()) {
+                            JSONObject h = new JSONObject(headersJson);
+                            Iterator<String> keys = h.keys();
+                            while (keys.hasNext()) {
+                                String k = keys.next();
+                                c.setRequestProperty(k, h.optString(k));
+                            }
+                        }
+                        if (bodyBase64 != null && !bodyBase64.isEmpty()) {
+                            byte[] bytes = Base64.decode(bodyBase64, Base64.DEFAULT);
+                            c.setDoOutput(true);
+                            c.setFixedLengthStreamingMode(bytes.length);
+                            OutputStream os = c.getOutputStream();
+                            os.write(bytes);
+                            os.close();
+                        }
+                        status = c.getResponseCode();
+                        InputStream in = status >= 400 ? c.getErrorStream() : c.getInputStream();
+                        if (in != null) {
+                            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                            byte[] chunk = new byte[8192];
+                            int n;
+                            while ((n = in.read(chunk)) > 0 && buf.size() < 2 * 1024 * 1024) buf.write(chunk, 0, n);
+                            in.close();
+                            body64 = Base64.encodeToString(buf.toByteArray(), Base64.NO_WRAP);
+                        }
+                    } catch (Exception e) {
+                        status = 0;
+                    } finally {
+                        if (c != null) c.disconnect();
+                    }
+                    final String js = "window.INDTVNativeResponse && INDTVNativeResponse('" + id.replaceAll("[^A-Za-z0-9_-]", "")
+                            + "'," + status + ",'" + body64 + "')";
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() { if (web != null) web.evaluateJavascript(js, null); }
+                    });
+                }
+            }).start();
+        }
     }
 
     /* ------------------------------------------------------------------ */
