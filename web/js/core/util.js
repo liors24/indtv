@@ -145,7 +145,9 @@
       });
   };
 
-  Util.formatTime = function (date, lang) {
+  /** Times are wrapped in Unicode LTR isolates so "20:00–21:00" never flips inside Hebrew text. */
+  Util.formatTime = function (date, lang) { return '\u2066' + Util._formatTime(date, lang) + '\u2069'; };
+  Util._formatTime = function (date, lang) {
     try {
       return new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'en-GB', { hour: '2-digit', minute: '2-digit' }).format(date);
     } catch (e) {

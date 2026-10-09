@@ -194,22 +194,54 @@
     return new Blob([buf], { type: 'audio/wav' });
   }
 
-  /* ---------- audio capture ---------- */
-  var audio = { ctx: null, src: null, dest: null, analyser: null, video: null };
+  /* ---------- audio capture ----------
+   * Preferred: video.captureStream() — a copy of the sound; what you hear is untouched.
+   * Fallback (older WebViews): Web Audio routing, used only while translation is on. */
+  var audio = { ctx: null, src: null, dest: null, analyser: null, video: null, mode: null, stream: null };
+  function captureStreamOf(video) {
+    var fn = video.captureStream || video.mozCaptureStream;
+    if (!fn) return null;
+    try {
+      var st = fn.call(video);
+      var tracks = st.getAudioTracks();
+      return tracks.length ? new MediaStream(tracks) : null;
+    } catch (e) { return null; }
+  }
   function attach(video) {
-    if (audio.video === video && audio.ctx) return audio;
     var AC = root.AudioContext || root.webkitAudioContext;
     if (!AC || typeof root.MediaRecorder === 'undefined') throw Object.assign(new Error('unsupported'), { code: 'unsupported' });
-    var ctx = new AC();
-    var src = ctx.createMediaElementSource(video);   // once per element; sound keeps playing below
-    src.connect(ctx.destination);
-    var dest = ctx.createMediaStreamDestination();
-    src.connect(dest);
-    var analyser = ctx.createAnalyser();
-    analyser.fftSize = 1024;
-    src.connect(analyser);
-    audio = { ctx: ctx, src: src, dest: dest, analyser: analyser, video: video };
+    if (!audio.ctx) audio.ctx = new AC();
+    var ctx = audio.ctx;
+    var stream = captureStreamOf(video);
+    if (stream) {
+      if (audio.srcNode) { try { audio.srcNode.disconnect(); } catch (e) { /* ignore */ } }
+      var node = ctx.createMediaStreamSource(stream);       // analysis only, not connected to the speakers
+      var analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      node.connect(analyser);
+      audio.srcNode = node; audio.analyser = analyser; audio.stream = stream; audio.mode = 'capture'; audio.video = video;
+      return audio;
+    }
+    if (audio.video !== video || audio.mode !== 'route') {
+      var src = ctx.createMediaElementSource(video);
+      src.connect(ctx.destination);
+      var dest = ctx.createMediaStreamDestination();
+      src.connect(dest);
+      var an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      src.connect(an);
+      audio.src = src; audio.dest = dest; audio.analyser = an; audio.mode = 'route'; audio.video = video;
+    }
+    audio.stream = audio.dest.stream;
     return audio;
+  }
+  /** The stream to record now (re-captured each chunk: a channel switch replaces the audio track). */
+  function currentStream() {
+    if (audio.mode === 'capture' && audio.video) {
+      var live = audio.stream && audio.stream.getAudioTracks().some(function (tr) { return tr.readyState === 'live'; });
+      if (!live) { try { attach(audio.video); } catch (e) { /* keep old */ } }
+    }
+    return audio.stream;
   }
   function level() {
     var a = audio.analyser;
@@ -288,7 +320,8 @@
       if (run !== LT._run) return;
       var mime = pickMime();
       var rec;
-      try { rec = mime ? new root.MediaRecorder(audio.dest.stream, { mimeType: mime, audioBitsPerSecond: 32000 }) : new root.MediaRecorder(audio.dest.stream); }
+      var stream = currentStream();
+      try { rec = mime ? new root.MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 }) : new root.MediaRecorder(stream); }
       catch (e) { INDTV.UI.toast(t('translateUnsupported')); LT.stop(); return; }
       var parts = [];
       LT._peak = 0;

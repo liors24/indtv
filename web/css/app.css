@@ -22,7 +22,7 @@
 
   --topbar-h: 5.6rem;
   --rail-w: 5.25rem;
-  --gutter: 6.75rem;          /* content start, clear of the side rail */
+  --gutter: 7.6rem;           /* content start, clear of the side rail */
   --card-w: 21.5rem;
   --card-h: 11.8rem;
   --poster-w: 21.5rem;
@@ -167,12 +167,12 @@ html[dir="rtl"] .sr-item:focus:not(.is-active) .sr-label::after { content: ' ‹
 /* ===================== Home ===================== */
 .home-scroll { padding-bottom: 4rem; }
 
-.hero { position: relative; height: 31.2rem; margin-bottom: 1.6rem; overflow: hidden; }
+.hero { position: relative; height: 32rem; margin-bottom: 1.6rem; overflow: hidden; }
 .hero-bg { position: absolute; inset: 0; background: radial-gradient(120% 140% at 78% 30%, #1a1208 0%, #0b0a0b 46%, var(--bg) 78%); }
 .hero-bg-logo {
-  position: absolute; right: -6%; top: -18%; width: 78%; height: 150%;
+  position: absolute; right: 6%; top: 8%; width: 38%; height: 84%;
   background-repeat: no-repeat; background-position: center; background-size: contain;
-  opacity: 0.22; filter: blur(2.6rem) saturate(1.5); transform: scale(1.25);
+  opacity: 0.13; filter: blur(3rem) saturate(1.2);
 }
 /* warm bokeh: abstract light only, no invented scenery */
 .hero-bokeh {
@@ -203,7 +203,7 @@ html[dir="rtl"] .hero-shade {
     linear-gradient(0deg, var(--bg) 0%, rgba(5, 6, 9, 0) 34%),
     linear-gradient(180deg, rgba(5, 6, 9, 0.6) 0%, rgba(5, 6, 9, 0) 26%);
 }
-html[dir="rtl"] .hero-bg-logo { right: auto; left: -6%; }
+html[dir="rtl"] .hero-bg-logo { right: auto; left: 6%; }
 html[dir="rtl"] .hero-art-img { right: auto; left: 0; }
 .hero-art { position: absolute; right: 7.5rem; top: 8.2rem; width: 36rem; height: 18.5rem; display: grid; place-items: center; }
 html[dir="rtl"] .hero-art { right: auto; left: 7.5rem; }
@@ -217,7 +217,11 @@ html[dir="rtl"] .hero-art { right: auto; left: 7.5rem; }
 .hero-logo .logo-fb-mono { font-size: 6.5rem; }
 .hero-logo .logo-fb-name { font-size: 1.6rem; }
 
-.hero-copy { position: absolute; left: var(--gutter); top: 9.4rem; width: 46rem; }
+.hero-copy {
+  /* fixed frame: content stacks from the bottom so the buttons always sit in the same place */
+  position: absolute; left: var(--gutter); top: 6.2rem; bottom: 2.9rem; width: 52rem;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
 html[dir="rtl"] .hero-copy { left: auto; right: var(--gutter); }
 .hero-copy.is-in > * { animation: rise 520ms var(--ease) both; }
 .hero-copy.is-in > *:nth-child(2) { animation-delay: 40ms; }
@@ -227,19 +231,28 @@ html[dir="rtl"] .hero-copy { left: auto; right: var(--gutter); }
 @keyframes rise { from { opacity: 0; transform: translateY(0.8rem); } to { opacity: 1; transform: none; } }
 .hero-eyebrow { margin-bottom: 0.9rem; }
 .hero-title {
-  font-family: 'Outfit', var(--font-ui); font-size: 4.9rem; font-weight: 700; line-height: 1.02; letter-spacing: -0.025em;
-  text-wrap: balance; max-width: 44rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-family: 'Outfit', var(--font-ui); font-size: 4.4rem; font-weight: 700; line-height: 1.12; letter-spacing: -0.025em;
+  max-width: 50rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none;
 }
 .hero-meta { margin-top: 0.85rem; font-size: 1.55rem; font-weight: 500; display: flex; align-items: center; }
 .hero-cat { color: var(--orange-warm); }
 .hero-sep { margin: 0 0.65rem; color: var(--muted); }
 .hero-livenow { color: var(--text); }
-.hero-program { margin-top: 0.7rem; font-size: 1.5rem; color: var(--text); display: flex; align-items: baseline; }
+.hero-program { margin-top: 0.6rem; font-size: 1.5rem; color: var(--text); display: flex; align-items: baseline; min-width: 0; flex: none; }
+.hero-program-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.hero-eyebrow, .hero-meta, .hero-actions { flex: none; }
 .hero-program-time { margin-inline-start: 0.8rem; font-size: 1.05rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.hero-desc { margin-top: 0.6rem; font-size: 1.35rem; color: var(--text-2); max-width: 36rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.hero-actions { margin-top: 1.7rem; display: flex; align-items: center; }
+.hero-desc { flex: none; margin-top: 0.5rem; font-size: 1.25rem; color: var(--text-2); max-width: 36rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-actions { margin-top: 1.4rem; display: flex; align-items: center; }
+.hero-pager { display: flex; align-items: center; margin-inline-start: 2rem; }
+.hero-pager > * + * { margin-inline-start: 0.8rem; }
+.hero-pager .btn-icon-only { width: 3.8rem; height: 3.8rem; }
+.hero-prev .ic { transform: scaleX(-1); }
+html[dir="rtl"] .hero-prev .ic { transform: none; }
+html[dir="rtl"] .hero-next .ic { transform: scaleX(-1); }
+.hero-count { font-size: 1.15rem; color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 3.4rem; text-align: center; }
 .hero-actions > * + * { margin-inline-start: 1rem; }
-.hero-dots { position: absolute; left: 50%; bottom: 1.1rem; display: flex; transform: translateX(-50%); }
+.hero-dots { position: absolute; left: 50%; bottom: 0.9rem; display: flex; transform: translateX(-50%); }
 .hero-dots .dot { width: 0.5rem; height: 0.5rem; border-radius: 1rem; background: rgba(248, 248, 249, 0.3); margin: 0 0.3rem; transition: width 300ms var(--ease), background 300ms var(--ease); }
 .hero-dots .dot.is-on { width: 1.5rem; background: var(--text); }
 
@@ -767,3 +780,13 @@ html[dir="rtl"] .live-sub-status { right: auto; left: 3.6rem; }
 @keyframes pulse { 50% { opacity: 0.3; } }
 .ctl.is-on { color: var(--orange); }
 .set-status.is-bad { color: var(--orange-warm); }
+
+/* Channel and show names keep their own direction (Latin names read left-to-right inside the Hebrew UI) */
+.hero-title, .hero-desc, .hero-program-title, .card-name, .card-now-title, .wide-name, .wide-prog, .row-name, .row-sub,
+.detail-name, .guide-title, .guide-desc, .osd-ch-name, .osd-now-title, .osd-next-title, .promo-cap, .logo-fb-name, .cat-name {
+  unicode-bidi: plaintext;
+}
+html[dir="rtl"] .hero-title, html[dir="rtl"] .hero-desc, html[dir="rtl"] .card-name, html[dir="rtl"] .card-now-title,
+html[dir="rtl"] .wide-name, html[dir="rtl"] .wide-prog, html[dir="rtl"] .row-name, html[dir="rtl"] .row-sub,
+html[dir="rtl"] .detail-name, html[dir="rtl"] .guide-title, html[dir="rtl"] .guide-desc, html[dir="rtl"] .cat-name { text-align: right; }
+.hero-count { direction: ltr; unicode-bidi: isolate; }

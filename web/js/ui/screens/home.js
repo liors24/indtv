@@ -228,7 +228,7 @@
       if (epg && epg.now) {
         copy.appendChild(U.el('p', { class: 'hero-program' }, [
           U.el('span', { class: 'hero-program-title', text: epg.now.title }),
-          U.el('span', { class: 'hero-program-time', text: U.formatTime(epg.now.start, INDTV.I18n.lang()) + '–' + U.formatTime(epg.now.stop, INDTV.I18n.lang()) })
+          U.el('span', { class: 'hero-program-time', text: '\u2066' + U._formatTime(epg.now.start, INDTV.I18n.lang()) + '–' + U._formatTime(epg.now.stop, INDTV.I18n.lang()) + '\u2069' })
         ]));
         if (epg.now.desc) copy.appendChild(U.el('p', { class: 'hero-desc', text: epg.now.desc }));
       } else {
@@ -243,11 +243,26 @@
         var added = INDTV.FavoritesRepository.toggle(ch.id);
         UI.toast(added ? t('favAdded') : t('favRemoved'));
       }, { cls: 'btn-ghost btn-icon-only', key: 'hero:fav', aria: fav ? t('removeFavorite') : t('addFavorite') });
-      copy.appendChild(U.el('div', { class: 'hero-actions' }, [watch, favBtn]));
+      // manual carousel controls: browse the featured channels with the remote
+      var pager = null;
+      if (Home._heroItems.length > 1) {
+        var prev = UI.button(t('prevChannel'), 'chevron', function () { Home._heroStep(-1); }, { cls: 'btn-ghost btn-icon-only hero-prev', key: 'hero:prev', aria: t('prevChannel') });
+        var next = UI.button(t('nextChannel'), 'chevron', function () { Home._heroStep(1); }, { cls: 'btn-ghost btn-icon-only hero-next', key: 'hero:next', aria: t('nextChannel') });
+        pager = U.el('div', { class: 'hero-pager' }, [prev,
+          U.el('span', { class: 'hero-count', text: (Home._heroIndex + 1) + ' / ' + Home._heroItems.length }), next]);
+      }
+      copy.appendChild(U.el('div', { class: 'hero-actions' }, [watch, favBtn, pager]));
       if (focusKey) INDTV.Focus.restore(focusKey, copy);
 
       var dots = hero.querySelectorAll('.hero-dots .dot');
       for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('is-on', i === Home._heroIndex);
+    },
+
+    _heroStep: function (delta) {
+      var hero = Home.el && Home.el.querySelector('.hero');
+      if (!hero || !Home._heroItems.length) return;
+      Home._heroIndex = (Home._heroIndex + delta + Home._heroItems.length) % Home._heroItems.length;
+      Home._fillHero(hero, true);
     },
 
     _startHeroTimer: function () {

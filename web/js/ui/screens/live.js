@@ -176,7 +176,7 @@
           guide.appendChild(U.el('div', { class: 'guide-now' }, [
             U.el('span', { class: 'guide-label', text: t('nowPlaying') }),
             U.el('span', { class: 'guide-title', text: epg.now.title }),
-            U.el('span', { class: 'guide-time', text: U.formatTime(epg.now.start, lang) + '–' + U.formatTime(epg.now.stop, lang) }),
+            U.el('span', { class: 'guide-time', text: '\u2066' + U._formatTime(epg.now.start, lang) + '–' + U._formatTime(epg.now.stop, lang) + '\u2069' }),
             U.el('span', { class: 'progress' }, [U.el('span', { class: 'progress-fill', style: 'width:' + Math.round(epg.progress * 100) + '%' })]),
             epg.now.desc ? U.el('p', { class: 'guide-desc', text: epg.now.desc }) : null,
             Live._showFavButton(epg.now, ch)

@@ -284,7 +284,7 @@
           PS.showOsd();
         });
         PS.prog.appendChild(U.el('div', { class: 'osd-now' }, [
-          U.el('span', { class: 'osd-label', text: t('nowPlaying') + ' · ' + U.formatTime(prog.start, lang) + '–' + U.formatTime(prog.stop, lang) }),
+          U.el('span', { class: 'osd-label', text: t('nowPlaying') + ' · ' + '\u2066' + U._formatTime(prog.start, lang) + '–' + U._formatTime(prog.stop, lang) + '\u2069' }),
           U.el('span', { class: 'osd-now-row' }, [U.el('span', { class: 'osd-now-title', text: prog.title }), heart])
         ]));
         if (epg.next) PS.prog.appendChild(U.el('div', { class: 'osd-next' }, [

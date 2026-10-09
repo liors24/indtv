@@ -225,9 +225,17 @@
     _startHls: function (token, src) {
       var Hls = root.Hls;
       var hls = new Hls({
-        enableWorker: true, lowLatencyMode: false, backBufferLength: 30, capLevelToPlayerSize: false,
-        abrEwmaDefaultEstimate: 6000000, startFragPrefetch: true,
-        manifestLoadingTimeOut: 12000, manifestLoadingMaxRetry: 1, levelLoadingTimeOut: 12000, fragLoadingTimeOut: 20000
+        // Smooth, clean sound first: a deeper buffer behind the live edge, gentle quality switching,
+        // and A/V alignment fixes for streams whose audio and video segments differ slightly.
+        enableWorker: true, lowLatencyMode: false,
+        liveSyncDurationCount: 4, liveMaxLatencyDurationCount: 12, maxLiveSyncPlaybackRate: 1,
+        maxBufferLength: 40, maxMaxBufferLength: 90, backBufferLength: 30, maxBufferHole: 0.7,
+        stretchShortVideoTrack: true, maxAudioFramesDrift: 4, forceKeyFrameOnDiscontinuity: true,
+        nudgeMaxRetry: 6, highBufferWatchdogPeriod: 3,
+        capLevelToPlayerSize: true, abrEwmaDefaultEstimate: 2500000, abrBandWidthUpFactor: 0.6,
+        startFragPrefetch: true, testBandwidth: true,
+        manifestLoadingTimeOut: 12000, manifestLoadingMaxRetry: 1, levelLoadingTimeOut: 12000, fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 4, levelLoadingMaxRetry: 3
       });
       P.hls = hls;
       var recovered = { media: false, network: false };

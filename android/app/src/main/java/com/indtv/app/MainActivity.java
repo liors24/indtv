@@ -18,6 +18,7 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -346,6 +347,7 @@ public class MainActivity extends Activity {
 
         InputStream body = code >= 400 ? c.getErrorStream() : c.getInputStream();
         if (body == null) body = new ByteArrayInputStream(new byte[0]);
+        else body = new BufferedInputStream(body, 64 * 1024);   // fewer, larger reads keep segments flowing smoothly
         return new WebResourceResponse(mime, encoding, code, reason, out, body);
     }
 
