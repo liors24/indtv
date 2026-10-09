@@ -5,6 +5,13 @@
 
   var Util = {};
 
+  /* Letters/digits of any script. Built at run time: older Smart TV browsers (Chrome < 64)
+   * cannot even parse a \p{…} regex literal, which would stop the whole app. */
+  Util.NON_ALNUM = (function () {
+    try { return new RegExp('[^\\p{L}\\p{N}]+', 'gu'); }
+    catch (e) { return /[^0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ֐-׿؀-ۿऀ-෿฀-๿぀-ヿ一-鿿가-힯]+/g; }
+  })();
+
   /** Strip control characters and clamp length. Playlist text is untrusted. */
   Util.cleanText = function (value, maxLen) {
     if (value === null || value === undefined) return '';
@@ -34,7 +41,7 @@
     var s = Util.cleanText(value, 300).toLowerCase();
     s = s.replace(/\((\d{3,4}p|4k|hd|sd|fhd|uhd)\)/g, ' ');
     s = s.replace(/\[[^\]]*\]/g, ' ');
-    s = s.replace(/[^\p{L}\p{N}]+/gu, '');
+    s = s.replace(Util.NON_ALNUM, '');
     return s;
   };
 

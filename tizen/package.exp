@@ -1,0 +1,8 @@
+#!/usr/bin/expect -f
+# Runs "tizen package" non-interactively (it may prompt even when the password is in the profile).
+set timeout 300
+spawn $env(TIZEN_STUDIO)/tools/ide/bin/tizen package -t wgt -o $env(OUT_DIR) -s INDTV -- $env(BUILD_DIR)
+expect {
+  -re "(?i)password" { send "$env(AUTHOR_PW)\r"; exp_continue }
+  eof
+}

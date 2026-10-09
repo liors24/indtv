@@ -25,6 +25,14 @@
 
   function boot() {
     if (root.INDTVNative) document.documentElement.classList.add('is-native');
+    // Samsung Tizen app: ask the TV to deliver the remote's media and channel keys to INDTV.
+    if (root.tizen && root.tizen.tvinputdevice) {
+      document.documentElement.classList.add('is-tizen', 'is-native');
+      ['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop', 'MediaFastForward', 'MediaRewind',
+        'ChannelUp', 'ChannelDown', 'ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue'].forEach(function (k) {
+        try { root.tizen.tvinputdevice.registerKey(k); } catch (e) { /* key not on this model */ }
+      });
+    }
     INDTV.I18n.applyDir();
     INDTV.Display.apply();
     INDTV.Focus.start();

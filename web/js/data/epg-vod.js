@@ -58,7 +58,9 @@
     function norm(s) {
       s = String(s || '').toLowerCase();
       s = s.replace(/\((\d{3,4}p|4k|hd|sd|fhd|uhd)\)/g, ' ').replace(/\[[^\]]*\]/g, ' ').replace(/&/g, 'and');
-      return s.replace(/[^\p{L}\p{N}]+/gu, '');
+      var re;
+      try { re = new RegExp('[^\\p{L}\\p{N}]+', 'gu'); } catch (e) { re = /[^0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ֐-׿؀-ۿऀ-෿฀-๿぀-ヿ一-鿿가-힯]+/g; }
+      return s.replace(re, '');
     }
     function loose(s) {
       var n = norm(s).replace(/(hd|sd|fhd|uhd|4k)$/, '').replace(/(tv|channel|india)$/, '');

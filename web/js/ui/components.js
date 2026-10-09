@@ -5,7 +5,7 @@
   var U = INDTV.Util, t = function (k) { return INDTV.I18n.t(k); };
 
   function monogram(name) {
-    var words = String(name || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean);
+    var words = String(name || '').replace(U.NON_ALNUM, ' ').trim().split(/\s+/).filter(Boolean);
     if (!words.length) return 'TV';
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();

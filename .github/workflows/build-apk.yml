@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,16 +30,87 @@ jobs:
       - name: Name the APK
         run: cp android/app/build/outputs/apk/release/app-release.apk INDTV.apk
 
-      - name: Keep a copy on the run page
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: INDTV-apk
           path: INDTV.apk
 
-      - name: Publish as a release (direct download link)
+  # Samsung Smart TV (Tizen) package. Signed with an INDTV author certificate and the public
+  # Tizen distributor certificate; TizenBrew Installer re-signs it for Tizen 7+ TVs.
+  samsung:
+    runs-on: ubuntu-latest
+    env:
+      TIZEN_STUDIO: ${{ github.workspace }}/tizen-studio
+      AUTHOR_PW: indtv-tizen-2026
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Tizen CLI
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq expect zip
+          curl -fsSLo tizen-installer "https://download.tizen.org/sdk/Installer/tizen-studio_5.6/web-cli_Tizen_Studio_5.6_ubuntu-64.bin"
+          chmod +x tizen-installer
+          ./tizen-installer --accept-license "$TIZEN_STUDIO"
+          rm tizen-installer
+
+      - name: Author certificate (created once, then kept in the repo so updates install over the old app)
+        run: |
+          if [ ! -f tizen/indtv-author.p12 ]; then
+            "$TIZEN_STUDIO/tools/ide/bin/tizen" certificate -a INDTV -p "$AUTHOR_PW" -c IL -ct TelAviv -o INDTV -n INDTV -f indtv-author
+            P12=$(find "$HOME" "$GITHUB_WORKSPACE" -name 'indtv-author.p12' -not -path '*/tizen/*' | head -n 1)
+            cp "$P12" tizen/indtv-author.p12
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add tizen/indtv-author.p12
+            git commit -m "Add INDTV Tizen author certificate [skip ci]"
+            git push || echo "certificate kept for this build only"
+          fi
+
+      - name: Signing profile
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tizen-data/profile"
+          sed -e "s|\$TIZEN_STUDIO|$TIZEN_STUDIO|g" \
+              -e "s|\$AUTHOR_P12|$GITHUB_WORKSPACE/tizen/indtv-author.p12|g" \
+              -e "s|\$AUTHOR_PW|$AUTHOR_PW|g" tizen/profiles.xml > "$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" cli-config "profiles.path=$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+
+      - name: Build and sign INDTV.wgt
+        run: |
+          APP="$GITHUB_WORKSPACE/tizen-build/app"
+          mkdir -p "$APP"
+          cp -r web/. "$APP/"
+          rm -rf "$APP/tests" "$APP/README.md" "$APP/sw.js"
+          cp tizen/config.xml tizen/icon.png "$APP/"
+          VERSION="1.0.${GITHUB_RUN_NUMBER}"
+          sed -i "s/version=\"1.0.0\"/version=\"$VERSION\"/" "$APP/config.xml"
+          cd "$APP"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" build-web -e ".*"
+          export BUILD_DIR="$APP/.buildResult" OUT_DIR="$GITHUB_WORKSPACE/tizen-out"
+          mkdir -p "$OUT_DIR"
+          expect "$GITHUB_WORKSPACE/tizen/package.exp"
+          ls -la "$OUT_DIR"
+          cp "$OUT_DIR"/*.wgt "$GITHUB_WORKSPACE/INDTV.wgt"
+          unzip -l "$GITHUB_WORKSPACE/INDTV.wgt" | grep -E "signature|config.xml|index.html"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: INDTV-wgt
+          path: INDTV.wgt
+
+  release:
+    needs: [android, samsung]
+    if: ${{ always() && needs.android.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Publish as a release (direct download links)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: INDTV 1.0.${{ github.run_number }}
           make_latest: true
-          files: INDTV.apk
+          files: out/*
