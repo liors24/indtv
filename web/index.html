@@ -22,6 +22,8 @@
     /* Correct direction before first paint (preference saved by the language toggle). */
     (function () {
       try {
+        var sc = JSON.parse(localStorage.getItem('indtv:scale'));
+        document.documentElement.setAttribute('data-scale', sc === 'm' || sc === 'xl' ? sc : 'l');
         if (JSON.parse(localStorage.getItem('indtv:lang')) === 'he') {
           document.documentElement.setAttribute('lang', 'he');
           document.documentElement.setAttribute('dir', 'rtl');

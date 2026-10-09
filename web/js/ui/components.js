@@ -53,7 +53,7 @@
       dataset: { key: (opts.keyPrefix || 'c') + ':' + ch.id, channelId: ch.id },
       'aria-label': ch.name + (ch.groupName ? ', ' + ch.groupName : '')
     });
-    if (opts.glow !== false && ch.logoUrl) {
+    if (opts.glow === true && ch.logoUrl) {
       card.appendChild(U.el('span', { class: 'card-glow', 'aria-hidden': 'true', style: 'background-image:url("' + encodeURI(ch.logoUrl).replace(/"/g, '%22') + '")' }));
     }
     card.appendChild(logo(ch, { cls: 'card-logo', showName: true }));
@@ -82,7 +82,7 @@
     section.appendChild(head);
     section.appendChild(track);
     var items = opts.items || [];
-    var batch = opts.batch || 24, rendered = 0;
+    var batch = opts.batch || 12, rendered = 0;
     function renderMore() {
       var end = Math.min(items.length, rendered + batch);
       var frag = document.createDocumentFragment();
@@ -95,7 +95,7 @@
       track.addEventListener('focusin', function (e) {
         var kids = track.children;
         var idx = Array.prototype.indexOf.call(kids, e.target);
-        if (idx >= rendered - 4 && rendered < items.length) renderMore();
+        if (idx >= rendered - 5 && rendered < items.length) renderMore();
       });
     }
     return section;

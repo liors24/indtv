@@ -23,25 +23,29 @@
     handlers: [],           // stack of {onBack, onKey}
     _lastMove: 0,
 
+    /** Cheap visibility test: layout box only (no getComputedStyle per element). */
     isVisible: function (el) {
-      if (!el || !el.isConnected) return false;
-      if (el.disabled) return false;
+      if (!el || !el.isConnected || el.disabled) return false;
+      if (el.offsetParent === null && !el.closest('.topbar, .siderail, .player')) return false;
       var r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) return false;
-      var cs = root.getComputedStyle(el);
-      if (cs.visibility === 'hidden' || cs.display === 'none') return false;
-      // inside a hidden ancestor?
-      return el.offsetParent !== null || cs.position === 'fixed';
+      return r.width > 1 && r.height > 1;
     },
 
+    /** Only the open screen, the TopBar and the SideRail (or the active scope, e.g. the player). */
     candidates: function () {
-      var scope = Focus.scope || document;
-      var list = scope.querySelectorAll('.fx');
+      var list;
+      if (Focus.scope) list = Focus.scope.querySelectorAll('.fx');
+      else list = document.querySelectorAll('#topbar .fx, #siderail .fx, .screen:not([hidden]) .fx');
       var out = [];
+      var vh = root.innerHeight, margin = vh * 1.5;
       for (var i = 0; i < list.length; i++) {
         var el = list[i];
-        if (el.closest('[hidden]') || el.closest('[aria-hidden="true"]')) continue;
-        if (Focus.isVisible(el)) out.push(el);
+        if (el.disabled) continue;
+        var r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        // ignore items far above/below the viewport: they can never be the nearest neighbour
+        if (r.bottom < -margin || r.top > vh + margin) continue;
+        out.push(el);
       }
       return out;
     },
@@ -66,7 +70,7 @@
       var track = el.closest('.rail-track, .hscroll');
       if (track) {
         var tr = track.getBoundingClientRect(), r = el.getBoundingClientRect();
-        var pad = parseFloat(root.getComputedStyle(document.documentElement).fontSize) * 2.2;
+        var pad = Focus.rem() * 2.2;
         var dx = 0;
         if (r.left < tr.left + pad) dx = r.left - tr.left - pad;
         else if (r.right > tr.right - pad) dx = r.right - tr.right + pad;
@@ -76,8 +80,7 @@
       if (scroller) {
         var anchor = el.closest('[data-row]') || el;
         var sr = scroller.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
-        var top = parseFloat(scroller.getAttribute('data-top-offset') || '0') *
-          parseFloat(root.getComputedStyle(document.documentElement).fontSize);
+        var top = parseFloat(scroller.getAttribute('data-top-offset') || '0') * Focus.rem();
         var dy = 0;
         if (anchor.hasAttribute('data-row-top')) {
           dy = ar.top - sr.top - top;
@@ -85,6 +88,12 @@
         else if (ar.bottom > sr.bottom - 16) dy = ar.bottom - sr.bottom + 16 + (ar.height < sr.height * 0.4 ? sr.height * 0.12 : 0);
         if (Math.abs(dy) > 1) scroller.scrollBy({ top: dy, behavior: Focus.smooth() });
       }
+    },
+
+    _rem: 0,
+    rem: function () {
+      if (!Focus._rem) Focus._rem = parseFloat(root.getComputedStyle(document.documentElement).fontSize) || 16;
+      return Focus._rem;
     },
 
     smooth: function () {
@@ -250,6 +259,7 @@
     },
 
     start: function () {
+      root.addEventListener('resize', function () { Focus._rem = 0; });
       document.addEventListener('keydown', Focus.onKeyDown, true);
       // Mouse / pointer remotes (LG Magic Remote) move focus too.
       document.addEventListener('mouseover', function (e) {

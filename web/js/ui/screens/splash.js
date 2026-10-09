@@ -36,8 +36,8 @@
       return new Promise(function (resolve) {
         setTimeout(function () {
           el.classList.add('is-leaving');
-          setTimeout(function () { el.hidden = true; el.innerHTML = ''; el.classList.remove('is-leaving'); resolve(); }, 420);
-        }, durationMs || 1700);
+          setTimeout(function () { el.hidden = true; el.innerHTML = ''; el.classList.remove('is-leaving'); resolve(); }, 320);
+        }, durationMs || 1100);
       });
     }
   };

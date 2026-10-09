@@ -2,7 +2,7 @@
  * App shell: network first, cached copy when offline (so an update is picked up on the next load).
  * Channel logos (tvg-logo images): cache first, capped — the disk cache for logos.
  * Playlists, guide data and video streams are never touched here. */
-var SHELL = 'indtv-shell-v1';
+var SHELL = 'indtv-shell-v2';
 var LOGOS = 'indtv-logos-v1';
 var LOGO_LIMIT = 500;
 var SHELL_FILES = [

@@ -57,14 +57,11 @@
       // Focus = Navigate (primary navigation only). Containers persist across rebuilds: bind once.
       if (Router._chromeBound) { Router.markActive(); return; }
       Router._chromeBound = true;
+      // Moving over a tab only highlights it; OK (or a click) opens it with an animated transition.
       [top, side].forEach(function (container) {
-        container.addEventListener('focusin', function (e) {
-          var item = e.target.closest ? e.target.closest('.nav-item') : null;
-          if (item && item.dataset.tab) Router.go(item.dataset.tab, { fromFocus: true });
-        });
         container.addEventListener('click', function (e) {
           var item = e.target.closest ? e.target.closest('.nav-item') : null;
-          if (item && item.dataset.tab) Router.go(item.dataset.tab, { focusContent: true });
+          if (item && item.dataset.tab) Router.go(item.dataset.tab, { focusContent: true, animate: true });
         });
       });
       Router.markActive();
@@ -80,7 +77,7 @@
     },
 
     /**
-     * Switch tab. Restores the screen's own scroll/focus state because screens are kept mounted.
+     * Switch tab (opened with OK from TopBar / SideRail). Restores the screen's own scroll/focus state because screens are kept mounted.
      * opts.fromFocus: keep focus on the navigation item. opts.focusContent: move focus into the screen.
      */
     go: function (tab, opts) {
@@ -96,6 +93,12 @@
         var scr = Router.screens[tab];
         if (scr && !scr.mounted) { scr.mount(); scr.mounted = true; }
         Router.current = tab;
+        if (opts.animate && scr && scr.el) {
+          scr.el.classList.remove('is-entering');
+          void scr.el.offsetWidth;
+          scr.el.classList.add('is-entering');
+          setTimeout(function () { scr.el.classList.remove('is-entering'); }, 320);
+        }
         document.documentElement.setAttribute('data-tab', tab);
         if (scr && scr.onShow) scr.onShow(opts);
         try { root.history.replaceState({ tab: tab }, '', '#' + tab); } catch (e) { /* file:// */ }
@@ -140,7 +143,7 @@
       var cur = INDTV.Focus.current();
       var inNav = cur && cur.closest && cur.closest('#topbar, #siderail');
       if (Router.current !== 'home') {
-        Router.go('home');
+        Router.go('home', { animate: true });
         Router.focusNav('home');
         return;
       }

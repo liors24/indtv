@@ -51,6 +51,8 @@
       pressBackAgain: 'Press Back again to leave INDTV',
       // settings
       language: 'Language', english: 'English', hebrew: 'עברית',
+      displaySize: 'Display size', sizeM: 'Standard', sizeL: 'Large', sizeXL: 'Extra large',
+      displaySizeHint: 'Makes cards and text bigger on every screen. Pick the size that reads best from your sofa.',
       builtIn: 'Built-in', userSource: 'Your source', enabled: 'On', disabled: 'Off',
       lastRefresh: 'Last refresh', status: 'Status', statusOk: 'Loaded', statusError: 'Error',
       statusIdle: 'Waiting', statusLoading: 'Loading', remove: 'Remove',
@@ -115,6 +117,8 @@
       stop: 'עצור', fullscreen: 'מסך מלא', back: 'חזרה', stopped: 'הניגון נעצר',
       pressBackAgain: 'לחצו שוב על חזרה כדי לצאת מ-INDTV',
       language: 'שפה', english: 'English', hebrew: 'עברית',
+      displaySize: 'גודל תצוגה', sizeM: 'רגיל', sizeL: 'גדול', sizeXL: 'גדול מאוד',
+      displaySizeHint: 'מגדיל את הכרטיסים והטקסט בכל המסכים. בחרו את הגודל שהכי קריא מהספה.',
       builtIn: 'מובנה', userSource: 'המקור שלך', enabled: 'פעיל', disabled: 'כבוי',
       lastRefresh: 'רענון אחרון', status: 'מצב', statusOk: 'נטען', statusError: 'שגיאה',
       statusIdle: 'ממתין', statusLoading: 'טוען', remove: 'הסר',
@@ -139,6 +143,22 @@
 
   var lang = 'en';
   try { lang = INDTV.Store.getSync('lang') === 'he' ? 'he' : 'en'; } catch (e) { lang = 'en'; }
+
+  /* Display size (Settings): scales the whole TV canvas. Default is Large. */
+  INDTV.Display = {
+    get: function () {
+      var v = null;
+      try { v = INDTV.Store.getSync('scale'); } catch (e) { v = null; }
+      return v === 'm' || v === 'l' || v === 'xl' ? v : 'l';
+    },
+    apply: function () { document.documentElement.setAttribute('data-scale', INDTV.Display.get()); },
+    set: function (v) {
+      INDTV.Store.setSync('scale', v);
+      INDTV.Display.apply();
+      if (INDTV.Focus) INDTV.Focus._rem = 0;
+      INDTV.Bus.emit('display-size', v);
+    }
+  };
 
   INDTV.I18n = {
     lang: function () { return lang; },

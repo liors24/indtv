@@ -47,6 +47,18 @@
       });
       s.appendChild(Settings.section(t('language'), langRow));
 
+      // Display size
+      var sizeRow = U.el('div', { class: 'set-row', 'data-fgroup': 'set-size' });
+      [['m', 'sizeM'], ['l', 'sizeL'], ['xl', 'sizeXL']].forEach(function (z) {
+        var on = INDTV.Display.get() === z[0];
+        sizeRow.appendChild(UI.button(t(z[1]), on ? 'check' : null, function () {
+          INDTV.Display.set(z[0]);
+          Settings.build();
+          INDTV.Focus.restore('size:' + z[0], Settings.el);
+        }, { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'size:' + z[0] }));
+      });
+      s.appendChild(Settings.section(t('displaySize'), U.el('div', {}, [sizeRow, U.el('p', { class: 'set-status', text: t('displaySizeHint') })])));
+
       // Sources
       Settings.sourcesBox = U.el('div', { class: 'sources' });
       var head = U.el('div', { class: 'set-row', 'data-fgroup': 'set-src-actions' }, [

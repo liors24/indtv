@@ -26,6 +26,7 @@
   function boot() {
     if (root.INDTVNative) document.documentElement.classList.add('is-native');
     INDTV.I18n.applyDir();
+    INDTV.Display.apply();
     INDTV.Focus.start();
     INDTV.Router.start();
     registerScreens();
@@ -50,7 +51,7 @@
       INDTV.PlayerScreen.build();
       var tab = INDTV.Router.initialTab();
       INDTV.Router.go(tab);
-      var splash = INDTV.Splash.show(1700);
+      var splash = INDTV.Splash.show(1100);
       return splash.then(function () {
         document.documentElement.classList.add('is-ready');
         INDTV.Router.focusNav(tab);
