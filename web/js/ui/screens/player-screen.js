@@ -374,7 +374,13 @@
       INDTV.UI.applySubStyle(PS.subs);
       PS.subs.innerHTML = '';
       if (!ts.on || !ts.text) return;
-      PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.text }));
+      if (ts.lines) {
+        // rolling subtitles: finished sentences above (dimmer), the sentence being spoken at the bottom
+        ts.lines.forEach(function (l, i) {
+          PS.subs.appendChild(U.el('div', { class: 'live-sub-line live-sub-prev', dir: 'auto', text: l, style: 'opacity:' + (0.55 + 0.45 * (i + 1) / (ts.lines.length + 1)).toFixed(2) }));
+        });
+        if (ts.cur) PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.cur }));
+      } else PS.subs.appendChild(U.el('div', { class: 'live-sub-line', dir: 'auto', text: ts.text }));
       if (ts.showOriginal && ts.orig && ts.orig !== ts.text) PS.subs.appendChild(U.el('div', { class: 'live-sub-orig', dir: 'auto', text: ts.orig }));
     }
   };

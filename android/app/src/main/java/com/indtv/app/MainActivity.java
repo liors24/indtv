@@ -2,6 +2,8 @@ package com.indtv.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
+import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
@@ -50,6 +52,8 @@ public class MainActivity extends Activity {
     private static final int MAX_REDIRECTS = 5;
 
     private WebView web;
+    /** True while the page is recording a programme: the app then keeps running in the background. */
+    private volatile boolean recording = false;
     private WebViewAssetLoader assets;
 
     /** host -> {userAgent, referrer} requested by the playlist (#EXTVLCOPT) for that stream. */
@@ -63,6 +67,8 @@ public class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         web = new WebView(this);
+        // Keep the page's renderer at high priority so a recording keeps running while the app is in the background.
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
         web.setBackgroundColor(0xFF050609);
         web.setFocusable(true);
         web.setFocusableInTouchMode(true);
@@ -138,7 +144,19 @@ public class MainActivity extends Activity {
         public void exitApp() {
             runOnUiThread(new Runnable() {
                 @Override
-                public void run() { finish(); }
+                public void run() {
+                    // A running recording must survive "exit": just move the app to the background.
+                    if (recording) moveTaskToBack(true); else finish();
+                }
+            });
+        }
+
+        /** Called by the page when a recording starts or stops: keeps the process alive in the background. */
+        @JavascriptInterface
+        public void setRecording(final boolean on, final String title) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { applyRecording(on, title); }
             });
         }
 
@@ -361,11 +379,27 @@ public class MainActivity extends Activity {
         web.saveState(outState);
     }
 
+    private void applyRecording(boolean on, String title) {
+        recording = on;
+        try {
+            Intent i = new Intent(this, RecordingService.class);
+            if (on) {
+                i.putExtra("title", title == null ? "" : title);
+                if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
+            } else {
+                stopService(i);
+            }
+        } catch (Exception ignored) {
+            // the system may refuse a background start; recording still works while the app is open
+        }
+    }
+
     @Override
     protected void onPause() {
         // Leaving the app (Home button) pauses the stream so it does not keep playing in the background.
         web.evaluateJavascript("window.INDTV && INDTV.Player && INDTV.Player.video && INDTV.Player.video.pause()", null);
-        web.onPause();
+        // ...but while recording the page must keep running, so its timers and downloads are not frozen.
+        if (!recording) web.onPause();
         super.onPause();
     }
 
@@ -377,6 +411,10 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (recording) {
+            recording = false;
+            try { stopService(new Intent(this, RecordingService.class)); } catch (Exception ignored) { }
+        }
         if (web != null) {
             web.destroy();
             web = null;

@@ -125,6 +125,41 @@
     };
   }
 
+  /* ---------- timers that keep running in the background ----------
+   * Browsers throttle setTimeout in hidden pages (to once a minute after a few minutes), which would leave gaps in a
+   * recording made while the app is in the background. A Web Worker's clock is not throttled, so it drives our timers. */
+  var Tick = {
+    jobs: [], worker: null, id: 0,
+    start: function () {
+      if (Tick.worker || Tick.failed) return;
+      try {
+        var src = 'setInterval(function(){postMessage(0)},400)';
+        var url = (root.URL || root.webkitURL).createObjectURL(new Blob([src], { type: 'application/javascript' }));
+        Tick.worker = new Worker(url);
+        Tick.worker.onmessage = Tick.run;
+      } catch (e) { Tick.failed = true; Tick.worker = null; }
+    },
+    run: function () {
+      var now = Date.now(), due = [];
+      Tick.jobs = Tick.jobs.filter(function (j) { if (j.at <= now) { due.push(j); return false; } return true; });
+      due.forEach(function (j) { try { j.fn(); } catch (e) { if (root.console) console.warn('[INDTV dvr] timer error', e); } });
+      if (!Tick.jobs.length && Tick.worker) { Tick.worker.terminate(); Tick.worker = null; }
+    },
+    /** like setTimeout; returns a handle for Tick.cancel */
+    after: function (fn, ms) {
+      Tick.start();
+      if (!Tick.worker) return { t: setTimeout(fn, ms) };
+      var j = { id: ++Tick.id, at: Date.now() + ms, fn: fn };
+      Tick.jobs.push(j);
+      return j;
+    },
+    cancel: function (h) {
+      if (!h) return;
+      if (h.t) { clearTimeout(h.t); return; }
+      Tick.jobs = Tick.jobs.filter(function (j) { return j !== h; });
+    }
+  };
+
   /* ---------- capture session (one per watched channel) ---------- */
   var uid = 0;
   function newId(p) { return p + Date.now().toString(36) + (++uid).toString(36); }
@@ -148,13 +183,13 @@
     if (self.stopped) return;
     self._step().then(function (gotNew) {
       self.fails = 0;
-      self.timer = setTimeout(function () { self._loop(); }, gotNew ? 600 : 1200);
+      self.timer = Tick.after(function () { self._loop(); }, gotNew ? 600 : 1200);
     }, function (e) {
       if (self.stopped) return;
       if (e && e.fatal) { self._fatal(e.fatal); return; }
       self.fails++;
       if (self.fails >= MAX_FAILS) { self._fatal('network'); return; }
-      self.timer = setTimeout(function () { self._loop(); }, Math.min(5000, 800 * self.fails));
+      self.timer = Tick.after(function () { self._loop(); }, Math.min(5000, 800 * self.fails));
     });
   };
   Session.prototype._fatal = function (why) {
@@ -243,7 +278,7 @@
   Session.prototype.stop = function (keepRec) {
     if (this.stopped) return;
     this.stopped = true;
-    clearTimeout(this.timer);
+    Tick.cancel(this.timer);
     var drop = [];
     this.segs.forEach(function (m) { if (!m.rec) drop.push(m.k); });
     if (this.initKey && !this.rec) drop.push(this.initKey);
@@ -342,6 +377,15 @@
       var rows = DVR._rows.filter(function (r) { return !live[r.id]; }).concat(Object.keys(live).map(function (k) { return DVR._rowOf(live[k]); }));
       rows.sort(function (a, b) { return b.createdAt - a.createdAt; });
       DVR.state.set(rows);
+      DVR._syncNative();
+    },
+    /** Tell the Android app a recording is running, so it keeps the process alive when the user leaves. */
+    _nativeOn: false,
+    _syncNative: function () {
+      var on = DVR.isRecording(), rec = DVR.activeRec();
+      if (on === DVR._nativeOn) return;
+      DVR._nativeOn = on;
+      try { if (root.INDTVNative && root.INDTVNative.setRecording) root.INDTVNative.setRecording(on, on && rec ? (rec.title || rec.chName || '') : ''); } catch (e) { /* ignore */ }
     },
     _active: function () { return (DVR._cur ? [DVR._cur] : []).concat(DVR._detached); },
     recordings: function () { return DVR.state.get(); },
@@ -432,9 +476,9 @@
       var ok = step();
       rec._ready = ok;
       if (rec.endAt) {
-        rec._timer = setTimeout(function () { DVR.stopRecording('end'); }, Math.max(1000, rec.endAt - Date.now()));
+        rec._timer = Tick.after(function () { DVR.stopRecording('end'); }, Math.max(1000, rec.endAt - Date.now()));
       }
-      rec._cap = setTimeout(function () { DVR.stopRecording('limit'); }, MAX_REC_MS);
+      rec._cap = Tick.after(function () { DVR.stopRecording('limit'); }, MAX_REC_MS);
       DVR._pendingRec = rec;
       return rec;
     },
@@ -449,7 +493,7 @@
     _finishRec: function (s, why) {
       var rec = s.rec;
       if (!rec) return;
-      clearTimeout(rec._timer); clearTimeout(rec._cap);
+      Tick.cancel(rec._timer); Tick.cancel(rec._cap);
       s.rec = null; s._recPending = null;
       // keep the segments that belong to this recording; later ring segments are plain buffer again
       rec.status = rec.segs.length ? 'done' : 'error';

@@ -783,6 +783,9 @@ html.is-native .ctl[data-key="ctl:fs"] { display: none; }
 .live-subs[data-bg="none"] .live-sub-line, .live-subs[data-bg="none"] .live-sub-orig {
   text-shadow: -0.1rem -0.1rem 0 #000, 0.1rem -0.1rem 0 #000, -0.1rem 0.1rem 0 #000, 0.1rem 0.1rem 0 #000, 0 0 0.6rem rgba(0, 0, 0, 0.9);
 }
+.live-subs { max-height: 56vh; overflow: hidden; justify-content: flex-end; }
+.live-sub-prev { margin-bottom: 0.2rem; animation: none; }
+.live-sub-line + .live-sub-line { margin-top: 0.2rem; }
 .live-sub-orig {
   margin-top: 0.35rem; font-size: calc(var(--sub-size) * 0.58); font-weight: 500; color: rgba(255, 255, 255, 0.85);
   background: var(--sub-bg); padding: 0.15rem 0.7rem; border-radius: 0.3rem; text-align: center; max-width: 100%;

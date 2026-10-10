@@ -427,16 +427,17 @@
     _streamDG: function (run, cfg) {
       var mime = pickMime();
       var dg = LT._dg = { ws: null, rec: null, lines: [], final: '', interim: '', shownSrc: '', busy: false, seq: 0, shown: 0, retry: 0, prev: '', watch: null, tick: null, dirty: false, lastTr: '' };
+      var MAXS = 5;           // at most five sentences on screen: the finished ones roll upwards, the newest is at the bottom
       function render(out) {
         var cur = out || dg.lastTr;
-        var lines = dg.lines.slice(-1);
-        if (cur) lines.push(cur);
-        var text = lines.map(function (l) { return l.length > 90 ? '…' + l.slice(-88) : l; }).join('\n').trim();
+        if (cur.length > 170) cur = '…' + cur.slice(-168);
+        var done = dg.lines.map(function (l) { return l.tr; }).filter(Boolean).slice(-(MAXS - (cur ? 1 : 0)));
+        var text = done.concat(cur ? [cur] : []).join('\n').trim();
         var orig = (dg.final + ' ' + dg.interim).trim();
-        if (orig.length > 90) orig = '…' + orig.slice(-88);
-        LT.state.update({ text: text, orig: orig, error: null });
+        if (orig.length > 100) orig = '…' + orig.slice(-98);
+        LT.state.update({ text: text, lines: done, cur: cur, orig: orig, error: null });
         clearTimeout(LT._clear);
-        LT._clear = setTimeout(function () { if (run === LT._run) { dg.lines = []; dg.lastTr = ''; LT.state.update({ text: '', orig: '' }); } }, 6000);
+        LT._clear = setTimeout(function () { if (run === LT._run) { dg.lines = []; dg.lastTr = ''; LT.state.update({ text: '', lines: [], cur: '', orig: '' }); } }, 9000);
       }
       function translateNow() {
         if (dg.busy || run !== LT._run || Date.now() < LT._pauseUntil) return;
@@ -458,22 +459,33 @@
           else { LT._pauseUntil = Date.now() + 1500; LT._notify(describe(e)); }
         });
       }
-      function commit() {
-        // sentence finished: keep its translation as a finished line, then start fresh
-        var src = dg.final.trim();
-        if (!src) return;
-        var done = dg.lastTr;
-        var seq = ++dg.seq;
-        dg.prev = src;
-        fastTranslate(cfg, src, '').then(function (out) {
-          if (run !== LT._run) return;
-          out = (out || '').trim() || done;
-          if (out) { dg.lines.push(out); dg.lines = dg.lines.slice(-2); }
-          dg.final = ''; dg.interim = ''; dg.lastTr = ''; dg.shownSrc = ''; dg.shown = seq;
-          render('');
-        }).catch(function () {
-          if (done) dg.lines.push(done);
-          dg.final = ''; dg.interim = ''; dg.lastTr = ''; dg.shownSrc = '';
+      /** Split text into finished sentences and the unfinished rest (Hindi danda included). */
+      function splitSentences(txt) {
+        var re = /[^.!?\u0964\u061F\u2026]+[.!?\u0964\u061F\u2026]+["'\u201D)\]]*\s*/g, out = [], m, last = 0;
+        while ((m = re.exec(txt))) { out.push(m[0].trim()); last = re.lastIndex; }
+        return { done: out, rest: txt.slice(last).trim() };
+      }
+      /** Move finished sentences (all of them when the speaker paused) into the rolling list and translate each one properly. */
+      function commit(all) {
+        var parts = splitSentences(dg.final), done = parts.done.slice(), rest = parts.rest;
+        if (all && rest) { done.push(rest); rest = ''; }
+        if (!done.length) return;
+        var fallback = done.length === 1 && !rest ? dg.lastTr : '';
+        dg.final = rest;
+        if (all) dg.interim = '';
+        dg.lastTr = ''; dg.shownSrc = ''; dg.shown = ++dg.seq;
+        dg.prev = done[done.length - 1];
+        var entries = done.map(function (src, i) { var e = { src: src, tr: i === 0 ? fallback : '' }; dg.lines.push(e); return e; });
+        dg.lines = dg.lines.slice(-MAXS);
+        dg.dirty = true;
+        render('');
+        entries.forEach(function (e) {
+          fastTranslate(cfg, e.src, '').then(function (out) {
+            if (run !== LT._run) return;
+            out = (out || '').replace(/^["\u201C\u201D']+|["\u201C\u201D']+$/g, '').trim();
+            if (out) e.tr = out;
+            render('');
+          }, function () { render(''); });
         });
       }
       function startRecorder() {
@@ -503,7 +515,7 @@
           if (!txt) return;
           if (m.is_final) {
             dg.final = (dg.final + ' ' + txt).trim(); dg.interim = '';
-            if (m.speech_final) { translateNow(); setTimeout(commit, 250); }
+            if (m.speech_final) commit(true); else commit(false);
           } else dg.interim = txt;
           dg.dirty = true;
         };

@@ -94,4 +94,9 @@ Inside the player (no extra app):
 - **Back to live** (yellow key / LIVE button, or forward past the end of the buffer).
 - **Record** (red key / ● button): saves the current programme — from its start when buffered, until its end (+ padding) — into **Recordings**, where it can be played, seeked and deleted. A recording continues if you change channel.
 - Works by copying the stream's own HLS segments (no re-encoding). Encrypted/DRM streams are never captured; only HLS channels are supported.
-- Test locally: `tools/` has no extra deps; see `web/js/player/dvr.js` for the design notes.
+- **Android TV:** a recording keeps running after you press Home or exit the app (a foreground service with a notification and wake lock keeps the process alive; timers run from a Web Worker so they are not throttled). Samsung/Tizen cannot record in the background.
+- See `web/js/player/dvr.js` for the design notes.
+
+## Live subtitles
+
+Deepgram streaming + free Google translation: words appear as they are spoken, finished sentences are translated one by one and roll upwards — at most five sentences on screen, the newest at the bottom.
