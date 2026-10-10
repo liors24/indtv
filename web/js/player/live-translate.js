@@ -26,8 +26,11 @@
     openai: { base: 'https://api.openai.com/v1', stt: 'whisper-1', llm: 'gpt-6-luna', api: 'responses' },
     custom: { base: '', stt: 'whisper-1', llm: '', api: 'chat' },
     // Streaming: speech recognition and translation in one live connection, word by word.
-    soniox: { base: 'wss://stt-rt.soniox.com/transcribe-websocket', stt: 'stt-rt-v5', llm: '-', api: 'stream' }
+    soniox: { base: 'wss://stt-rt.soniox.com/transcribe-websocket', stt: 'stt-rt-v5', llm: '-', api: 'stream' },
+    // Streaming speech recognition by Deepgram (free starting credit) + translation by Groq (free).
+    deepgram: { base: 'wss://api.deepgram.com/v1/listen', stt: 'nova-3', llm: 'llama-3.3-70b-versatile', api: 'stream' }
   };
+  var GROQ_BASE = 'https://api.groq.com/openai/v1';
   var TARGETS = [
     { code: 'he', name: 'עברית', en: 'Hebrew' }, { code: 'en', name: 'English', en: 'English' },
     { code: 'ar', name: 'العربية', en: 'Arabic' }, { code: 'ru', name: 'Русский', en: 'Russian' },
@@ -44,7 +47,7 @@
     c = c && typeof c === 'object' ? c : {};
     var prov = PROVIDERS[c.provider] ? c.provider : 'groq';
     return {
-      provider: prov, key: c.key || '', target: c.target || 'he', showOriginal: c.showOriginal === true,
+      provider: prov, key: c.key || '', key2: c.key2 || '', target: c.target || 'he', showOriginal: c.showOriginal === true,
       subSize: c.subSize || 'l', subBg: c.subBg || 'semi', subColor: c.subColor || 'white', subPos: c.subPos || 'bottom',
       base: c.base || PROVIDERS[prov].base, stt: c.stt || PROVIDERS[prov].stt, llm: c.llm || PROVIDERS[prov].llm
     };
@@ -293,7 +296,8 @@
       var tg = TARGETS.filter(function (x) { return x.code === c.target; })[0] || TARGETS[0];
       return tg.name;
     },
-    isConfigured: function () { var c = loadCfg(); return !!(c.key && c.base && c.stt && (c.llm || c.provider === 'soniox')); },
+    isConfigured: function () { var c = loadCfg(); if (c.provider === 'deepgram') return !!(c.key && c.key2 && c.base && c.stt);
+      return !!(c.key && c.base && c.stt && (c.llm || c.provider === 'soniox')); },
     isStreaming: function () { return PROVIDERS[loadCfg().provider].api === 'stream'; },
     isOn: function () { return LT.state.get().on; },
 
@@ -313,7 +317,8 @@
       LT._seq = 0; LT._shown = 0; LT._inFlight = 0; LT._lastSent = 0;
       LT._minGap = PACE[cfg.provider] || PACE.custom;
       LT.state.set({ on: true, text: '', orig: '', detected: null, error: null, targetName: LT.targetName(), showOriginal: cfg.showOriginal });
-      if (PROVIDERS[cfg.provider].api === 'stream') LT._stream(run, cfg);
+      if (cfg.provider === 'deepgram') LT._streamDG(run, cfg);
+      else if (PROVIDERS[cfg.provider].api === 'stream') LT._stream(run, cfg);
       else LT._record(run);
     },
 
@@ -397,6 +402,112 @@
       }, 700);
     },
 
+    /* ---------- Deepgram + Groq (free streaming) ----------
+     * The programme sound streams to Deepgram over one WebSocket; recognised words (interim and final)
+     * come back within a fraction of a second. The sentence being spoken is translated by Groq about
+     * once a second and replaced in place, so subtitles follow the speech word by word. */
+    _streamDG: function (run, cfg) {
+      var mime = pickMime();
+      var tcfg = { provider: 'groq', base: GROQ_BASE, key: cfg.key2, llm: cfg.llm, target: cfg.target };
+      var dg = LT._dg = { ws: null, rec: null, lines: [], final: '', interim: '', shownSrc: '', busy: false, seq: 0, shown: 0, retry: 0, prev: '', watch: null, tick: null, dirty: false, lastTr: '' };
+      function render(out) {
+        var cur = out || dg.lastTr;
+        var lines = dg.lines.slice(-1);
+        if (cur) lines.push(cur);
+        var text = lines.map(function (l) { return l.length > 90 ? '…' + l.slice(-88) : l; }).join('\n').trim();
+        var orig = (dg.final + ' ' + dg.interim).trim();
+        if (orig.length > 90) orig = '…' + orig.slice(-88);
+        LT.state.update({ text: text, orig: orig, error: null });
+        clearTimeout(LT._clear);
+        LT._clear = setTimeout(function () { if (run === LT._run) { dg.lines = []; dg.lastTr = ''; LT.state.update({ text: '', orig: '' }); } }, 6000);
+      }
+      function translateNow() {
+        if (dg.busy || run !== LT._run || Date.now() < LT._pauseUntil) return;
+        var src = (dg.final + ' ' + dg.interim).replace(/\s+/g, ' ').trim();
+        if (!src || src === dg.shownSrc) return;
+        dg.busy = true; dg.dirty = false;
+        var seq = ++dg.seq;
+        translate(tcfg, src, dg.prev).then(function (out) {
+          dg.busy = false;
+          if (run !== LT._run || seq < dg.shown) return;
+          dg.shown = seq; dg.shownSrc = src;
+          out = (out || '').replace(/^["“”']+|["“”']+$/g, '').trim();
+          if (out) { dg.lastTr = out; render(out); }
+        }).catch(function (e) {
+          dg.busy = false;
+          if (run !== LT._run) return;
+          if (e && e.status === 429) { LT._pauseUntil = Date.now() + 8000; LT._notify(t('translateLimit')); }
+          else if (e && (e.status === 401 || e.status === 403)) { LT._pauseUntil = Date.now() + 5 * 60000; LT._notify(t('translateFail')); }
+          else { LT._pauseUntil = Date.now() + 4000; LT._notify(describe(e)); }
+        });
+      }
+      function commit() {
+        // sentence finished: keep its translation as a finished line, then start fresh
+        var src = dg.final.trim();
+        if (!src) return;
+        var done = dg.lastTr;
+        var seq = ++dg.seq;
+        dg.prev = src;
+        translate(tcfg, src, '').then(function (out) {
+          if (run !== LT._run) return;
+          out = (out || '').trim() || done;
+          if (out) { dg.lines.push(out); dg.lines = dg.lines.slice(-2); }
+          dg.final = ''; dg.interim = ''; dg.lastTr = ''; dg.shownSrc = ''; dg.shown = seq;
+          render('');
+        }).catch(function () {
+          if (done) dg.lines.push(done);
+          dg.final = ''; dg.interim = ''; dg.lastTr = ''; dg.shownSrc = '';
+        });
+      }
+      function startRecorder() {
+        var stream = currentStream(), rec;
+        try { rec = mime ? new root.MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 48000 }) : new root.MediaRecorder(stream); }
+        catch (e) { INDTV.UI.toast(t('translateUnsupported')); LT.stop(); return; }
+        rec.ondataavailable = function (ev) {
+          if (run === LT._run && ev.data && ev.data.size && dg.ws && dg.ws.readyState === 1) dg.ws.send(ev.data);
+        };
+        dg.rec = rec;
+        rec.start(150);
+      }
+      function open() {
+        if (run !== LT._run) return;
+        var url = cfg.base + (cfg.base.indexOf('?') < 0 ? '?' : '&') + 'model=' + encodeURIComponent(cfg.stt) +
+          '&language=' + encodeURIComponent(cfg.srcLang || 'multi') + '&interim_results=true&endpointing=400&smart_format=true&punctuate=true';
+        var ws;
+        try { ws = new WebSocket(url, ['token', cfg.key]); } catch (e) { LT._notify(describe(e)); return; }
+        dg.ws = ws;
+        ws.onopen = function () { dg.retry = 0; startRecorder(); };
+        ws.onmessage = function (ev) {
+          if (run !== LT._run) return;
+          var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+          if (m.type === 'Error' || m.err_code) { LT._notify(describe({ step: 'stt', status: m.status, detail: m.err_msg || m.description })); return; }
+          if (m.type !== 'Results' || !m.channel || !m.channel.alternatives || !m.channel.alternatives[0]) return;
+          var alt = m.channel.alternatives[0], txt = String(alt.transcript || '').trim();
+          if (!txt) return;
+          if (m.is_final) {
+            dg.final = (dg.final + ' ' + txt).trim(); dg.interim = '';
+            if (m.speech_final) { translateNow(); setTimeout(commit, 250); }
+          } else dg.interim = txt;
+          dg.dirty = true;
+        };
+        ws.onclose = function (ev) {
+          if (dg.rec && dg.rec.state !== 'inactive') { try { dg.rec.stop(); } catch (e) { /* ignore */ } }
+          if (run !== LT._run) return;
+          if (ev && (ev.code === 1008 || ev.code === 4001 || ev.code === 4003)) { LT._notify(t('translateFail')); return; }
+          dg.retry++;
+          setTimeout(open, Math.min(5000, 400 * dg.retry));
+        };
+        ws.onerror = function () { if (dg.retry > 2) LT._notify(describe({ step: 'stt' })); };
+      }
+      open();
+      dg.tick = setInterval(function () { if (run === LT._run && dg.dirty) translateNow(); }, 450);
+      dg.watch = setInterval(function () {
+        if (run !== LT._run) { clearInterval(dg.watch); return; }
+        var live = audio.stream && audio.stream.getAudioTracks().some(function (tr) { return tr.readyState === 'live'; });
+        if (!live && dg.ws) { try { attach(audio.video); } catch (e) { /* keep */ } try { dg.ws.close(); } catch (e2) { /* ignore */ } }
+      }, 700);
+    },
+
     stop: function () {
       LT._run++;
       if (LT._sx) {
@@ -404,6 +515,12 @@
         if (LT._sx.rec && LT._sx.rec.state !== 'inactive') { try { LT._sx.rec.stop(); } catch (e) { /* ignore */ } }
         if (LT._sx.ws) { try { LT._sx.ws.send(''); LT._sx.ws.close(); } catch (e) { /* ignore */ } }
         LT._sx = null;
+      }
+      if (LT._dg) {
+        clearInterval(LT._dg.watch); clearInterval(LT._dg.tick);
+        if (LT._dg.rec && LT._dg.rec.state !== 'inactive') { try { LT._dg.rec.stop(); } catch (e) { /* ignore */ } }
+        if (LT._dg.ws) { try { LT._dg.ws.send(JSON.stringify({ type: 'CloseStream' })); LT._dg.ws.close(); } catch (e) { /* ignore */ } }
+        LT._dg = null;
       }
       clearInterval(LT._vad);
       clearTimeout(LT._clear);
@@ -501,6 +618,7 @@
     /** Settings "Save": checks the key, speech recognition and translation, and reports each step. */
     test: function () {
       var cfg = loadCfg();
+      if (cfg.provider === 'deepgram') return LT._testDG(cfg);
       if (PROVIDERS[cfg.provider].api === 'stream') return LT._testStream(cfg);
       var he = INDTV.I18n.lang() === 'he';
       var report = { ok: false, lines: [] };
@@ -524,6 +642,30 @@
           return report;
         });
     }
+  };
+
+  LT._testDG = function (cfg) {
+    var he = INDTV.I18n.lang() === 'he';
+    var lines = [];
+    return new Promise(function (resolve) {
+      var ws, done = false;
+      function fin(ok, line) { if (done) return; done = true; try { ws.close(); } catch (e) { /* ignore */ } resolve({ ok: ok, line: line }); }
+      try { ws = new WebSocket(cfg.base + '?model=' + encodeURIComponent(cfg.stt) + '&language=multi', ['token', cfg.key]); } catch (e) { fin(false, '✗ ' + describe(e)); return; }
+      var timer = setTimeout(function () { fin(false, '✗ Deepgram: ' + (he ? 'אין תשובה מהשירות' : 'no answer')); }, 10000);
+      ws.onopen = function () { clearTimeout(timer); fin(true, he ? '✓ Deepgram — המפתח תקין (' + cfg.stt + ')' : '✓ Deepgram key accepted (' + cfg.stt + ')'); };
+      ws.onerror = function () { clearTimeout(timer); fin(false, '✗ Deepgram: ' + (he ? 'המפתח נדחה או שאין חיבור' : 'key rejected or no connection')); };
+    }).then(function (r) {
+      lines.push(r.line);
+      if (!r.ok) return { ok: false, lines: lines };
+      var tc = { provider: 'groq', base: GROQ_BASE, key: cfg.key2, llm: cfg.llm, target: cfg.target };
+      return translate(tc, 'नमस्ते, आप कैसे हैं?', '').then(function (out) {
+        lines.push((he ? '✓ Groq תרגום (' : '✓ Groq translation (') + cfg.llm + '): ' + (out || '—'));
+        return { ok: true, lines: lines };
+      }).catch(function (e) {
+        lines.push('✗ Groq: ' + (e && e.status === 401 ? t('translateFail') : describe(e)));
+        return { ok: false, lines: lines };
+      });
+    });
   };
 
   LT._testStream = function (cfg) {

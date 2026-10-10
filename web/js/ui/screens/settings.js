@@ -247,18 +247,25 @@
 
       box.appendChild(U.el('span', { class: 'field-label', text: t('translateProvider') }));
       var provRow = U.el('div', { class: 'set-row' });
-      [['soniox', 'provSoniox'], ['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
+      [['deepgram', 'provDeepgram'], ['soniox', 'provSoniox'], ['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
         var on = cfg.provider === pv[0];
         provRow.appendChild(UI.button(t(pv[1]), on ? 'check' : null, function () { LT.saveConfig({ provider: pv[0] }); rebuild('tr:prov:' + pv[0]); },
           { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:prov:' + pv[0] }));
       });
       box.appendChild(provRow);
-      box.appendChild(U.el('p', { class: 'set-status', text: cfg.provider === 'soniox' ? t('sonioxHint') : cfg.provider === 'groq' ? t('groqHint') : '' }));
+      box.appendChild(U.el('p', { class: 'set-status', text: cfg.provider === 'deepgram' ? t('deepgramHint') : cfg.provider === 'soniox' ? t('sonioxHint') : cfg.provider === 'groq' ? t('groqHint') : '' }));
 
       var keyIn = U.el('input', { class: 'fx field', id: 'tr-key', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
-        placeholder: cfg.provider === 'groq' ? 'gsk_…' : cfg.provider === 'soniox' ? 'Soniox API key' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
+        placeholder: cfg.provider === 'deepgram' ? 'Deepgram API key' : cfg.provider === 'groq' ? 'gsk_…' : cfg.provider === 'soniox' ? 'Soniox API key' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
       box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key', text: t('translateKey') }));
       box.appendChild(keyIn);
+      var key2In = null;
+      if (cfg.provider === 'deepgram') {
+        key2In = U.el('input', { class: 'fx field', id: 'tr-key2', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
+          placeholder: 'gsk_…', value: cfg.key2 || '', dataset: { key: 'tr:key2' } });
+        box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key2', text: t('groqKeyLabel') }));
+        box.appendChild(key2In);
+      }
 
       box.appendChild(U.el('span', { class: 'field-label', text: t('translateTo') }));
       var tgRow = U.el('div', { class: 'set-row' });
@@ -318,7 +325,7 @@
       var msg = U.el('p', { class: 'set-status', 'aria-live': 'polite' });
       box.appendChild(U.el('div', { class: 'set-row' }, [
         UI.button(t('save2'), 'check', function () {
-          LT.saveConfig({ key: keyIn.value.trim(), base: baseIn.value.trim() || cfg.base, stt: sttIn.value.trim() || cfg.stt, llm: llmIn.value.trim() || cfg.llm });
+          LT.saveConfig({ key: keyIn.value.trim(), key2: key2In ? key2In.value.trim() : cfg.key2, base: baseIn.value.trim() || cfg.base, stt: sttIn.value.trim() || cfg.stt, llm: llmIn.value.trim() || cfg.llm });
           msg.textContent = t('statusLoading') + '…';
           LT.test().then(function (r) { msg.textContent = r.lines.join('  ·  '); msg.classList.toggle('is-bad', !r.ok); });
         }, { cls: 'btn-primary', key: 'tr:save' }),
