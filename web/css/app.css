@@ -828,3 +828,6 @@ html[dir="rtl"] .detail-name, html[dir="rtl"] .guide-title, html[dir="rtl"] .gui
 .edit-hint { margin-top: 0.8rem; font-size: 1.05rem; color: var(--muted); }
 /* page fields look like buttons you open, not text you type into */
 input.fx[readonly], textarea.fx[readonly] { cursor: pointer; caret-color: transparent; }
+
+.set-cats { margin: 0 var(--gutter) 1.6rem; max-width: 84rem; }
+.set-form > .set-cats { margin: 0 0 1.2rem; }

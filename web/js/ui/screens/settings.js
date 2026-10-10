@@ -34,7 +34,18 @@
       Settings.scroller = U.el('div', { class: 'vscroll settings-scroll', 'data-top-offset': '7' });
       Settings.el.appendChild(Settings.scroller);
       var s = Settings.scroller;
+      var CATS = [['general', 'catGeneral', 'settings'], ['translate', 'liveTranslate', 'globe'], ['sources', 'sources', 'link'], ['guide', 'epgTitle', 'refresh'], ['about', 'about', 'check']];
+      var parts = {};
+      function put(cat, el) { (parts[cat] = parts[cat] || []).push(el); }
+      Settings._cat = Settings._cat || 'general';
       s.appendChild(U.el('div', { class: 'screen-head', 'data-row': '' }, [U.el('h1', { class: 'screen-title', text: t('settings') })]));
+      var catRow = U.el('div', { class: 'set-row set-cats', 'data-row': '', 'data-fgroup': 'set-cats' });
+      CATS.forEach(function (c) {
+        var on = Settings._cat === c[0];
+        catRow.appendChild(UI.button(t(c[1]), on ? 'check' : null, function () { Settings._cat = c[0]; Settings.build(); INDTV.Focus.restore('cat:' + c[0], Settings.el); },
+          { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'cat:' + c[0] }));
+      });
+      s.appendChild(catRow);
 
       // Language
       var langRow = U.el('div', { class: 'set-row', 'data-fgroup': 'set-lang' });
@@ -45,7 +56,7 @@
         if (l[0] === 'he') b.setAttribute('lang', 'he');
         langRow.appendChild(b);
       });
-      s.appendChild(Settings.section(t('language'), langRow));
+      put('general', Settings.section(t('language'), langRow));
 
       // Display size
       var sizeRow = U.el('div', { class: 'set-row', 'data-fgroup': 'set-size' });
@@ -57,7 +68,7 @@
           INDTV.Focus.restore('size:' + z[0], Settings.el);
         }, { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'size:' + z[0] }));
       });
-      s.appendChild(Settings.section(t('displaySize'), U.el('div', {}, [sizeRow, U.el('p', { class: 'set-status', text: t('displaySizeHint') })])));
+      put('general', Settings.section(t('displaySize'), U.el('div', {}, [sizeRow, U.el('p', { class: 'set-status', text: t('displaySizeHint') })])));
 
       // Sources
       Settings.sourcesBox = U.el('div', { class: 'sources' });
@@ -72,7 +83,7 @@
         UI.button(t('addFile'), 'file', function () { Settings.openAdd('file'); }, { cls: 'btn-ghost', key: 'src:addfile' })
       ]);
       Settings.addBox = U.el('div', { class: 'add-box' });
-      s.appendChild(Settings.section(t('sources'), U.el('div', {}, [Settings.sourcesBox, head, Settings.addBox])));
+      put('sources', Settings.section(t('sources'), U.el('div', {}, [Settings.sourcesBox, head, Settings.addBox])));
       Settings.renderSources();
       Settings.renderAdd();
 
@@ -98,11 +109,11 @@
         ]),
         Settings.epgStatus
       ]);
-      s.appendChild(Settings.section(t('epgTitle'), epgRow));
+      put('guide', Settings.section(t('epgTitle'), epgRow));
       Settings.renderEpgStatus();
 
       // Live translation
-      s.appendChild(Settings.section(t('liveTranslate'), Settings.translateForm()));
+      put('translate', Settings.section(t('liveTranslate'), Settings.translateForm()));
 
       // Data + about
       var clearBtn = UI.button(t('clearCache'), 'trash', function () {
@@ -115,11 +126,12 @@
         Settings._confirmClear = false;
         Settings.clearAll();
       }, { cls: 'btn-ghost btn-danger', key: 'data:clear' });
-      s.appendChild(Settings.section(t('about'), U.el('div', {}, [
+      put('about', Settings.section(t('about'), U.el('div', {}, [
         U.el('p', { class: 'about-text', text: t('aboutBody') }),
         U.el('p', { class: 'about-text about-src', dir: 'ltr', text: INDTV.Config.BUILTIN_NAME + ': ' + INDTV.Config.BUILTIN_URL }),
         U.el('div', { class: 'set-row', 'data-fgroup': 'set-data' }, [clearBtn])
       ])));
+      (parts[Settings._cat] || []).forEach(function (el) { s.appendChild(el); });
     },
 
     section: function (title, body) {
@@ -242,32 +254,44 @@
       var LT = INDTV.LiveTranslate;
       var cfg = LT.config();
       var box = U.el('div', { class: 'set-form', 'data-fgroup': 'set-tr' });
-      box.appendChild(U.el('p', { class: 'set-status', text: t('translateHint') }));
-      function rebuild(key) { var parent = box.parentNode; parent.replaceChild(Settings.translateForm(), box); if (key) INDTV.Focus.restore(key, Settings.el); }
+      var trCat = Settings._trCat || 'service';
+      var realBox = box;
+      box = U.el('div', { class: 'set-form' });            // active sub-category content
+      var subRow = U.el('div', { class: 'set-row set-cats', 'data-fgroup': 'set-trcats' });
+      [['service', 'trCatService'], ['language', 'trCatLang'], ['style', 'trCatStyle']].forEach(function (c) {
+        var on = trCat === c[0];
+        subRow.appendChild(UI.button(t(c[1]), on ? 'check' : null, function () { Settings._trCat = c[0]; var par = realBox.parentNode; par.replaceChild(Settings.translateForm(), realBox); INDTV.Focus.restore('trcat:' + c[0], Settings.el); },
+          { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'trcat:' + c[0] }));
+      });
+      realBox.appendChild(subRow);
+      realBox.appendChild(box);
+      var secs = { service: [], language: [], style: [] };
+      secs['service'].push(U.el('p', { class: 'set-status', text: t('translateHint') }));
+      function rebuild(key) { var parent = realBox.parentNode; parent.replaceChild(Settings.translateForm(), realBox); if (key) INDTV.Focus.restore(key, Settings.el); }
 
-      box.appendChild(U.el('span', { class: 'field-label', text: t('translateProvider') }));
+      secs['service'].push(U.el('span', { class: 'field-label', text: t('translateProvider') }));
       var provRow = U.el('div', { class: 'set-row' });
       [['deepgram', 'provDeepgram'], ['soniox', 'provSoniox'], ['groq', 'provGroq'], ['openai', 'provOpenai'], ['custom', 'provCustom']].forEach(function (pv) {
         var on = cfg.provider === pv[0];
         provRow.appendChild(UI.button(t(pv[1]), on ? 'check' : null, function () { LT.saveConfig({ provider: pv[0] }); rebuild('tr:prov:' + pv[0]); },
           { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:prov:' + pv[0] }));
       });
-      box.appendChild(provRow);
-      box.appendChild(U.el('p', { class: 'set-status', text: cfg.provider === 'deepgram' ? t('deepgramHint') : cfg.provider === 'soniox' ? t('sonioxHint') : cfg.provider === 'groq' ? t('groqHint') : '' }));
+      secs['service'].push(provRow);
+      secs['service'].push(U.el('p', { class: 'set-status', text: cfg.provider === 'deepgram' ? t('deepgramHint') : cfg.provider === 'soniox' ? t('sonioxHint') : cfg.provider === 'groq' ? t('groqHint') : '' }));
 
       var keyIn = U.el('input', { class: 'fx field', id: 'tr-key', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
         placeholder: cfg.provider === 'deepgram' ? 'Deepgram API key' : cfg.provider === 'groq' ? 'gsk_…' : cfg.provider === 'soniox' ? 'Soniox API key' : 'sk-…', value: cfg.key, dataset: { key: 'tr:key' } });
-      box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key', text: t('translateKey') }));
-      box.appendChild(keyIn);
+      secs['service'].push(U.el('label', { class: 'field-label', for: 'tr-key', text: t('translateKey') }));
+      secs['service'].push(keyIn);
       var key2In = null;
       if (cfg.provider === 'deepgram') {
         key2In = U.el('input', { class: 'fx field', id: 'tr-key2', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr',
           placeholder: 'gsk_…', value: cfg.key2 || '', dataset: { key: 'tr:key2' } });
-        box.appendChild(U.el('label', { class: 'field-label', for: 'tr-key2', text: t('groqKeyLabel') }));
-        box.appendChild(key2In);
+        secs['service'].push(U.el('label', { class: 'field-label', for: 'tr-key2', text: t('groqKeyLabel') }));
+        secs['service'].push(key2In);
       }
 
-      box.appendChild(U.el('span', { class: 'field-label', text: t('translateTo') }));
+      secs['language'].push(U.el('span', { class: 'field-label', text: t('translateTo') }));
       var tgRow = U.el('div', { class: 'set-row' });
       LT.TARGETS.forEach(function (tg) {
         var on = cfg.target === tg.code;
@@ -276,22 +300,22 @@
         b.setAttribute('lang', tg.code);
         tgRow.appendChild(b);
       });
-      box.appendChild(tgRow);
+      secs['language'].push(tgRow);
 
       var origRow = U.el('div', { class: 'set-row' }, [
         UI.button(t('translateShowOriginal') + ': ' + (cfg.showOriginal ? t('on') : t('off')), cfg.showOriginal ? 'check' : null, function () {
           LT.saveConfig({ showOriginal: !cfg.showOriginal }); rebuild('tr:orig');
         }, { cls: 'btn-choice' + (cfg.showOriginal ? ' is-on' : ''), key: 'tr:orig' })
       ]);
-      box.appendChild(origRow);
+      secs['language'].push(origRow);
 
       // Subtitle style with a live preview
-      box.appendChild(U.el('span', { class: 'field-label', text: t('subStyle') }));
+      secs['style'].push(U.el('span', { class: 'field-label', text: t('subStyle') }));
       var preview = U.el('div', { class: 'sub-preview' });
       var pv = U.el('div', { class: 'live-subs' }, [U.el('div', { class: 'live-sub-line', text: t('subPreview') })]);
       preview.appendChild(pv);
       UI.applySubStyle(pv);
-      box.appendChild(preview);
+      secs['style'].push(preview);
       [
         ['subSize', 'subSize', [['s', 'sizeS'], ['m', 'sizeMd'], ['l', 'sizeLg'], ['xl', 'sizeXl']]],
         ['subBg', 'subBg', [['none', 'bgNone'], ['semi', 'bgSemi'], ['solid', 'bgSolid']]],
@@ -306,7 +330,7 @@
             LT.saveConfig(patch); rebuild('tr:' + grp[0] + ':' + opt[0]);
           }, { cls: 'btn-choice' + (on ? ' is-on' : ''), key: 'tr:' + grp[0] + ':' + opt[0] }));
         });
-        box.appendChild(row);
+        secs['style'].push(row);
       });
 
       var adv = U.el('div', { class: 'set-form', hidden: cfg.provider !== 'custom' && !Settings._trAdvanced });
@@ -323,7 +347,7 @@
       }
 
       var msg = U.el('p', { class: 'set-status', 'aria-live': 'polite' });
-      box.appendChild(U.el('div', { class: 'set-row' }, [
+      secs['service'].push(U.el('div', { class: 'set-row' }, [
         UI.button(t('save2'), 'check', function () {
           LT.saveConfig({ key: keyIn.value.trim(), key2: key2In ? key2In.value.trim() : cfg.key2, base: baseIn.value.trim() || cfg.base, stt: sttIn.value.trim() || cfg.stt, llm: llmIn.value.trim() || cfg.llm });
           msg.textContent = t('statusLoading') + '…';
@@ -331,9 +355,10 @@
         }, { cls: 'btn-primary', key: 'tr:save' }),
         UI.button(t('translateModels'), 'settings', function () { Settings._trAdvanced = !Settings._trAdvanced; adv.hidden = !adv.hidden; }, { cls: 'btn-ghost', key: 'tr:adv' })
       ]));
-      box.appendChild(adv);
-      box.appendChild(msg);
-      return box;
+      secs['service'].push(adv);
+      secs['service'].push(msg);
+      secs[trCat].forEach(function (el) { box.appendChild(el); });
+      return realBox;
     },
 
     clearAll: function () {

@@ -195,6 +195,24 @@
       });
   }
 
+  /** Fast free translator (no key, no per-minute quota). The Groq key, when given, is only a backup. */
+  var GCODE = { he: 'iw' };
+  function gtranslate(text, target) {
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&dt=t&tl=' + (GCODE[target] || target) + '&q=' + encodeURIComponent(text);
+    return http('GET', url, { Accept: 'application/json' }, null).then(function (res) {
+      if (res.status !== 200) { var e = new Error('HTTP ' + res.status); e.status = res.status; e.step = 'llm'; throw e; }
+      var j = JSON.parse(res.text), out = '';
+      (j[0] || []).forEach(function (seg) { out += seg[0] || ''; });
+      return out.trim();
+    });
+  }
+  function fastTranslate(cfg, text, previous) {
+    return gtranslate(text, cfg.target).catch(function (e) {
+      if (cfg.key2) return translate({ provider: 'groq', base: GROQ_BASE, key: cfg.key2, llm: cfg.llm, target: cfg.target }, text, previous);
+      throw e;
+    });
+  }
+
   /** A one-second test tone as WAV, to check the whole pipeline from Settings. */
   function testWav() {
     var rate = 16000, n = rate, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
@@ -296,7 +314,7 @@
       var tg = TARGETS.filter(function (x) { return x.code === c.target; })[0] || TARGETS[0];
       return tg.name;
     },
-    isConfigured: function () { var c = loadCfg(); if (c.provider === 'deepgram') return !!(c.key && c.key2 && c.base && c.stt);
+    isConfigured: function () { var c = loadCfg(); if (c.provider === 'deepgram') return !!(c.key && c.base && c.stt);
       return !!(c.key && c.base && c.stt && (c.llm || c.provider === 'soniox')); },
     isStreaming: function () { return PROVIDERS[loadCfg().provider].api === 'stream'; },
     isOn: function () { return LT.state.get().on; },
@@ -408,7 +426,6 @@
      * once a second and replaced in place, so subtitles follow the speech word by word. */
     _streamDG: function (run, cfg) {
       var mime = pickMime();
-      var tcfg = { provider: 'groq', base: GROQ_BASE, key: cfg.key2, llm: cfg.llm, target: cfg.target };
       var dg = LT._dg = { ws: null, rec: null, lines: [], final: '', interim: '', shownSrc: '', busy: false, seq: 0, shown: 0, retry: 0, prev: '', watch: null, tick: null, dirty: false, lastTr: '' };
       function render(out) {
         var cur = out || dg.lastTr;
@@ -427,7 +444,7 @@
         if (!src || src === dg.shownSrc) return;
         dg.busy = true; dg.dirty = false;
         var seq = ++dg.seq;
-        translate(tcfg, src, dg.prev).then(function (out) {
+        fastTranslate(cfg, src, dg.prev).then(function (out) {
           dg.busy = false;
           if (run !== LT._run || seq < dg.shown) return;
           dg.shown = seq; dg.shownSrc = src;
@@ -436,9 +453,9 @@
         }).catch(function (e) {
           dg.busy = false;
           if (run !== LT._run) return;
-          if (e && e.status === 429) { LT._pauseUntil = Date.now() + 8000; LT._notify(t('translateLimit')); }
+          if (e && e.status === 429) { LT._pauseUntil = Date.now() + 2000; LT._notify(t('translateLimit')); }
           else if (e && (e.status === 401 || e.status === 403)) { LT._pauseUntil = Date.now() + 5 * 60000; LT._notify(t('translateFail')); }
-          else { LT._pauseUntil = Date.now() + 4000; LT._notify(describe(e)); }
+          else { LT._pauseUntil = Date.now() + 1500; LT._notify(describe(e)); }
         });
       }
       function commit() {
@@ -448,7 +465,7 @@
         var done = dg.lastTr;
         var seq = ++dg.seq;
         dg.prev = src;
-        translate(tcfg, src, '').then(function (out) {
+        fastTranslate(cfg, src, '').then(function (out) {
           if (run !== LT._run) return;
           out = (out || '').trim() || done;
           if (out) { dg.lines.push(out); dg.lines = dg.lines.slice(-2); }
@@ -500,7 +517,7 @@
         ws.onerror = function () { if (dg.retry > 2) LT._notify(describe({ step: 'stt' })); };
       }
       open();
-      dg.tick = setInterval(function () { if (run === LT._run && dg.dirty) translateNow(); }, 450);
+      dg.tick = setInterval(function () { if (run === LT._run && dg.dirty) translateNow(); }, 200);
       dg.watch = setInterval(function () {
         if (run !== LT._run) { clearInterval(dg.watch); return; }
         var live = audio.stream && audio.stream.getAudioTracks().some(function (tr) { return tr.readyState === 'live'; });
@@ -665,12 +682,11 @@
     }).then(function (r) {
       lines.push(r.line);
       if (!r.ok) return { ok: false, lines: lines };
-      var tc = { provider: 'groq', base: GROQ_BASE, key: cfg.key2, llm: cfg.llm, target: cfg.target };
-      return translate(tc, 'नमस्ते, आप कैसे हैं?', '').then(function (out) {
-        lines.push((he ? '✓ Groq תרגום (' : '✓ Groq translation (') + cfg.llm + '): ' + (out || '—'));
+      return fastTranslate(cfg, 'नमस्ते, आप कैसे हैं?', '').then(function (out) {
+        lines.push((he ? '✓ תרגום מהיר: ' : '✓ Fast translation: ') + (out || '—'));
         return { ok: true, lines: lines };
       }).catch(function (e) {
-        lines.push('✗ Groq: ' + (e && e.status === 401 ? t('translateFail') : describe(e)));
+        lines.push('✗ ' + describe(e));
         return { ok: false, lines: lines };
       });
     });
