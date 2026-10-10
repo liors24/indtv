@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Each GitHub build gets a higher version number, so a new APK installs over the old one.
+def buildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer
+
+android {
+    namespace 'com.indtv.teletv'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.indtv.teletv'
+        minSdk 21
+        targetSdk 34
+        versionCode buildNumber
+        versionName "1.0.${buildNumber}"
+    }
+
+    signingConfigs {
+        release {
+            // Same fixed key as INDTV, kept in the project so every build can update the installed app.
+            storeFile file('indtv-release.jks')
+            storePassword 'indtv-tv-2026'
+            keyAlias 'indtv'
+            keyPassword 'indtv-tv-2026'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // The TeleTV web app (built into ../../tgtv/www by the workflow) is packaged as the APK's assets.
+    sourceSets {
+        main {
+            assets.srcDirs = ['../../tgtv/www']
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

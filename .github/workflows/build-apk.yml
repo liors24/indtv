@@ -3,6 +3,7 @@ name: Build INDTV APK
 on:
   push:
     branches: [ main, master ]
+    paths-ignore: [ 'tgtv/**', 'android-tg/**', '.github/workflows/build-tgtv.yml' ]
   workflow_dispatch:
 
 permissions:

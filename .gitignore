@@ -5,3 +5,7 @@ android/local.properties
 *.iml
 .idea/
 .DS_Store
+tgtv/vendor/
+tgtv/dist/
+tgtv/node_modules/
+tgtv/www/app.js

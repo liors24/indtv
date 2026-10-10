@@ -100,3 +100,14 @@ Inside the player (no extra app):
 ## Live subtitles
 
 Deepgram streaming + free Google translation: words appear as they are spoken, finished sentences are translated one by one and roll upwards — at most five sentences on screen, the newest at the bottom.
+
+## TeleTV — Telegram on the TV (`tgtv/`, `android-tg/`)
+
+A separate TV app (Samsung `.wgt` + Android TV `.apk`, same web code) that signs in to **your own Telegram account**
+(QR code or phone number) and shows the photos, videos, music and files of your chats, groups and channels.
+
+* Needs your own `api_id` / `api_hash` (my.telegram.org → API development tools); entered once on the TV.
+* MTProto runs in the app itself (gramjs, bundled by `tgtv/build.js`; libraries are fetched by `tgtv/vendor.sh`).
+* Videos are downloaded in order and played progressively; a far seek waits for the download to reach that point.
+* Built by `.github/workflows/build-tgtv.yml`; releases are tagged `tgtv-v1.0.N` (assets `TeleTV.apk`, `TeleTV.wgt`).
+* The session is stored only on the device (localStorage). Optional repo secrets `TG_API_ID` / `TG_API_HASH` bake keys into a private build.

@@ -1,0 +1,124 @@
+name: Build TeleTV (Telegram for TV)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'tgtv/**', 'android-tg/**', '.github/workflows/build-tgtv.yml', 'tizen/**' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Fetch pinned libraries (gramjs and friends)
+        run: bash tgtv/vendor.sh
+      - name: Bundle the app
+        working-directory: tgtv
+        env:
+          # Optional repository secrets; when empty the app asks for api_id / api_hash on first launch.
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+        run: |
+          npm install --no-save --no-audit --no-fund esbuild@0.21.5
+          node build.js src/main.js www/app.js
+          ls -la www
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tgtv-www
+          path: tgtv/www
+
+  android:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: tgtv-www
+          path: tgtv/www
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build signed APK
+        working-directory: android-tg
+        run: gradle assembleRelease --no-daemon --stacktrace
+      - run: cp android-tg/app/build/outputs/apk/release/app-release.apk TeleTV.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TeleTV-apk
+          path: TeleTV.apk
+
+  samsung:
+    needs: web
+    runs-on: ubuntu-latest
+    env:
+      TIZEN_STUDIO: ${{ github.workspace }}/tizen-studio
+      AUTHOR_PW: indtv-tizen-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: tgtv-www
+          path: tgtv/www
+      - name: Install Tizen CLI
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq expect zip
+          curl -fsSLo tizen-installer "https://download.tizen.org/sdk/Installer/tizen-studio_5.6/web-cli_Tizen_Studio_5.6_ubuntu-64.bin"
+          chmod +x tizen-installer
+          ./tizen-installer --accept-license "$TIZEN_STUDIO"
+          rm tizen-installer
+      - name: Signing profile (same author certificate as INDTV)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tizen-data/profile"
+          sed -e "s|\$TIZEN_STUDIO|$TIZEN_STUDIO|g" \
+              -e "s|\$AUTHOR_P12|$GITHUB_WORKSPACE/tizen/indtv-author.p12|g" \
+              -e "s|\$AUTHOR_PW|$AUTHOR_PW|g" tizen/profiles.xml > "$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" cli-config "profiles.path=$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+      - name: Build and sign TeleTV.wgt
+        run: |
+          APP="$GITHUB_WORKSPACE/tizen-build/app"
+          mkdir -p "$APP"
+          cp -r tgtv/www/. "$APP/"
+          cp tgtv/tizen/config.xml tgtv/tizen/icon.png "$APP/"
+          sed -i "s/version=\"1.0.0\"/version=\"1.0.${GITHUB_RUN_NUMBER}\"/" "$APP/config.xml"
+          cd "$APP"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" build-web -e ".*"
+          export BUILD_DIR="$APP/.buildResult" OUT_DIR="$GITHUB_WORKSPACE/tizen-out"
+          mkdir -p "$OUT_DIR"
+          expect "$GITHUB_WORKSPACE/tizen/package.exp"
+          ls -la "$OUT_DIR"
+          cp "$OUT_DIR"/*.wgt "$GITHUB_WORKSPACE/TeleTV.wgt"
+          unzip -l "$GITHUB_WORKSPACE/TeleTV.wgt" | grep -E "signature|config.xml|index.html|app.js"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TeleTV-wgt
+          path: TeleTV.wgt
+
+  release:
+    needs: [android, samsung]
+    if: ${{ always() && needs.android.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          pattern: TeleTV-*
+          merge-multiple: true
+      - name: Publish as a release (direct download links)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tgtv-v1.0.${{ github.run_number }}
+          name: TeleTV 1.0.${{ github.run_number }}
+          make_latest: false
+          files: out/*
