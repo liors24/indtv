@@ -124,6 +124,27 @@ jobs:
           git commit -q -m "OTA bundle ${{ github.run_number }}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/ota
 
+  # Web version for the TV's own browser: published to the gh-pages branch (Settings -> Pages -> gh-pages).
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish web/ to gh-pages
+        run: |
+          mkdir -p site-out
+          cp -r web/. site-out/
+          rm -rf site-out/tests site-out/README.md
+          sed -i "s/INDTV_BUILD = 0;/INDTV_BUILD = ${{ github.run_number }};/" site-out/app.html
+          sed -i "s/INDTV_SHELL_BUILD = 0;/INDTV_SHELL_BUILD = ${{ github.run_number }};/" site-out/index.html
+          touch site-out/.nojekyll
+          cd site-out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Site ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/gh-pages
+
   release:
     needs: [android, samsung, ota]
     if: ${{ always() && needs.android.result == 'success' }}
