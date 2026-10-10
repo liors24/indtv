@@ -24,13 +24,13 @@ export const Service = {
   async phoneLogin(cb) { await cb.getPhone(); await cb.getCode(); session = true; ls('session', 'x'); window.__phoneDone = true; },
   async logout() { session = false; ls('session', null); },
   async me() { return { name: 'Test User', phone: '972500000000', username: 'tester' }; },
-  async dialogs() { return CHATS; },
+  async dialogs(folder) { return folder ? CHATS.slice(0, 3).map((c) => Object.assign({}, c, { key: 'a' + c.key, title: 'Arch ' + c.title })) : CHATS; },
   async avatar(d) { return canvasBlob(d.title[0], 64, 64, d.key.length * 40); },
-  async mediaPage(dlg, filter, offsetId) {
+  async mediaPage(dlg, filter, offsetId, query) {
     const all = [];
     for (let i = 0; i < 100; i++) {
       const kind = filter === 'photos' ? 'photo' : filter === 'music' ? 'audio' : filter === 'files' ? 'file' : (i % 3 === 0 ? 'photo' : 'video');
-      all.push({ id: 1000 - i, type: kind, size: kind === 'video' ? (M.videoSize || 3e6) : 200000, duration: 60 + i, name: 'f' + i + '.mp4', title: kind === 'audio' ? 'Artist – Song ' + i : '', mime: 'video/mp4', caption: '', chat: dlg, msg: {} });
+      all.push({ id: 1000 - i, type: kind, size: kind === 'video' ? (M.videoSize || 3e6) : 200000, duration: 60 + i, name: 'f' + i + '.mp4', title: kind === 'audio' ? 'Artist – Song ' + i : '', mime: 'video/mp4', caption: 'Station 19 S4E' + (i + 1) + '\nSubtitle line ' + (query || ''), chat: dlg, msg: {} });
     }
     const start = offsetId ? all.findIndex((x) => x.id === offsetId) + 1 : 0;
     const items = all.slice(start, start + 48);

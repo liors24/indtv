@@ -119,8 +119,8 @@ export const Service = {
   },
   async me() { const u = await Service.client.getMe(); return { name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || '', phone: u.phone || '', username: u.username || '' }; },
 
-  async dialogs() {
-    const list = await Service.client.getDialogs({ limit: 250 });
+  async dialogs(folder) {
+    const list = await Service.client.getDialogs({ limit: 250, folder: folder || 0 });
     return list.map((d) => ({
       key: String(d.id), title: d.title || d.name || '?', unread: d.unreadCount || 0, date: d.date || 0, pinned: !!d.pinned,
       kind: d.isUser ? (d.entity && d.entity.bot ? 'bot' : 'user') : d.isGroup ? 'group' : d.isChannel ? 'channel' : 'group',
@@ -134,9 +134,9 @@ export const Service = {
     } catch (e) { return null; }
   },
   /** One page of media from a chat. filter: media|videos|photos|music|voice|files */
-  async mediaPage(dlg, filter, offsetId) {
+  async mediaPage(dlg, filter, offsetId, query) {
     const limit = 48;
-    const msgs = await Service.client.getMessages(dlg.entity, { limit, offsetId: offsetId || 0, filter: (FILTERS[filter] || FILTERS.media)() });
+    const msgs = await Service.client.getMessages(dlg.entity, { limit, offsetId: offsetId || 0, filter: (FILTERS[filter] || FILTERS.media)(), search: query || undefined });
     const items = [];
     for (let i = 0; i < msgs.length; i++) { const it = toItem(msgs[i]); if (it) { it.chat = dlg; items.push(it); } }
     return { items, next: msgs.length >= limit ? msgs[msgs.length - 1].id : 0 };

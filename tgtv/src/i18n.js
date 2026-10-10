@@ -12,6 +12,8 @@ const S = {
     settings: 'הגדרות', account: 'חשבון', logout: 'התנתקות', logoutSure: 'להתנתק? לחץ שוב לאישור', changeKeys: 'שינוי מפתחות API', clearCache: 'ניקוי זיכרון מטמון', language: 'שפה', cleared: 'נוקה',
     play: 'נגן', pause: 'השהה', buffering: 'מוריד…', downloading: 'מוריד', ofSize: 'מתוך', tooBig: 'הקובץ גדול מאוד והורדה מלאה עלולה להיכשל בטלוויזיה.', notPlayable: 'סוג הקובץ הזה לא נתמך בנגן', playErr: 'הנגינה נכשלה', netErr: 'שגיאת רשת, נסה שוב',
     sizeLabel: 'גודל', hint: 'חיצים: ניווט · אישור: פתיחה · חזרה: אחורה', seekHint: '◀ ▶ דילוג · אישור: הפעלה/השהיה', conn: 'מתחבר…', connFail: 'אין חיבור לטלגרם. בדוק אינטרנט.', floodWait: 'טלגרם ביקש להמתין', you: 'אתה', photo: 'תמונה', video: 'סרטון', audioMsg: 'הודעה קולית', file: 'קובץ', sticker: 'סטיקר',
+    tabSettings: 'הגדרות', tabChats: 'צ׳אטים', tabMedia: 'מדיה', convSel: 'בחירת שיחה', allChats: 'כל הצ׳אטים', archive: 'ארכיון', search: 'חיפוש', searchPh: 'חיפוש בשיחה',
+    f_media: 'תמונות/וידאו', f_videos: 'סרטונים', f_photos: 'תמונות', f_music: 'מוזיקה', f_voice: 'הקלטות', f_files: 'קבצים',
     savedMsgs: 'הודעות שמורות', next2: 'הבא', prev2: 'הקודם'
   },
   en: {
@@ -25,6 +27,8 @@ const S = {
     settings: 'Settings', account: 'Account', logout: 'Log out', logoutSure: 'Log out? Press again to confirm', changeKeys: 'Change API keys', clearCache: 'Clear cache', language: 'Language', cleared: 'Cleared',
     play: 'Play', pause: 'Pause', buffering: 'Downloading…', downloading: 'Downloading', ofSize: 'of', tooBig: 'This file is very large; a full download may fail on a TV.', notPlayable: 'This file type cannot be played here', playErr: 'Playback failed', netErr: 'Network error, try again',
     sizeLabel: 'Size', hint: 'Arrows: move · OK: open · Back: return', seekHint: '◀ ▶ seek · OK: play/pause', conn: 'Connecting…', connFail: 'Cannot reach Telegram. Check your internet.', floodWait: 'Telegram asked to wait', you: 'You', photo: 'Photo', video: 'Video', audioMsg: 'Voice message', file: 'File', sticker: 'Sticker',
+    tabSettings: 'Settings', tabChats: 'Chats', tabMedia: 'Media', convSel: 'Conversation Selection', allChats: 'All Chats', archive: 'Archive', search: 'Search', searchPh: 'Search in chat',
+    f_media: 'Photo/Video', f_videos: 'Videos', f_photos: 'Photos', f_music: 'Music', f_voice: 'Voice', f_files: 'Files',
     savedMsgs: 'Saved Messages', next2: 'Next', prev2: 'Previous'
   }
 };

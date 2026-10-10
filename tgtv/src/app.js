@@ -147,48 +147,64 @@ function loginScreen() {
   return s;
 }
 
-/* ---------- chats ---------- */
-function avatarNode(dlg, big) {
-  const n = el('div', { class: 'avatar' + (big ? ' big' : ''), style: { background: colorFor(dlg.key) }, text: initials(dlg.title) });
-  return n;
-}
+/* ---------- shared bits ---------- */
 const avatarQ = new Queue(3);
 const avatarCache = {};
+function avatarNode(dlg) {
+  const n = el('div', { class: 'avatar', style: { background: colorFor(dlg.key) }, text: initials(dlg.title) });
+  if (avatarCache[dlg.key]) { n.textContent = ''; n.style.backgroundImage = 'url(' + avatarCache[dlg.key] + ')'; }
+  return n;
+}
+function fillAvatar(node, dlg) {
+  if (avatarCache[dlg.key]) { node.textContent = ''; node.style.backgroundImage = 'url(' + avatarCache[dlg.key] + ')'; return; }
+  avatarQ.add(async () => {
+    if (!node.isConnected) return;
+    let url = avatarCache[dlg.key];
+    if (!url) { const b = await Service.avatar(dlg); if (b) { url = URL.createObjectURL(b); avatarCache[dlg.key] = url; } }
+    if (url && node.isConnected) { node.textContent = ''; node.style.backgroundImage = 'url(' + url + ')'; }
+  });
+}
+const state = { dialogs: null, archived: null, chat: null, tab: 'chats', go: null, focusGrid: false };
+async function ensureDialogs(force) {
+  if (!state.dialogs || force) state.dialogs = await Service.dialogs(0);
+  return state.dialogs;
+}
+/** A dialog box over the current screen; Back closes it. */
+function openModal(node) {
+  const host = stack[stack.length - 1].el;
+  const back = el('div', { class: 'modal-back' }, [node]);
+  host.appendChild(back);
+  const prevScope = host, prevFocus = document.activeElement;
+  const h = { onKey: (name) => { if (name === 'BACK') { api.close(); return true; } return false; } };
+  const api = { el: back, close() { Nav.pop(h); if (back.parentNode) back.parentNode.removeChild(back); Nav.setScope(prevScope); if (prevFocus && prevFocus.isConnected) Nav.focus(prevFocus); } };
+  Nav.push(h); Nav.setScope(back);
+  setTimeout(() => { Nav.focus(back.querySelector('.fx')); }, 30);
+  return api;
+}
 
-function chatsScreen() {
-  let dialogs = [], filter = ls('chatFilter') || 'all';
+/* ---------- Chats tab ---------- */
+function chatsView() {
+  let filter = ls('chatFilter') || 'all';
   const grid = el('div', { class: 'grid chats' });
-  const tabs = el('div', { class: 'tabs' });
+  const tabs = el('div', { class: 'chips' });
   const info = el('div', { class: 'info' });
   const FILTERS = [['all', 'all'], ['user', 'users'], ['group', 'groups'], ['channel', 'channels'], ['bot', 'bots']];
-  const s = { el: el('div', { class: 'page' }, [
-    el('div', { class: 'top' }, [el('h1', { text: t('chats') }), tabs, btn('⚙', () => open(settingsScreen()), 'icon')]), info, grid
-  ]) };
-  let io = null;
-  function loadAvatar(card, dlg) {
-    if (dlg.avatarDone) return; dlg.avatarDone = true;
-    avatarQ.add(async () => {
-      if (!card.isConnected) { dlg.avatarDone = false; return; }
-      let url = avatarCache[dlg.key];
-      if (!url) { const b = await Service.avatar(dlg); if (b) { url = URL.createObjectURL(b); avatarCache[dlg.key] = url; } }
-      if (url && card.isConnected) { const a = card.querySelector('.avatar'); a.textContent = ''; a.style.backgroundImage = 'url(' + url + ')'; }
-    });
-  }
+  const v = { el: el('div', { class: 'view' }, [tabs, info, grid]) };
+  let io = null, loaded = false;
   function render() {
     grid.innerHTML = '';
-    const list = dialogs.filter((d) => filter === 'all' || d.kind === filter);
+    const list = (state.dialogs || []).filter((d) => filter === 'all' || d.kind === filter);
     info.textContent = list.length ? '' : t('noChats');
     if (io) io.disconnect();
-    io = ('IntersectionObserver' in window) ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { loadAvatar(e.target, e.target._dlg); io.unobserve(e.target); } }), { rootMargin: '300px' }) : null;
+    io = ('IntersectionObserver' in window) ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { fillAvatar(e.target.querySelector('.avatar'), e.target._dlg); io.unobserve(e.target); } }), { rootMargin: '300px' }) : null;
     list.forEach((d) => {
-      const card = el('button', { class: 'fx card chat', type: 'button', onclick: () => open(mediaScreen(d)) }, [
+      const card = el('button', { class: 'fx card chat', type: 'button', onclick: () => { state.chat = d; ls('lastChat', d.key); state.focusGrid = true; state.go('media'); } }, [
         avatarNode(d),
         el('div', { class: 'meta' }, [el('div', { class: 'title', text: d.title }), el('div', { class: 'sub', text: d.last })]),
         d.unread ? el('span', { class: 'badge', text: String(d.unread > 99 ? '99+' : d.unread) }) : null
       ]);
       card._dlg = d;
-      if (avatarCache[d.key]) { const a = card.querySelector('.avatar'); a.textContent = ''; a.style.backgroundImage = 'url(' + avatarCache[d.key] + ')'; d.avatarDone = true; }
-      else if (io) io.observe(card); else loadAvatar(card, d);
+      if (io && !avatarCache[d.key]) io.observe(card); else fillAvatar(card.querySelector('.avatar'), d);
       grid.appendChild(card);
     });
   }
@@ -196,34 +212,44 @@ function chatsScreen() {
     tabs.innerHTML = '';
     FILTERS.forEach((f) => tabs.appendChild(el('button', { class: 'fx tab' + (filter === f[0] ? ' on' : ''), type: 'button', text: t(f[1]), onclick: () => { filter = f[0]; ls('chatFilter', filter); renderTabs(); render(); Nav.focus(tabs.querySelector('.on')); } })));
   }
-  async function load() {
+  v.activate = async () => {
+    renderTabs();
+    if (loaded) return;
     info.textContent = t('loading');
-    try { dialogs = await Service.dialogs(); renderTabs(); render(); if (!stack.length || stack[stack.length - 1] === s) Nav.focus(grid.querySelector('.fx') || Nav.first()); }
-    catch (e) { info.textContent = errCode(e); }
-  }
-  renderTabs();
-  s.onOpen = load;
-  s.onResume = () => {};
-  s.onBack = () => exitApp();
-  s.destroy = () => { if (io) io.disconnect(); };
-  return s;
+    try { await ensureDialogs(); loaded = true; render(); } catch (e) { info.textContent = errCode(e); }
+  };
+  v.destroy = () => { if (io) io.disconnect(); };
+  return v;
 }
 
-/* ---------- media gallery of one chat ---------- */
+/* ---------- Media tab ---------- */
 const thumbQ = new Queue(4);
-function mediaScreen(dlg) {
-  const TABS = ['media', 'videos', 'photos', 'music', 'voice', 'files'];
-  let filter = 'media', items = [], next = 0, loading = false, ended = false, gen = 0;
+const FILTER_LIST = ['media', 'videos', 'photos', 'music', 'voice', 'files'];
+function mediaView() {
+  let fi = 0, items = [], next = 0, loading = false, ended = false, gen = 0, query = '', shown = null;
   const grid = el('div', { class: 'grid media' });
-  const tabs = el('div', { class: 'tabs' });
   const info = el('div', { class: 'info' });
-  const s = { el: el('div', { class: 'page' }, [el('div', { class: 'top' }, [btn('←', () => close(), 'icon'), el('h1', { text: dlg.title }), tabs]), info, grid]) };
+  const filterBtn = el('button', { class: 'fx pill primary', type: 'button', onclick: () => { fi = (fi + 1) % FILTER_LIST.length; renderBar(); reset(); Nav.focus(filterBtn); } });
+  const chatLabel = el('span', { class: 'chatname' });
+  const chatAv = el('span', { class: 'avatar sm' });
+  const chatBtn = el('button', { class: 'fx pill chatsel', type: 'button', onclick: () => chatModal() }, [chatLabel, chatAv, el('span', { class: 'caret', text: '▾' })]);
+  const searchBtn = el('button', { class: 'fx pill round', type: 'button', text: '🔍', onclick: () => searchModal() });
+  const bar = el('div', { class: 'toolbar' }, [filterBtn, chatBtn, searchBtn]);
+  const v = { el: el('div', { class: 'view' }, [bar, info, grid]) };
+  function renderBar() {
+    filterBtn.textContent = t('f_' + FILTER_LIST[fi]) + '  →';
+    const c = state.chat;
+    chatLabel.textContent = (c ? c.title : '…') + (query ? '  🔍 ' + query : '');
+    chatAv.textContent = c ? initials(c.title) : ''; chatAv.style.backgroundImage = ''; chatAv.style.background = c ? colorFor(c.key) : '#333';
+    if (c) fillAvatar(chatAv, c);
+  }
   function cellFor(it, idx) {
-    const kind = it.type;
+    const kind = it.type, cap = (it.caption || '').split('\n');
+    const label = it.title || cap[0] || it.name || '';
     const c = el('button', { class: 'fx card cell ' + kind, type: 'button', onclick: () => open(viewerScreen(items, items.indexOf(it))) }, [
       el('div', { class: 'ph', text: kind === 'audio' ? '♪' : kind === 'file' ? '📄' : '' }),
-      kind === 'audio' || kind === 'file' ? el('div', { class: 'fname', text: it.title || it.name || it.caption || '' }) : null,
-      el('div', { class: 'tags' }, [kind === 'video' ? el('span', { class: 'tag', text: '▶ ' + (it.duration ? fmtDur(it.duration) : '') }) : null, it.size ? el('span', { class: 'tag', text: fmtSize(it.size) }) : null])
+      kind === 'video' && it.duration ? el('span', { class: 'dur', text: fmtDur(it.duration) }) : null,
+      el('div', { class: 'cap' }, [el('div', { class: 'c1', text: label }), el('div', { class: 'c2', text: (cap[1] || (it.size ? fmtSize(it.size) : '')) })])
     ]);
     c.addEventListener('focus', () => { if (idx >= items.length - 10) more(); });
     if (kind === 'video' || kind === 'photo' || kind === 'image' || it.gif) {
@@ -237,51 +263,133 @@ function mediaScreen(dlg) {
     return c;
   }
   async function more() {
-    if (loading || ended) return;
+    if (loading || ended || !state.chat) return;
     loading = true; const my = gen;
     info.textContent = items.length ? t('loadMore') : t('loading');
     try {
-      const r = await Service.mediaPage(dlg, filter, next);
+      const r = await Service.mediaPage(state.chat, FILTER_LIST[fi], next, query);
       if (my !== gen) return;
       const base = items.length;
       r.items.forEach((it, i) => { items.push(it); grid.appendChild(cellFor(it, base + i)); });
       next = r.next; if (!r.next) ended = true;
       info.textContent = items.length ? '' : t('noMedia');
-      if (base === 0 && my === gen) {
-        const fc = grid.querySelector('.fx');
-        if (fc && tabs.contains(document.activeElement)) { /* keep focus on the tabs while browsing them */ } else if (fc) Nav.focus(fc);
-      }
-      // if the page was mostly filtered out and the screen is not full, keep going
+      if (base === 0 && state.focusGrid) { state.focusGrid = false; Nav.focus(grid.querySelector('.fx')); }
       if (!ended && grid.children.length < 12) { loading = false; return more(); }
-    } catch (e) { if (my === gen) info.textContent = errCode(e) + ' — ' + t('retry'); }
+    } catch (e) { if (my === gen) info.textContent = errCode(e); }
     loading = false;
   }
-  function reset() {
-    gen++; items = []; next = 0; ended = false; loading = false; grid.innerHTML = ''; thumbQ.clear(); more();
+  function reset() { gen++; items = []; next = 0; ended = false; loading = false; grid.innerHTML = ''; thumbQ.clear(); more(); }
+  function chatModal() {
+    const list = el('div', { class: 'mlist' });
+    let showArchive = false, m;
+    const render = async () => {
+      list.innerHTML = '';
+      let src = state.dialogs || [];
+      if (showArchive) {
+        if (!state.archived) { list.appendChild(el('div', { class: 'info', text: t('loading') })); try { state.archived = await Service.dialogs(1); } catch (e) { state.archived = []; } list.innerHTML = ''; }
+        src = state.archived;
+      }
+      list.appendChild(el('button', { class: 'fx mrow all', type: 'button', onclick: () => { showArchive = !showArchive; render(); } }, [el('span', { class: 'mt', text: showArchive ? t('allChats') : t('archive') }), el('span', { class: 'mi', text: '🗀' })]));
+      src.forEach((d) => {
+        const av = avatarNode(d); fillAvatar(av, d);
+        list.appendChild(el('button', { class: 'fx mrow', type: 'button', onclick: () => { state.chat = d; ls('lastChat', d.key); query = ''; m.close(); renderBar(); reset(); } }, [el('span', { class: 'mt', text: d.title }), av]));
+      });
+      setTimeout(() => Nav.focus(list.querySelector('.fx')), 20);
+    };
+    m = openModal(el('div', { class: 'modal' }, [el('h2', { text: t('convSel') }), list]));
+    render();
   }
-  function renderTabs() {
-    tabs.innerHTML = '';
-    TABS.forEach((f) => tabs.appendChild(el('button', { class: 'fx tab' + (filter === f ? ' on' : ''), type: 'button', text: t(f), onclick: () => { filter = f; renderTabs(); reset(); Nav.focus(tabs.querySelector('.on')); } })));
+  function searchModal() {
+    const f = field(t('searchPh'), { type: 'text', value: query });
+    let m;
+    const go = () => { query = f.input.value.trim(); m.close(); renderBar(); reset(); };
+    m = openModal(el('div', { class: 'modal' }, [el('h2', { text: t('search') }), f.row, el('div', { class: 'row' }, [btn(t('search'), go, 'primary'), btn(t('cancel'), () => m.close())])]));
+    setTimeout(() => Nav.focus(f.input), 60);
   }
-  renderTabs();
-  s.onOpen = () => reset();
-  s.focusFirst = () => Nav.focus(tabs.querySelector('.on'));
-  s.destroy = () => { gen++; thumbQ.clear(); };
+  v.activate = async () => {
+    try {
+      const list = await ensureDialogs();
+      if (!state.chat) { const last = ls('lastChat'); state.chat = list.filter((d) => d.key === last)[0] || list[0] || null; }
+    } catch (e) { info.textContent = errCode(e); return; }
+    renderBar();
+    if (state.chat !== shown) { shown = state.chat; query = ''; renderBar(); reset(); }
+  };
+  v.destroy = () => { gen++; thumbQ.clear(); };
+  return v;
+}
+
+/* ---------- Settings tab ---------- */
+function settingsView() {
+  let sure = false;
+  const who = el('p', { class: 'body', text: '' });
+  const out = btn(t('logout'), () => {
+    if (!sure) { sure = true; out.textContent = t('logoutSure'); setTimeout(() => { sure = false; out.textContent = t('logout'); }, 5000); return; }
+    Service.logout().then(() => start());
+  }, 'danger');
+  const v = { el: el('div', { class: 'view narrow' }, [
+    el('h2', { text: t('account') }), who,
+    el('div', { class: 'col' }, [
+      btn(t('language') + ': ' + (I18n.lang() === 'he' ? 'עברית → English' : 'English → עברית'), () => { I18n.set(I18n.lang() === 'he' ? 'en' : 'he'); start(); }),
+      btn(t('clearCache'), () => { Object.keys(avatarCache).forEach((k) => { delete avatarCache[k]; }); toast(t('cleared')); }),
+      btn(t('changeKeys'), () => open(setupScreen(true))),
+      out
+    ])
+  ]) };
+  v.activate = () => { Service.me().then((m) => { who.textContent = m.name + (m.username ? '  @' + m.username : '') + (m.phone ? '  +' + m.phone : ''); }).catch(() => { who.textContent = ''; }); };
+  return v;
+}
+
+/* ---------- shell: Settings | Chats | Media ---------- */
+function shellScreen() {
+  const nav = el('div', { class: 'topnav' });
+  const content = el('div', { class: 'content' });
+  const views = { settings: settingsView(), chats: chatsView(), media: mediaView() };
+  const names = [['settings', 'tabSettings'], ['chats', 'tabChats'], ['media', 'tabMedia']];
+  Object.keys(views).forEach((k) => { views[k].el.hidden = true; content.appendChild(views[k].el); });
+  const s = { el: el('div', { class: 'shell' }, [nav, content]), noAutoFocus: true };
+  function renderNav() {
+    nav.innerHTML = '';
+    names.forEach((n) => nav.appendChild(el('button', { class: 'fx navtab' + (state.tab === n[0] ? ' on' : ''), type: 'button', text: t(n[1]), onclick: () => go(n[0]) })));
+  }
+  function go(tab) {
+    state.tab = tab;
+    Object.keys(views).forEach((k) => { views[k].el.hidden = k !== tab; });
+    renderNav();
+    if (views[tab].activate) views[tab].activate();
+    if (!state.focusGrid) Nav.focus(nav.querySelector('.on'));
+  }
+  state.go = go;
+  s.onOpen = () => { ensureDialogs().catch(() => {}); go(state.tab); };
+  s.onBack = () => { if (state.tab !== 'chats') go('chats'); else exitApp(); };
+  s.focusFirst = () => Nav.focus(nav.querySelector('.on'));
+  s.destroy = () => { Object.keys(views).forEach((k) => { if (views[k].destroy) views[k].destroy(); }); };
   return s;
 }
 
 /* ---------- viewer ---------- */
 function viewerScreen(list, startIdx) {
-  let idx = startIdx, eng = null, hideT = null, objUrl = null, paused = false, lastSeekKey = 0, seekAcc = 0;
+  let idx = startIdx, eng = null, hideT = null, objUrl = null, lastSeekKey = 0, seekAcc = 0, speedI = 0, loop = false;
+  const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
   const stage = el('div', { class: 'stage' });
   const title = el('div', { class: 'vtitle' });
   const status = el('div', { class: 'vstatus' });
-  const bar = el('div', { class: 'vbar' }, [el('div', { class: 'vdl' }), el('div', { class: 'vpos' })]);
-  const time = el('div', { class: 'vtime' });
-  const ctl = el('div', { class: 'vctl' }, [title, el('div', { class: 'vbottom' }, [bar, time, el('div', { class: 'vhint', text: t('seekHint') })])]);
+  const bar = el('div', { class: 'vbar' }, [el('div', { class: 'vdl' }), el('div', { class: 'vpos' }), el('div', { class: 'vknob' })]);
+  const tL = el('span', { class: 'tl' }), tR = el('span', { class: 'tr' });
+  const trow = el('div', { class: 'vtimes' }, [tL, tR]);
+  const vname = el('div', { class: 'vname' });
+  const bPlay = el('button', { class: 'fx vbtn big', type: 'button', text: '❚❚', onclick: () => toggle() });
+  const bRw = el('button', { class: 'fx vbtn', type: 'button', text: '◀◀', onclick: () => seekBy(-1) });
+  const bFf = el('button', { class: 'fx vbtn', type: 'button', text: '▶▶', onclick: () => seekBy(1) });
+  const bSp = el('button', { class: 'fx vbtn', type: 'button', text: '1.0x', onclick: () => { speedI = (speedI + 1) % SPEEDS.length; applySpeed(); } });
+  const bLoop = el('button', { class: 'fx vbtn', type: 'button', text: '⟲', onclick: () => { loop = !loop; bLoop.classList.toggle('on', loop); const v = vEl(); if (v) v.loop = loop; } });
+  const btns = el('div', { class: 'vbtns' }, [bLoop, bSp, bRw, bFf, bPlay]);
+  const bottom = el('div', { class: 'vbottom' }, [vname, bar, trow, btns]);
+  const ctl = el('div', { class: 'vctl' }, [title, bottom]);
   const s = { el: el('div', { class: 'viewer' }, [stage, status, ctl]), noAutoFocus: true };
   const vEl = () => stage.querySelector('video,audio');
-  function showCtl() { ctl.classList.add('on'); clearTimeout(hideT); hideT = setTimeout(() => { const v = vEl(); if (!v || !v.paused) ctl.classList.remove('on'); }, 4500); }
+  const inCtl = () => { const a = document.activeElement; return !!(a && a.classList && a.classList.contains('vbtn')); };
+  function applySpeed() { const v = vEl(); const sp = SPEEDS[speedI]; if (v) { v.defaultPlaybackRate = sp; v.playbackRate = sp; } bSp.textContent = (sp % 1 ? String(sp) : sp.toFixed(1)) + 'x'; }
+  function showCtl() { ctl.classList.add('on'); clearTimeout(hideT); hideT = setTimeout(() => { const v = vEl(); if (inCtl()) { showCtl(); return; } if (!v || !v.paused) ctl.classList.remove('on'); }, 4500); }
   function cleanup() {
     if (eng) { eng.stop(); eng = null; }
     if (objUrl) { try { URL.revokeObjectURL(objUrl); } catch (e) { /* ignore */ } objUrl = null; }
@@ -293,10 +401,12 @@ function viewerScreen(list, startIdx) {
     cleanup();
     idx = (i + list.length) % list.length;
     const it = list[idx], myIdx = idx;
-    title.textContent = (it.chat ? it.chat.title + ' · ' : '') + (it.title || it.name || it.caption || '') + (list.length > 1 ? '   ' + (idx + 1) + '/' + list.length : '');
+    const nm = it.name || it.title || (it.caption || '').split('\n')[0] || '';
+    title.textContent = (it.chat ? it.chat.title : '') + (list.length > 1 ? '   ' + (idx + 1) + '/' + list.length : '');
+    vname.textContent = nm;
     showCtl();
     if (it.type === 'photo' || it.type === 'image') {
-      ctl.classList.add('photo'); bar.style.display = 'none'; time.style.display = 'none';
+      ctl.classList.add('photo');
       say(t('loading'));
       try {
         const b = await Service.photo(it);
@@ -308,13 +418,16 @@ function viewerScreen(list, startIdx) {
       return;
     }
     if (it.type !== 'video' && it.type !== 'audio') { say(t('notPlayable') + (it.name ? ': ' + it.name : ''), 'bad'); return; }
-    ctl.classList.remove('photo'); bar.style.display = ''; time.style.display = '';
+    ctl.classList.remove('photo');
     const v = el(it.type === 'audio' ? 'audio' : 'video', { class: 'vmedia', playsinline: true, 'webkit-playsinline': true });
+    v.loop = loop;
     if (it.type === 'audio') stage.appendChild(el('div', { class: 'vaudio', text: '♪' }));
     stage.appendChild(v);
     say(t('buffering'));
     if (it.size > 1.5e9) toast(t('tooBig'));
-    v.addEventListener('playing', () => { silent(); });
+    v.addEventListener('playing', () => { silent(); bPlay.textContent = '❚❚'; applySpeed(); });
+    v.addEventListener('play', () => { bPlay.textContent = '❚❚'; });
+    v.addEventListener('pause', () => { bPlay.textContent = '▶'; });
     v.addEventListener('waiting', () => { if (eng && !eng.done) say(t('buffering') + ' ' + pct()); });
     v.addEventListener('error', () => { if (eng && eng.done && eng.swapped >= eng.loaded) say(t('notPlayable'), 'bad'); else if (eng) say(t('buffering') + ' ' + pct()); });
     v.addEventListener('timeupdate', paint);
@@ -329,10 +442,12 @@ function viewerScreen(list, startIdx) {
   function pct() { return eng && eng.total ? Math.floor(eng.loaded / eng.total * 100) + '%' : ''; }
   function paint() {
     const v = vEl(); if (!v || !eng) return;
-    const dur = v.duration;
-    bar.firstChild.style.width = (eng.total ? Math.min(100, eng.loaded / eng.total * 100) : 0) + '%';
-    bar.lastChild.style.width = (isFinite(dur) && dur > 0 ? Math.min(100, v.currentTime / dur * 100) : 0) + '%';
-    time.textContent = fmtDur(v.currentTime) + ' / ' + (isFinite(dur) ? fmtDur(dur) : (list[idx].duration ? fmtDur(list[idx].duration) : '--:--')) + (eng.done ? '' : '   ⬇ ' + pct());
+    const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : (list[idx].duration || 0);
+    bar.querySelector('.vdl').style.width = (eng.total ? Math.min(100, eng.loaded / eng.total * 100) : 0) + '%';
+    const f = dur ? Math.min(100, v.currentTime / dur * 100) : 0;
+    bar.querySelector('.vpos').style.width = f + '%'; bar.querySelector('.vknob').style.left = f + '%';
+    tL.textContent = fmtDur(v.currentTime) + (eng.done ? '' : '   ⬇ ' + pct());
+    tR.textContent = dur ? fmtDur(Math.max(0, dur - v.currentTime)) : '--:--';
   }
   function toggle() { const v = vEl(); if (!v) return; if (eng) eng.userPaused = !v.paused; if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); showCtl(); }
   function seekBy(dir) {
@@ -345,17 +460,22 @@ function viewerScreen(list, startIdx) {
   }
   s.onKey = (name) => {
     const it = list[idx], isImg = it && (it.type === 'photo' || it.type === 'image');
-    if (name === 'BACK') { close(); return true; }
+    if (name === 'BACK') { if (inCtl()) { document.activeElement.blur(); showCtl(); return true; } close(); return true; }
     if (name === 'CH_UP' || (isImg && name === 'RIGHT')) { show(idx + 1); return true; }
     if (name === 'CH_DOWN' || (isImg && name === 'LEFT')) { show(idx - 1); return true; }
     if (isImg) return name === 'UP' || name === 'DOWN' || name === 'OK';
+    if (inCtl()) {
+      showCtl();
+      if (name === 'DOWN') { document.activeElement.blur(); return true; }
+      if (name === 'OK' || name === 'LEFT' || name === 'RIGHT' || name === 'UP') return false;   // default navigation between the buttons
+    }
+    if (name === 'UP' || name === 'DOWN') { showCtl(); Nav.focus(bPlay); return true; }
     if (name === 'OK' || name === 'PLAYPAUSE') { toggle(); return true; }
     if (name === 'PLAY') { const v = vEl(); if (eng) eng.userPaused = false; if (v) v.play(); showCtl(); return true; }
     if (name === 'PAUSE') { const v = vEl(); if (eng) eng.userPaused = true; if (v) v.pause(); showCtl(); return true; }
     if (name === 'STOP') { close(); return true; }
     if (name === 'LEFT' || name === 'RW') { seekBy(-1); return true; }
     if (name === 'RIGHT' || name === 'FF') { seekBy(1); return true; }
-    if (name === 'UP' || name === 'DOWN') { showCtl(); return true; }
     return false;
   };
   s.onOpen = () => show(idx);
@@ -363,29 +483,8 @@ function viewerScreen(list, startIdx) {
   return s;
 }
 
-/* ---------- settings ---------- */
-function settingsScreen() {
-  let sure = false;
-  const who = el('p', { class: 'body', text: t('loading') });
-  Service.me().then((m) => { who.textContent = m.name + (m.username ? '  @' + m.username : '') + (m.phone ? '  +' + m.phone : ''); }).catch(() => { who.textContent = ''; });
-  const out = btn(t('logout'), () => {
-    if (!sure) { sure = true; out.textContent = t('logoutSure'); setTimeout(() => { sure = false; out.textContent = t('logout'); }, 5000); return; }
-    Service.logout().then(() => start());
-  }, 'danger');
-  const s = { el: el('div', { class: 'center-card' }, [
-    el('h1', { text: t('settings') }), el('h2', { text: t('account') }), who,
-    el('div', { class: 'col' }, [
-      btn(t('language') + ': ' + (I18n.lang() === 'he' ? 'עברית → English' : 'English → עברית'), () => { I18n.set(I18n.lang() === 'he' ? 'en' : 'he'); start(); }),
-      btn(t('clearCache'), () => { Object.keys(avatarCache).forEach((k) => { delete avatarCache[k]; }); toast(t('cleared')); }),
-      btn(t('changeKeys'), () => open(setupScreen(true))),
-      out, btn(t('back'), () => close())
-    ])
-  ]) };
-  return s;
-}
-
 /* ---------- boot ---------- */
-function showChats() { replaceAll(chatsScreen()); }
+function showChats() { replaceAll(shellScreen()); }
 function errorScreen(text) {
   const s = { el: el('div', { class: 'center-card' }, [el('h1', { text: t('appName') }), el('p', { class: 'body err', text }), el('div', { class: 'row' }, [btn(t('retry'), () => start(), 'primary'), btn(t('changeKeys'), () => open(setupScreen(true))), langButton()])]) };
   s.onBack = () => exitApp();
