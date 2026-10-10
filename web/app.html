@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>INDTV</title>
+  <meta name="description" content="INDTV — Indian live TV for Smart TV browsers. Public channels from the iptv-org India playlist.">
+  <meta name="theme-color" content="#050609">
+  <meta name="color-scheme" content="dark">
+  <meta name="referrer" content="no-referrer">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <meta property="og:image" content="assets/icons/banner-1280x720.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://iptv-org.github.io" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Heebo:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/app.css">
+  <script>var INDTV_BUILD = 0;</script>
+  <script>
+    /* Correct direction before first paint (preference saved by the language toggle). */
+    (function () {
+      try {
+        var sc = JSON.parse(localStorage.getItem('indtv:scale'));
+        document.documentElement.setAttribute('data-scale', sc === 'm' || sc === 'xl' ? sc : 'l');
+        if (JSON.parse(localStorage.getItem('indtv:lang')) === 'he') {
+          document.documentElement.setAttribute('lang', 'he');
+          document.documentElement.setAttribute('dir', 'rtl');
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header id="topbar" class="topbar"></header>
+    <nav id="siderail" class="siderail" aria-label="Sections"></nav>
+    <main id="stage" class="stage">
+      <section id="screen-home" class="screen" hidden></section>
+      <section id="screen-live" class="screen" hidden></section>
+      <section id="screen-movies" class="screen" hidden></section>
+      <section id="screen-shows" class="screen" hidden></section>
+      <section id="screen-kids" class="screen" hidden></section>
+      <section id="screen-news" class="screen" hidden></section>
+      <section id="screen-favorites" class="screen" hidden></section>
+      <section id="screen-settings" class="screen" hidden></section>
+      <section id="screen-search" class="screen" hidden></section>
+    </main>
+  </div>
+  <div id="player" class="player" hidden></div>
+  <div id="splash" class="splash"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><p style="color:#F8F8F9;padding:4rem;font:20px sans-serif">INDTV needs JavaScript to run.</p></noscript>
+
+  <!-- HLS playback engine (pinned). If it cannot load, INDTV falls back to the TV's native HLS player. -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+
+  <script src="js/core/util.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/i18n.js"></script>
+  <script src="js/data/m3u-parser.js"></script>
+  <script src="js/data/repositories.js"></script>
+  <script src="js/data/epg-vod.js"></script>
+  <script src="js/data/shows.js"></script>
+  <script src="js/player/player-controller.js"></script>
+  <script src="js/player/live-translate.js"></script>
+  <script src="js/ui/icons.js"></script>
+  <script src="js/ui/focus.js"></script>
+  <script src="js/ui/edit-dock.js"></script>
+  <script src="js/ui/components.js"></script>
+  <script src="js/ui/router.js"></script>
+  <script src="js/ui/screens/splash.js"></script>
+  <script src="js/ui/screens/home.js"></script>
+  <script src="js/ui/screens/live.js"></script>
+  <script src="js/ui/screens/grids.js"></script>
+  <script src="js/ui/screens/search.js"></script>
+  <script src="js/ui/screens/settings.js"></script>
+  <script src="js/ui/screens/player-screen.js"></script>
+  <script src="js/core/updater.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

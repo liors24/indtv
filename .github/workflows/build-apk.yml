@@ -23,6 +23,11 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Stamp build number
+        run: |
+          sed -i "s/INDTV_BUILD = 0;/INDTV_BUILD = ${{ github.run_number }};/" web/app.html
+          sed -i "s/INDTV_SHELL_BUILD = 0;/INDTV_SHELL_BUILD = ${{ github.run_number }};/" web/index.html
+
       - name: Build signed APK
         working-directory: android
         run: gradle assembleRelease --no-daemon --stacktrace
@@ -79,6 +84,8 @@ jobs:
           APP="$GITHUB_WORKSPACE/tizen-build/app"
           mkdir -p "$APP"
           cp -r web/. "$APP/"
+          sed -i "s/INDTV_BUILD = 0;/INDTV_BUILD = ${GITHUB_RUN_NUMBER};/" "$APP/app.html"
+          sed -i "s/INDTV_SHELL_BUILD = 0;/INDTV_SHELL_BUILD = ${GITHUB_RUN_NUMBER};/" "$APP/index.html"
           rm -rf "$APP/tests" "$APP/README.md" "$APP/sw.js"
           cp tizen/config.xml tizen/icon.png "$APP/"
           VERSION="1.0.${GITHUB_RUN_NUMBER}"
@@ -97,8 +104,28 @@ jobs:
           name: INDTV-wgt
           path: INDTV.wgt
 
+  # Over-the-air bundle: installed apps download this on launch and update themselves.
+  ota:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build and publish bundle to the ota branch
+        run: |
+          mkdir -p ota-out
+          node tools/make-ota.js ${{ github.run_number }} ota-out/bundle.json
+          cd ota-out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bundle.json
+          git commit -q -m "OTA bundle ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/ota
+
   release:
-    needs: [android, samsung]
+    needs: [android, samsung, ota]
     if: ${{ always() && needs.android.result == 'success' }}
     runs-on: ubuntu-latest
     steps:

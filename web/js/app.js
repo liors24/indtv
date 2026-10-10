@@ -66,6 +66,8 @@
       return splash.then(function () {
         document.documentElement.classList.add('is-ready');
         INDTV.Router.focusNav(tab);
+        try { localStorage.removeItem('indtv:ota-boot'); } catch (e) { /* ignore */ }   // this bundle started fine
+        setTimeout(function () { INDTV.Updater.check(); }, 4000);
       });
     });
 
