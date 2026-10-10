@@ -47,7 +47,7 @@
     c = c && typeof c === 'object' ? c : {};
     var prov = PROVIDERS[c.provider] ? c.provider : 'groq';
     return {
-      provider: prov, key: c.key || '', key2: c.key2 || '', target: c.target || 'he', showOriginal: c.showOriginal === true,
+      provider: prov, key: String(c.key || '').replace(/[\s"']/g, ''), key2: String(c.key2 || '').replace(/[\s"']/g, ''), target: c.target || 'he', showOriginal: c.showOriginal === true,
       subSize: c.subSize || 'l', subBg: c.subBg || 'semi', subColor: c.subColor || 'white', subPos: c.subPos || 'bottom',
       base: c.base || PROVIDERS[prov].base, stt: c.stt || PROVIDERS[prov].stt, llm: c.llm || PROVIDERS[prov].llm
     };
@@ -647,13 +647,21 @@
   LT._testDG = function (cfg) {
     var he = INDTV.I18n.lang() === 'he';
     var lines = [];
-    return new Promise(function (resolve) {
-      var ws, done = false;
-      function fin(ok, line) { if (done) return; done = true; try { ws.close(); } catch (e) { /* ignore */ } resolve({ ok: ok, line: line }); }
-      try { ws = new WebSocket(cfg.base + '?model=' + encodeURIComponent(cfg.stt) + '&language=multi', ['token', cfg.key]); } catch (e) { fin(false, '✗ ' + describe(e)); return; }
-      var timer = setTimeout(function () { fin(false, '✗ Deepgram: ' + (he ? 'אין תשובה מהשירות' : 'no answer')); }, 10000);
-      ws.onopen = function () { clearTimeout(timer); fin(true, he ? '✓ Deepgram — המפתח תקין (' + cfg.stt + ')' : '✓ Deepgram key accepted (' + cfg.stt + ')'); };
-      ws.onerror = function () { clearTimeout(timer); fin(false, '✗ Deepgram: ' + (he ? 'המפתח נדחה או שאין חיבור' : 'key rejected or no connection')); };
+    // 1) ask the REST API: it tells a wrong key (401/403) from a connection problem
+    var rest = http('GET', 'https://api.deepgram.com/v1/projects', { Authorization: 'Token ' + cfg.key, Accept: 'application/json' }, null)
+      .then(function (res) { return res.status; }, function () { return 0; });
+    return rest.then(function (status) {
+      if (status === 200) return { ok: true, line: he ? '✓ Deepgram — המפתח תקין (' + cfg.stt + ')' : '✓ Deepgram key accepted (' + cfg.stt + ')' };
+      if (status === 401 || status === 403) return { ok: false, line: '✗ Deepgram: ' + (he ? 'המפתח שגוי — הועתק חלקית או שהוא מפתח אחר (' + cfg.key.length + ' תווים)' : 'wrong key — copied partially or a different key (' + cfg.key.length + ' chars)') };
+      // 2) REST unreachable (browser CORS etc.): try the live connection itself
+      return new Promise(function (resolve) {
+        var ws, done = false;
+        function fin(ok, line) { if (done) return; done = true; try { ws.close(); } catch (e) { /* ignore */ } resolve({ ok: ok, line: line }); }
+        try { ws = new WebSocket(cfg.base + '?model=' + encodeURIComponent(cfg.stt) + '&language=multi', ['token', cfg.key]); } catch (e) { fin(false, '✗ ' + describe(e)); return; }
+        var timer = setTimeout(function () { fin(false, '✗ Deepgram: ' + (he ? 'אין תשובה מהשירות — בדקו חיבור לאינטרנט' : 'no answer — check the internet connection')); }, 10000);
+        ws.onopen = function () { clearTimeout(timer); fin(true, he ? '✓ Deepgram — המפתח תקין (' + cfg.stt + ')' : '✓ Deepgram key accepted (' + cfg.stt + ')'); };
+        ws.onerror = function () { clearTimeout(timer); fin(false, '✗ Deepgram: ' + (he ? 'החיבור נדחה (' + cfg.key.length + ' תווים במפתח; בדרך כלל 40) — צרו מפתח חדש והעתיקו אותו במלואו' : 'connection refused (key has ' + cfg.key.length + ' chars; usually 40) — create a new key and copy it fully')); };
+      });
     }).then(function (r) {
       lines.push(r.line);
       if (!r.ok) return { ok: false, lines: lines };
