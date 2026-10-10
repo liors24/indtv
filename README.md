@@ -84,3 +84,14 @@ android/                   מעטפת אנדרואיד TV (Java, WebView)
 מהגרסה הזו והלאה, האפליקציה בודקת בכל הפעלה אם יצאה גרסה חדשה של התוכן (`ota/bundle.json` בענף `ota`),
 מורידה אותה לבד ומחליפה בלי התקנה מחדש. אם אין חיבור לאינטרנט או שהגרסה החדשה לא עולה — ממשיכים עם הגרסה המותקנת.
 התקנה ידנית נחוצה רק כשמשתנה המעטפת עצמה (נדיר).
+
+## Recording and rewinding live TV
+
+Inside the player (no extra app):
+
+- **Rewind / forward** (remote ⏪ ⏩ or the on-screen buttons): the app keeps the last N minutes (Settings → Recording, default 30) of the channel you watch in the device's IndexedDB. Rewinding plays that buffer; repeated presses jump further (10 s, 10 s, 30 s, 1 min, 2 min, 5 min).
+- **Programme start** (green key / ⏮↺ button): jumps to the beginning of the current programme from the guide, if it is still in the buffer (otherwise to the earliest saved point).
+- **Back to live** (yellow key / LIVE button, or forward past the end of the buffer).
+- **Record** (red key / ● button): saves the current programme — from its start when buffered, until its end (+ padding) — into **Recordings**, where it can be played, seeked and deleted. A recording continues if you change channel.
+- Works by copying the stream's own HLS segments (no re-encoding). Encrypted/DRM streams are never captured; only HLS channels are supported.
+- Test locally: `tools/` has no extra deps; see `web/js/player/dvr.js` for the design notes.

@@ -43,6 +43,10 @@
     del: '<path ' + S + ' d="M9 5.5h10.5A1.5 1.5 0 0 1 21 7v10a1.5 1.5 0 0 1-1.5 1.5H9L3 12z"/><path ' + S + ' d="m11.5 9.5 5 5M16.5 9.5l-5 5"/>',
     space: '<path ' + S + ' d="M4 10v4.5h16V10"/>',
     translate: '<path ' + S + ' d="M3.5 5.5h9M8 3.5v2M10.5 5.5c-.8 3.6-3.3 6.4-6.5 7.8M6 8.5c1 1.9 2.6 3.4 4.6 4.3"/><path ' + S + ' d="m12.5 20.5 4-9.5 4 9.5M14 17h5"/>',
+    record: '<circle ' + S + ' cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.6" fill="currentColor"/>',
+    startOver: '<path ' + S + ' d="M4.6 13a7.6 7.6 0 1 0 2.3-5.6"/><path ' + S + ' d="M4.4 3.9v4h4"/><path fill="currentColor" d="M10.3 9.3v5.4l4.5-2.7z"/>',
+    goLive: '<path ' + S + ' d="M5.2 5.2 13.6 12 5.2 18.8z"/><path ' + S + ' d="M18.5 5v14"/>',
+    recordings: '<rect ' + S + ' x="3" y="5.5" width="18" height="13" rx="2.2"/><circle cx="8.6" cy="12" r="2.4" fill="currentColor"/><path ' + S + ' d="M13.5 10h4.5M13.5 14h3"/>',
     clear: '<circle ' + S + ' cx="12" cy="12" r="8.5"/><path ' + S + ' d="m9 9 6 6M15 9l-6 6"/>'
   };
 

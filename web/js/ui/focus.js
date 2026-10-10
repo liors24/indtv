@@ -11,6 +11,7 @@
     BACK: [10009, 461, 27, 'Escape', 'GoBack', 'BrowserBack', 'Back', 'XF86Back'],
     PLAY: [415, 'MediaPlay'], PAUSE: [19, 'MediaPause'], PLAYPAUSE: [10252, 179, 'MediaPlayPause'],
     STOP: [413, 'MediaStop'], FF: [417, 'MediaFastForward'], RW: [412, 'MediaRewind'],
+    RED: [403, 'ColorF0Red'], GREEN: [404, 'ColorF1Green'], YELLOW: [405, 'ColorF2Yellow'],
     CH_UP: [427, 33, 'ChannelUp', 'PageUp'], CH_DOWN: [428, 34, 'ChannelDown', 'PageDown']
   };
   function match(e, list) {

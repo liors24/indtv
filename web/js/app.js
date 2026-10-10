@@ -16,6 +16,7 @@
     R.register('kids', INDTV.KidsScreen);
     R.register('news', INDTV.NewsScreen);
     R.register('favorites', INDTV.FavoritesScreen);
+    R.register('recordings', INDTV.RecordingsScreen);
     R.register('settings', INDTV.SettingsScreen);
     R.register('search', INDTV.SearchScreen);
     Object.keys(R.screens).forEach(function (k) {
@@ -55,6 +56,7 @@
       // Programme guide: downloaded and parsed in the background once Home is up (never blocks the UI).
       setTimeout(function () { INDTV.EpgRepository.ensureFresh(); }, 3500);
       INDTV.ShowFavorites.startWatcher();
+      if (INDTV.DVR) INDTV.DVR.load();
       INDTV.PlaylistRepository.startBackgroundPolicy();
 
       // 3. Build the shell under the splash so Home is ready the moment it lifts.

@@ -29,12 +29,44 @@
     },
     firstFocus: function () { return Settings.el.querySelector('.fx'); },
 
+    dvrForm: function () {
+      var D = INDTV.DVR, cfg = D.settings(), box = U.el('div', {});
+      function rebuild(key) { Settings.build(); INDTV.Focus.restore(key, Settings.el); }
+      function choice(label, on, key, fn) {
+        return UI.button(label, on ? 'check' : null, function () { fn(); rebuild(key); }, { cls: 'btn-choice' + (on ? ' is-on' : ''), key: key });
+      }
+      if (!D.supported()) { box.appendChild(U.el('p', { class: 'set-status', text: t('dvrUnsupported') })); return box; }
+      var ring = U.el('div', { class: 'set-row', 'data-fgroup': 'set-dvr-ring' });
+      [0, 15, 30, 60, 120].forEach(function (m) {
+        ring.appendChild(choice(m ? m + ' ' + t('recMin') : t('dvrOff'), cfg.ringMin === m, 'dvr:ring:' + m, function () { D.saveSettings({ ringMin: m }); }));
+      });
+      box.appendChild(U.el('span', { class: 'field-label', text: t('dvrRing') }));
+      box.appendChild(ring);
+      box.appendChild(U.el('p', { class: 'set-status', text: t('dvrRingBody') }));
+      function onOff(label, field) {
+        var row = U.el('div', { class: 'set-row', 'data-fgroup': 'set-dvr-' + field });
+        row.appendChild(choice(t('on'), cfg[field], 'dvr:' + field + ':on', function () { var p = {}; p[field] = true; D.saveSettings(p); }));
+        row.appendChild(choice(t('off'), !cfg[field], 'dvr:' + field + ':off', function () { var p = {}; p[field] = false; D.saveSettings(p); }));
+        box.appendChild(U.el('span', { class: 'field-label', text: label }));
+        box.appendChild(row);
+      }
+      onOff(t('dvrAutoStop'), 'autoStop');
+      onOff(t('dvrFromStart'), 'fromStart');
+      var pad = U.el('div', { class: 'set-row', 'data-fgroup': 'set-dvr-pad' });
+      [0, 2, 5, 10].forEach(function (m) {
+        pad.appendChild(choice(m + ' ' + t('recMin'), cfg.padMin === m, 'dvr:pad:' + m, function () { D.saveSettings({ padMin: m }); }));
+      });
+      box.appendChild(U.el('span', { class: 'field-label', text: t('dvrPad') }));
+      box.appendChild(pad);
+      return box;
+    },
+
     build: function () {
       Settings.el.innerHTML = '';
       Settings.scroller = U.el('div', { class: 'vscroll settings-scroll', 'data-top-offset': '7' });
       Settings.el.appendChild(Settings.scroller);
       var s = Settings.scroller;
-      var CATS = [['general', 'catGeneral', 'settings'], ['translate', 'liveTranslate', 'globe'], ['sources', 'sources', 'link'], ['guide', 'epgTitle', 'refresh'], ['about', 'about', 'check']];
+      var CATS = [['general', 'catGeneral', 'settings'], ['translate', 'liveTranslate', 'globe'], ['sources', 'sources', 'link'], ['rec', 'catRec', 'recordings'], ['guide', 'epgTitle', 'refresh'], ['about', 'about', 'check']];
       var parts = {};
       function put(cat, el) { (parts[cat] = parts[cat] || []).push(el); }
       Settings._cat = Settings._cat || 'general';
@@ -111,6 +143,9 @@
       ]);
       put('guide', Settings.section(t('epgTitle'), epgRow));
       Settings.renderEpgStatus();
+
+      // Recording & rewind
+      put('rec', Settings.section(t('dvrTitle'), Settings.dvrForm()));
 
       // Live translation
       put('translate', Settings.section(t('liveTranslate'), Settings.translateForm()));

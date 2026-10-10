@@ -46,11 +46,15 @@
         PS.btn[name] = b;
         return b;
       }
-      main.appendChild(ctl('rw', 'rewind10', t('rewind'), function () { if (!P.seekBy(-10)) PS.flash(PS.btn.rw); }));
+      var dvr = U.el('div', { class: 'osd-dvr', 'data-fgroup': 'osd-dvr' });
+      dvr.appendChild(ctl('rec', 'record', t('recordBtn'), function () { PS.doRecord(); }, 'ctl-sm'));
+      dvr.appendChild(ctl('start', 'startOver', t('startOver'), function () { PS.doStartOver(); }, 'ctl-sm'));
+      dvr.appendChild(ctl('live', 'goLive', t('goLive'), function () { P.goLive(); }, 'ctl-sm ctl-live'));
+      main.appendChild(ctl('rw', 'rewind10', t('rewind'), function () { PS.jump(-1, PS.btn.rw); }));
       main.appendChild(ctl('prev', 'prev', t('prevChannel'), function () { P.step(-1); }));
       main.appendChild(ctl('play', 'pause', t('pause'), function () { P.togglePlay(); }, 'ctl-main'));
       main.appendChild(ctl('next', 'next', t('nextChannel'), function () { P.step(1); }));
-      main.appendChild(ctl('fw', 'forward10', t('forward'), function () { if (!P.seekBy(10)) PS.flash(PS.btn.fw); }));
+      main.appendChild(ctl('fw', 'forward10', t('forward'), function () { PS.jump(1, PS.btn.fw); }));
       var secondary = U.el('div', { class: 'osd-secondary', 'data-fgroup': 'osd-secondary' });
       secondary.appendChild(ctl('tr', 'translate', t('liveTranslate'), function () {
         if (!INDTV.LiveTranslate.isConfigured()) { UI.toast(t('translateSetup')); return; }
@@ -62,7 +66,7 @@
       secondary.appendChild(ctl('back', 'back', t('back'), function () { PS.close(); }, 'ctl-sm'));
       bottom.appendChild(PS.prog);
       bottom.appendChild(PS.progress);
-      bottom.appendChild(U.el('div', { class: 'osd-controls' }, [U.el('div', { class: 'osd-spacer' }), main, secondary]));
+      bottom.appendChild(U.el('div', { class: 'osd-controls' }, [dvr, main, secondary]));
       el.appendChild(bottom);
 
       P.init(PS.video);
@@ -129,8 +133,11 @@
       if (match(e, KEY.CH_DOWN)) { P.step(-1); PS.showOsd(); return true; }
       if (match(e, KEY.PLAYPAUSE) || match(e, KEY.PLAY) || match(e, KEY.PAUSE)) { P.togglePlay(); PS.showOsd(); return true; }
       if (match(e, KEY.STOP)) { P.stop(); PS.showOsd(); return true; }
-      if (match(e, KEY.FF)) { P.seekBy(10); PS.showOsd(); return true; }
-      if (match(e, KEY.RW)) { P.seekBy(-10); PS.showOsd(); return true; }
+      if (match(e, KEY.FF)) { PS.jump(1, PS.btn.fw); PS.showOsd(); return true; }
+      if (match(e, KEY.RW)) { PS.jump(-1, PS.btn.rw); PS.showOsd(); return true; }
+      if (match(e, KEY.RED)) { PS.doRecord(); PS.showOsd(); return true; }
+      if (match(e, KEY.GREEN)) { PS.doStartOver(); PS.showOsd(); return true; }
+      if (match(e, KEY.YELLOW)) { P.goLive(); PS.showOsd(); return true; }
       var isNav = match(e, KEY.LEFT) || match(e, KEY.RIGHT) || match(e, KEY.UP) || match(e, KEY.DOWN) || match(e, KEY.OK);
       if (isNav && !PS.el.classList.contains('osd-on')) {
         // First press only reveals the OSD; it never triggers a control by accident.
@@ -154,6 +161,32 @@
     hideOsd: function () {
       clearTimeout(PS._osdTimer);
       PS.el.classList.remove('osd-on');
+    },
+
+    /** Rewind / forward; repeated presses in a row jump further (10 s, 10 s, 30 s, 1 min, 2 min, 5 min). */
+    jump: function (dir, btn) {
+      var now = Date.now(), steps = [10, 10, 30, 60, 120, 300];
+      PS._jumpN = now - (PS._jumpAt || 0) < 1300 ? Math.min(steps.length - 1, (PS._jumpN || 0) + 1) : 0;
+      PS._jumpAt = now;
+      var ok = P.seekBy(dir * steps[PS._jumpN]);
+      if (!ok) {
+        PS.flash(btn);
+        var st = P.state.get();
+        if (st.kind === 'channel' && dir < 0) UI.toast(t(st.dvrOn ? 'recNoBuffer' : 'recNoDvr'));
+      }
+    },
+    doRecord: function () {
+      var r = P.toggleRecord();
+      if (r === 'started') UI.toast(t('recStarted'));
+      else if (r === 'stopped') UI.toast(t('recStopped'));
+      else if (r === 'busy') UI.toast(t('recBusy'), 'error');
+      else UI.toast(t('recUnavailable'), 'error');
+    },
+    doStartOver: function () {
+      var r = P.jumpToProgramme();
+      if (r.ok) { if (!r.exact) UI.toast(t('progPartial')); return; }
+      PS.flash(PS.btn.start);
+      UI.toast(t(r.why === 'noepg' ? 'progNoEpg' : r.why === 'kind' ? 'recNoDvr' : P.state.get().dvrOn ? 'recNoBuffer' : 'recNoDvr'));
     },
 
     flash: function (btn) {
@@ -182,7 +215,7 @@
           PS.chInfo.appendChild(U.el('span', { class: 'osd-logo' }, [UI.logo(isCh ? item : { name: item.title, poster: item.poster }, { showName: false, eager: true })]));
           PS.chInfo.appendChild(U.el('span', { class: 'osd-ch-text' }, [
             U.el('span', { class: 'osd-ch-name', text: isCh ? item.name : item.title }),
-            U.el('span', { class: 'osd-ch-cat', text: isCh ? (item.groups.join(' · ') || t('liveBroadcast')) : (item.kind === 'episode' ? 'S' + item.season + ' · E' + item.episode : t('movies')) })
+            U.el('span', { class: 'osd-ch-cat', text: isCh ? (item.groups.join(' · ') || t('liveBroadcast')) : st.kind === 'rec' ? (item.chName || t('recordings')) : (item.kind === 'episode' ? 'S' + item.season + ' · E' + item.episode : t('movies')) })
           ]));
         }
         PS.renderProgramme();
@@ -195,7 +228,9 @@
       // badges (top-right)
       PS.badges.innerHTML = '';
       PS.badges.appendChild(U.el('span', { class: 'osd-clock', text: U.formatTime(Date.now(), INDTV.I18n.lang()) }));
-      if (st.kind === 'channel') PS.badges.appendChild(UI.liveBadge('badge-lg'));
+      if (st.kind === 'channel' && st.recording) PS.badges.appendChild(U.el('span', { class: 'badge-rec', text: t('recBadge') + ' ' + U.formatDuration(st.recSec) }));
+      if (st.kind === 'channel' && st.shift) PS.badges.appendChild(U.el('span', { class: 'badge-shift', dir: 'ltr', text: '−' + U.formatDuration(st.behind) + ' ' + t('behindLive') }));
+      else if (st.kind === 'channel') PS.badges.appendChild(UI.liveBadge('badge-lg'));
       var q = st.quality || (item && item.quality ? (parseInt(item.quality, 10) >= 1000 ? 'FHD' : parseInt(item.quality, 10) >= 700 ? 'HD' : null) : null);
       if (q) PS.badges.appendChild(U.el('span', { class: 'tag tag-q', text: q }));
       if (st.muted) PS.badges.appendChild(U.el('span', { class: 'osd-muted', html: INDTV.icon('mute') }));
@@ -206,22 +241,50 @@
       PS.btn.play.setAttribute('aria-label', playing ? t('pause') : t('play'));
       PS.btn.mute.innerHTML = INDTV.icon(st.muted ? 'mute' : 'volume');
       PS.btn.mute.setAttribute('aria-label', st.muted ? t('unmute') : t('mute'));
-      PS.btn.rw.classList.toggle('is-disabled', !st.canSeek);
-      PS.btn.fw.classList.toggle('is-disabled', !st.canSeek);
+      var isCh = st.kind === 'channel';
+      var canBack = isCh ? (st.shift || (st.dvrOn && st.buf >= 6) || st.canSeek) : st.canSeek;
+      PS.btn.rw.classList.toggle('is-disabled', !canBack);
+      PS.btn.fw.classList.toggle('is-disabled', isCh ? !(st.shift || st.canSeek) : !st.canSeek);
+      PS.btn.rec.hidden = PS.btn.start.hidden = !isCh;
+      PS.btn.live.hidden = !(isCh && st.shift);
+      PS.btn.rec.classList.toggle('is-rec', !!st.recording);
+      PS.btn.rec.setAttribute('aria-label', st.recording ? t('recordStop') : t('recordBtn'));
+      PS.btn.rec.innerHTML = INDTV.icon(st.recording ? 'stop' : 'record');
+      PS.btn.start.classList.toggle('is-disabled', !(st.dvrOn && st.buf >= 6));
+      PS.btn.live.innerHTML = INDTV.icon('goLive') + '<span>' + U.escapeHtml(t('liveBadge')) + '</span>';
 
       // progress
       var fill = PS.progress.querySelector('.progress-fill');
       var a = PS.progress.querySelector('.osd-time-a'), b = PS.progress.querySelector('.osd-time-b');
-      if (st.kind === 'vod' && isFinite(st.duration) && st.duration > 0) {
+      var mark = PS.progress.querySelector('.prog-mark');
+      if (mark) mark.remove();
+      PS.progress.classList.toggle('is-shift', !!st.shift);
+      if ((st.kind === 'vod' || st.kind === 'rec') && isFinite(st.duration) && st.duration > 0) {
         fill.style.width = Math.min(100, st.currentTime / st.duration * 100) + '%';
         a.textContent = U.formatDuration(st.currentTime);
         b.textContent = U.formatDuration(st.duration);
       } else {
         var epg = st.kind === 'channel' ? INDTV.EpgRepository.nowNext(item) : null;
         if (epg && epg.now) {
-          fill.style.width = Math.round(epg.progress * 100) + '%';
+          // The bar is the whole programme. While watching behind live the thumb moves back by the delay,
+          // and a tick shows where the saved buffer begins (that is as far back as you can go).
+          var len = epg.now.stop - epg.now.start, at = Date.now() - (st.shift ? st.behind * 1000 : 0);
+          fill.style.width = Math.max(0, Math.min(100, Math.round((at - epg.now.start) / len * 100))) + '%';
           a.textContent = U.formatTime(epg.now.start, INDTV.I18n.lang());
           b.textContent = U.formatTime(epg.now.stop, INDTV.I18n.lang());
+          if (st.dvrOn && st.bufStart > epg.now.start) {
+            var mk = U.el('span', { class: 'prog-mark', 'aria-hidden': 'true' });
+            mk.style.left = Math.min(100, (st.bufStart - epg.now.start) / len * 100) + '%';
+            PS.progress.querySelector('.progress-osd').appendChild(mk);
+          }
+        } else if (st.kind === 'rec') {
+          fill.style.width = '100%';
+          a.textContent = U.formatDuration(st.currentTime);
+          b.textContent = '';
+        } else if (st.shift && st.buf > 0) {
+          fill.style.width = Math.max(0, Math.min(100, (st.buf - st.behind) / st.buf * 100)) + '%';
+          a.textContent = '−' + U.formatDuration(st.behind);
+          b.textContent = t('liveBadge');
         } else {
           fill.style.width = '100%';
           a.textContent = t('liveBadge');

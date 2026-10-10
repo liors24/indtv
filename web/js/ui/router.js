@@ -6,13 +6,13 @@
   var INDTV = root.INDTV = root.INDTV || {};
   var U = INDTV.Util, t = function (k) { return INDTV.I18n.t(k); };
 
-  var TOP_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news'];
+  var TOP_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news', 'recordings'];
   var SIDE_TABS = [
     { tab: 'home', icon: 'home' }, { tab: 'live', icon: 'live' }, { tab: 'movies', icon: 'movies' },
-    { tab: 'shows', icon: 'shows' }, { tab: 'favorites', icon: 'heart' }, { tab: 'news', icon: 'news' },
+    { tab: 'shows', icon: 'shows' }, { tab: 'favorites', icon: 'heart' }, { tab: 'recordings', icon: 'recordings' }, { tab: 'news', icon: 'news' },
     { tab: 'settings', icon: 'settings' }
   ];
-  var ALL_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news', 'favorites', 'settings', 'search'];
+  var ALL_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news', 'recordings', 'favorites', 'settings', 'search'];
 
   var Router = {
     screens: {},
