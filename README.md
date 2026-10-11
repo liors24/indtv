@@ -111,3 +111,12 @@ A separate TV app (Samsung `.wgt` + Android TV `.apk`, same web code) that signs
 * Videos are downloaded in order and played progressively; a far seek waits for the download to reach that point.
 * Built by `.github/workflows/build-tgtv.yml`; releases are tagged `tgtv-v1.0.N` (assets `TeleTV.apk`, `TeleTV.wgt`).
 * The session is stored only on the device (localStorage). Optional repo secrets `TG_API_ID` / `TG_API_HASH` bake keys into a private build.
+
+---
+
+# Flixgram — טלגרם לאנדרואיד TV
+
+אפליקציית מדיה מטלגרם לטלוויזיה (סדרות לפי עונות ופרקים, צפייה בהזרמה בלי לתפוס מקום). הקוד בתיקייה `flixgram/`.
+התקנה דרך Downloader בטלוויזיה, קישור קבוע:
+
+    https://github.com/liors24/indtv/releases/download/flixgram/Flixgram.apk

@@ -9,3 +9,5 @@ tgtv/vendor/
 tgtv/dist/
 tgtv/node_modules/
 tgtv/www/app.js
+flixgram/build/
+flixgram/node_modules/

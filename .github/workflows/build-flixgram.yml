@@ -1,0 +1,61 @@
+name: Build Flixgram (Telegram media for Android TV)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'flixgram/**', '.github/workflows/build-flixgram.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: TDLib for Android (prebuilt libtdjson.so 1.8.36, pinned)
+        run: |
+          git init -q tdlib && cd tdlib
+          git remote add origin https://github.com/itxmoizdev/handy-tdlib-next
+          git fetch -q --depth 1 origin 45d4c39cdcedb1e6645dd0f9aca100375804897a
+          git checkout -q FETCH_HEAD
+          cd android/src/main/jniLibs
+          echo "e77adc397fa4e62de6de60e2b7916986a3850cb768b776a1ed1ba9a500125fb2  arm64-v8a/libtdjson.so" | sha256sum -c
+          echo "9b445b3fab3f843bf210a92ff30a76960ce5d862f0826af32b03e20252d1ab06  armeabi-v7a/libtdjson.so" | sha256sum -c
+
+      - name: Build and sign Flixgram.apk
+        working-directory: flixgram
+        env:
+          TDLIB_LIBS: ${{ github.workspace }}/tdlib/android/src/main/jniLibs
+          VER_CODE: ${{ github.run_number }}
+          VER_NAME: 1.0.${{ github.run_number }}
+        run: |
+          npm install --no-save --no-audit --no-fund esbuild@0.21.5
+          ./build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Flixgram-apk
+          path: flixgram/build/out/Flixgram.apk
+
+      # One fixed release, refreshed on every build, so the download link never changes:
+      # https://github.com/<owner>/<repo>/releases/download/flixgram/Flixgram.apk
+      - name: Publish (direct download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: flixgram
+          name: Flixgram (latest build)
+          body: "Flixgram 1.0.${{ github.run_number }} for Android TV. Direct link: https://github.com/${{ github.repository }}/releases/download/flixgram/Flixgram.apk"
+          make_latest: false
+          files: flixgram/build/out/Flixgram.apk
