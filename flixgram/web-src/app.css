@@ -428,7 +428,8 @@ img { display: block; }
 .sheet h2 { font-family: 'Karantina'; font-weight: 700; font-size: 84px; line-height: 0.9; margin: 0 0 30px; }
 .sheet-row { display: flex; align-items: center; min-height: 82px; padding: 0 28px; border-radius: 20px; margin-bottom: 6px; transition: background-color 180ms; }
 .sheet-label { font-size: 27px; font-weight: 500; }
-.sheet-sub { font-size: 21px; color: var(--haze); margin-right: 14px; flex: 1; }
+.sheet-text { flex: 1; display: flex; flex-direction: column; padding: 12px 0; }
+.sheet-sub { font-size: 20px; color: var(--haze); line-height: 1.35; }
 .sheet-row .ic { width: 28px; height: 28px; margin-right: auto; }
 .sheet-row.is-focus { background: var(--lamp); color: var(--velvet); }
 .sheet-row.is-focus .sheet-sub { color: var(--velvet); }

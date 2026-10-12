@@ -15,7 +15,6 @@ import { settingsScreen } from './screens/settings.js';
 const TABS = [
   { id: 'home', label: 'בית' },
   { id: 'library', label: 'ספרייה' },
-  { id: 'chats', label: 'צ׳אטים' },
   { id: 'search', label: 'חיפוש' },
   { id: 'settings', label: 'הגדרות' },
 ];

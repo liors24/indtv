@@ -48,7 +48,7 @@
       },
     };
     if (opts.doc) m.content.document = { file_name: opts.doc, mime_type: 'video/x-matroska', thumbnail: { file: T(im) }, document: { id: 9000 + mid, size: 1.6e9 } };
-    else m.content.video = { duration: dur, width: 1920, height: 1080, file_name: opts.file || 'video.mp4', mime_type: 'video/mp4', supports_streaming: true, thumbnail: { file: T(im) }, video: { id: 9000 + mid, size: Math.round(dur * 260000) } };
+    else m.content.video = { duration: dur, width: opts.h ? Math.round(opts.h * 16 / 9) : 1920, height: opts.h || 1080, file_name: opts.file || 'video.mp4', mime_type: 'video/mp4', supports_streaming: true, thumbnail: { file: T(im) }, video: { id: 9000 + mid, size: Math.round(dur * 260000 * (opts.h ? opts.h / 1080 : 1)) } };
     (msgs[chatId] || (msgs[chatId] = [])).push(m);
     return m;
   }
@@ -77,6 +77,8 @@
   video(-1003, 'שקיעה מעל הכנרת, צילום רחפן', 180);
   video(-1003, 'נמרים בהודו', 2950);
   for (let e = 10; e >= 1; e--) video(-1004, `Grey's Anatomy S20E${e < 10 ? '0' + e : e}`, 2520);
+  for (let e = 10; e >= 1; e--) { video(-1004, `Grey's Anatomy S20E${e < 10 ? '0' + e : e} 720p`, 2520, { h: 720 }); video(-1004, `Grey's Anatomy S20E${e < 10 ? '0' + e : e} 480p`, 2520, { h: 480 }); }
+  video(-1002, 'גבעת חלפון אינה עונה 720p', 5400, { h: 720 });
   video(-1005, 'הצגה של נועה בגן 🥰', 245);
   video(-1005, 'יום הולדת לסבא', 420);
   for (let i = 0; i < 14; i++) photo(-1005, i === 0 ? 'טיול לצפון' : '');

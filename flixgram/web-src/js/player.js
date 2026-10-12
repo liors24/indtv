@@ -10,6 +10,7 @@ import { sheet, toast, modalOpen } from './ui.js';
 import { setAmbient } from './ambient.js';
 import * as warm from './prefetch.js';
 import * as reco from './reco.js';
+import * as quality from './quality.js';
 
 let P = null; // active player session
 
@@ -32,12 +33,26 @@ export async function openItem(item, list) {
   }
   if (item.kind === 'photo') return openViewer(item, (list || [item]).filter((i) => i.kind === 'photo'));
   if (item.kind === 'file') return toast('אי אפשר לפתוח את סוג הקובץ הזה בטלוויזיה');
-  play(item, (list || [item]).filter((i) => i.kind === item.kind));
+  start(item, (list || [item]).filter((i) => i.kind === item.kind));
+}
+
+// Plays `item`, but if this chat has a pinned quality, swaps in the matching upload first.
+async function start(item, list, opts) {
+  let chosen = item;
+  const want = item.kind === 'video' ? quality.pinned(item.chatId) : 0;
+  if (want && quality.heightOf(item) !== want) {
+    toast('מחפשים ' + quality.qualityLabel(want) + '…', 1200);
+    const versions = await quality.findVersions(item, 2500);
+    chosen = quality.choose(versions, want) || item;
+  }
+  play(chosen, list, Object.assign({ anchor: item }, opts || {}));
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
-function play(item, list) {
+function play(item, list, opts) {
+  opts = opts || {};
+  const anchor = opts.anchor || item; // the entry in `list` (used for next/previous)
   if (P) teardown(true);
   const t = displayTitle(item);
   const cur = h('span.pl-cur', { text: '0:00' });
@@ -53,10 +68,11 @@ function play(item, list) {
   const nextBtn = btn(ICON.skipR, 'הבא', () => step(1));
   const speedBtn = h('div.pl-pill.fx', { onselect: () => pickSpeed() }, svg(ICON.speed, 26), h('span', { text: '1x' }));
   const trackBtn = h('div.pl-pill.fx', { onselect: () => pickTracks() }, svg(ICON.cc, 26), h('span', { text: 'שמע וכתוביות' }));
+  const qualityBtn = h('div.pl-pill.fx.quality', { onselect: () => pickQuality() }, svg(ICON.hd, 26), h('span', { text: quality.qualityLabel(quality.heightOf(item)) }));
   const muteBtn = h('div.pl-pill.fx.mute', { onselect: () => toggleMute() }, svg(ICON.vol, 26), h('span', { text: 'השתקה' }));
   const controls = h('div.pl-controls', null,
     h('div.pl-group', null, prevBtn, btn(ICON.dblL, '10 שניות אחורה', () => nudge(-10)), playBtn, btn(ICON.dblR, '10 שניות קדימה', () => nudge(10)), nextBtn),
-    h('div.pl-group.end', null, muteBtn, speedBtn, trackBtn));
+    h('div.pl-group.end', null, muteBtn, qualityBtn, speedBtn, trackBtn));
   const status = h('div.pl-status', null, spinner());
   const subs = h('div.pl-subs');
   const upnext = h('div.pl-upnext');
@@ -74,13 +90,13 @@ function play(item, list) {
   if (item.kind === 'audio') setAmbient(item.thumb ? td.thumbUrl(item.thumb) : item.mini);
 
   P = {
-    item, list, el, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, muteBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
+    item, anchor, list, el, qualityBtn, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, muteBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
     state: { pos: 0, dur: (item.duration || 0) * 1000, playing: false, buffering: true },
     target: -1, seekTimer: 0, hideTimer: 0, poll: 0, nudgeAcc: 0, nudgeTimer: 0, chipTimer: 0,
     speed: store.get('speed', 1), tracks: [], ended: false, upnextTimer: 0, started: Date.now(),
   };
-  prevBtn.classList.toggle('dim', !list || list.indexOf(item) <= 0);
-  nextBtn.classList.toggle('dim', !nextInList(list || [], item));
+  prevBtn.classList.toggle('dim', !list || list.indexOf(anchor) <= 0);
+  nextBtn.classList.toggle('dim', !nextInList(list || [], anchor));
 
   bar._onkey = (dir) => {
     if (dir !== 'left' && dir !== 'right') return false;
@@ -89,8 +105,8 @@ function play(item, list) {
   };
   bar._onselect = () => commitSeek();
 
-  const resume = progress.get(item.key);
-  const startMs = resume && resume.pos ? Math.max(0, resume.pos - 3) * 1000 : 0;
+  const resume = progress.get(item.key) || (anchor !== item ? progress.get(anchor.key) : null);
+  const startMs = opts.startMs != null ? opts.startMs : (resume && resume.pos ? Math.max(0, resume.pos - 3) * 1000 : 0);
   warm.playing(item.fileId);
   td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
   if (P.speed !== 1) td.player.speed(P.speed);
@@ -126,7 +142,7 @@ function tick() {
     progress.set(P.item, st.pos / 1000, st.dur / 1000);
   }
   // offer the next episode near the end
-  const nx = nextInList(P.list || [], P.item);
+  const nx = nextInList(P.list || [], P.anchor);
   if (nx && st.dur && st.dur - st.pos < 25000 && st.pos > 5000 && !P.upnext.classList.contains('on')) showUpNext(nx, false);
 }
 
@@ -193,10 +209,10 @@ function toggle() {
 function step(dir) {
   if (!P) return;
   const list = P.list || [];
-  const i = list.indexOf(P.item);
+  const i = list.indexOf(P.anchor);
   const target = list[i + dir];
   if (!target) return toast(dir > 0 ? 'זה הפריט האחרון ברשימה' : 'זה הפריט הראשון ברשימה');
-  play(target, list);
+  start(target, list);
 }
 
 function applyMute() {
@@ -213,6 +229,38 @@ function toggleMute() {
   store.set('muted', !store.get('muted', false));
   applyMute();
   showControls();
+}
+
+async function pickQuality() {
+  const cur = P.item, anchor = P.anchor, list = P.list;
+  toast('בודקים אילו איכויות יש לסרטון…', 1500);
+  const versions = await quality.findVersions(cur);
+  if (!P || P.item !== cur) return;
+  const chat = chatTitle(cur.chatId) || 'הצ׳אט הזה';
+  const pinnedH = quality.pinned(cur.chatId);
+  const curH = quality.heightOf(cur);
+  const opts = versions.map((v) => ({
+    label: quality.qualityLabel(v._h),
+    sub: [v.size ? fmtSizeShort(v.size) : '', v === versions[0] && versions.length > 1 ? 'הכי גבוהה' : ''].filter(Boolean).join(', '),
+    value: { kind: 'v', v }, selected: v.fileId === cur.fileId,
+  }));
+  if (versions.length < 2) opts[0].sub = 'זו האיכות היחידה שהועלתה לסרטון הזה';
+  if (curH && pinnedH !== curH) opts.push({ label: `לקבע ${quality.qualityLabel(curH)} לצ׳אט הזה`, sub: `כל סרטון ב"${chat}" ייפתח מעכשיו ב־${quality.qualityLabel(curH)}`, value: { kind: 'pin', h: curH } });
+  if (pinnedH) opts.push({ label: 'ביטול הקיבוע לצ׳אט הזה', sub: `כרגע "${chat}" קבוע על ${quality.qualityLabel(pinnedH)}`, value: { kind: 'unpin' } });
+  document.getElementById('toast').classList.remove('on');
+  sheet('איכות וידאו', opts, (val) => {
+    if (val.kind === 'pin') { quality.pin(cur.chatId, val.h); toast(`מעכשיו כל סרטון ב"${chat}" ייפתח ב־${quality.qualityLabel(val.h)}`); return; }
+    if (val.kind === 'unpin') { quality.pin(cur.chatId, 0); toast(`הקיבוע ב"${chat}" בוטל`); return; }
+    const v = val.v;
+    if (v.fileId === cur.fileId) return;
+    const pos = P.state.pos;
+    play(v, list, { anchor, startMs: Math.max(0, pos - 2000) });
+    toast('עוברים ל־' + quality.qualityLabel(v._h));
+  });
+}
+
+function fmtSizeShort(b) {
+  return '\u2066' + (b >= 1073741824 ? (b / 1073741824).toFixed(1) + ' GB' : Math.round(b / 1048576) + ' MB') + '\u2069';
 }
 
 function pickSpeed() {
@@ -258,7 +306,7 @@ function showControls() {
 function showUpNext(nx, autoplay) {
   const t = displayTitle(nx);
   P.upnext.innerHTML = '';
-  const go = button(autoplay ? 'מנגנים עוד רגע' : 'לפרק הבא', () => play(nx, P.list), { primary: true, icon: ICON.play });
+  const go = button(autoplay ? 'מנגנים עוד רגע' : 'לפרק הבא', () => start(nx, P.list), { primary: true, icon: ICON.play });
   P.upnext.appendChild(h('div.un-k', { text: 'הבא בתור' }));
   P.upnext.appendChild(h('div.un-t', { text: t.sub || t.main }));
   P.upnext.appendChild(go);
@@ -270,7 +318,7 @@ function showUpNext(nx, autoplay) {
     P.upnextTimer = setInterval(() => {
       n--;
       if (!P) return;
-      if (n <= 0) { clearInterval(P.upnextTimer); play(nx, P.list); return; }
+      if (n <= 0) { clearInterval(P.upnextTimer); start(nx, P.list); return; }
       label.textContent = `מנגנים בעוד ${n}`;
     }, 1000);
     P.el.classList.add('ui');
@@ -295,7 +343,7 @@ window.__player = function (ev) {
       reco.record(P.item, P.watched || 0, true);
       P.watched = 0;
       P.recorded = true;
-      const nx = store.get('autoplay', true) ? nextInList(P.list || [], P.item) : null;
+      const nx = store.get('autoplay', true) ? nextInList(P.list || [], P.anchor) : null;
       if (nx) showUpNext(nx, true);
       else { P.el.classList.add('ui'); P.el.classList.add('paused'); }
       break;
@@ -316,7 +364,7 @@ function showError(ev) {
     : 'ייתכן שהחיבור לטלגרם נקטע או שהקודק לא נתמך במכשיר.';
   P.err.appendChild(h('h2', { text: 'הניגון נעצר' }));
   P.err.appendChild(h('p', { text: hint + ` (קוד ${ev.what || 0})` }));
-  const again = button('לנסות שוב', () => { const it = P.item, l = P.list; play(it, l); }, { primary: true });
+  const again = button('לנסות שוב', () => { const it = P.item, l = P.list, a = P.anchor; play(it, l, { anchor: a }); }, { primary: true });
   P.err.appendChild(h('div.row', null, again, button('חזרה', () => closePlayer())));
   P.err.classList.add('on');
   P.el.classList.add('ui');
@@ -331,7 +379,10 @@ function teardown(switching) {
   clearTimeout(s.hideTimer);
   clearTimeout(s.seekTimer);
   clearTimeout(s.nudgeTimer);
-  if (s.state.dur) progress.set(s.item, s.state.pos / 1000, s.state.dur / 1000);
+  if (s.state.dur) {
+    progress.set(s.item, s.state.pos / 1000, s.state.dur / 1000);
+    if (s.anchor && s.anchor !== s.item) progress.set(s.anchor, s.state.pos / 1000, s.state.dur / 1000);
+  }
   if (s.watched > 3) reco.record(s.item, s.watched, !s.recorded && s.state.dur > 0 && s.state.pos / s.state.dur > 0.94);
   td.player.stop();
   // free the space: nothing stays on the device after watching

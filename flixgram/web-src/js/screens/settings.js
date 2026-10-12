@@ -4,6 +4,7 @@ import { state } from '../state.js';
 import { avatar } from '../components.js';
 import { confirmDialog, toast, sheet } from '../ui.js';
 import { focus } from '../focus.js';
+import * as quality from '../quality.js';
 
 export function settingsScreen(app) {
   const list = h('div.set-list', { 'data-flist': '', data: { fgroup: 'set' } });
@@ -57,6 +58,16 @@ export function settingsScreen(app) {
       });
     }, { explain: 'המהירות שבה כל סרטון מתחיל. אפשר לשנות גם תוך כדי צפייה.' });
     list.appendChild(speedRow);
+    const qn = quality.pinnedCount();
+    const qRow = row('איכות קבועה לצ׳אטים', qn ? `${qn} צ׳אטים` : 'אין', () => {
+      if (!quality.pinnedCount()) return toast('אפשר לקבע איכות מתוך הנגן, בכפתור האיכות');
+      confirmDialog('לבטל את כל קיבועי האיכות?', 'כל הצ׳אטים יחזרו לנגן את הסרטון שבחרתם, באיכות שבה הועלה.', 'ביטול הקיבועים', () => {
+        quality.clearPins();
+        qRow._value.textContent = 'אין';
+        toast('קיבועי האיכות בוטלו');
+      });
+    }, { explain: 'בנגן, בכפתור האיכות, אפשר לבחור רזולוציה אחרת של אותו סרטון (כשהערוץ העלה כמה גרסאות) ולקבע אותה לצ׳אט מסוים. כאן מבטלים את כל הקיבועים.' });
+    list.appendChild(qRow);
     list.appendChild(row('איפוס "המשך צפייה"', '', () => {
       confirmDialog('לאפס את רשימת המשך הצפייה?', 'המיקומים השמורים בכל הסרטונים יימחקו מהטלוויזיה.', 'איפוס', () => {
         store.del('progress');

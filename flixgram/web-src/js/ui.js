@@ -50,7 +50,7 @@ export function sheet(title, options, onPick) {
   options.forEach((o) => {
     const row = h('div.sheet-row.fx' + (o.selected ? '.is-default.sel' : ''), {
       onselect: () => { closeModal(); onPick(o.value); },
-    }, h('span.sheet-label', { text: o.label }), o.sub ? h('span.sheet-sub', { text: o.sub }) : null, o.selected ? svg(ICON.check, 26) : null);
+    }, h('div.sheet-text', null, h('span.sheet-label', { text: o.label }), o.sub ? h('span.sheet-sub', { text: o.sub }) : null), o.selected ? svg(ICON.check, 26) : null);
     list.appendChild(row);
   });
   const panel = h('div.sheet', { 'data-vscroll': '0' }, h('div.sheet-inner', null, h('h2', { text: title }), list));
