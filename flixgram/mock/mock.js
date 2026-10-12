@@ -187,6 +187,7 @@
     seek: (ms) => { playState.pos = ms; },
     speed: () => {},
     mute: (m) => { playState.muted = m; },
+    aspect: (m) => { const v = document.getElementById('mockvideo'); if (!v) return; const fit = { fit: 'contain', zoom: 'cover', fill: 'fill' }[m]; v.style.objectFit = fit || 'contain'; v.style.background = '#000'; },
     prefetch: () => {},
     track: () => {},
     stop: () => { playState = { active: false }; clearInterval(playT); const v = document.getElementById('mockvideo'); if (v) v.style.display = 'none'; },

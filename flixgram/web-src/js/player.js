@@ -69,10 +69,11 @@ function play(item, list, opts) {
   const speedBtn = h('div.pl-pill.fx', { onselect: () => pickSpeed() }, svg(ICON.speed, 26), h('span', { text: '1x' }));
   const trackBtn = h('div.pl-pill.fx', { onselect: () => pickTracks() }, svg(ICON.cc, 26), h('span', { text: 'שמע וכתוביות' }));
   const qualityBtn = h('div.pl-pill.fx.quality', { onselect: () => pickQuality() }, svg(ICON.hd, 26), h('span', { text: quality.qualityLabel(quality.heightOf(item)) }));
+  const aspectBtn = h('div.pl-pill.fx.aspect', { onselect: () => pickAspect() }, svg(ICON.aspect, 26), h('span', { text: 'מסך' }));
   const muteBtn = h('div.pl-pill.fx.mute', { onselect: () => toggleMute() }, svg(ICON.vol, 26), h('span', { text: 'השתקה' }));
   const controls = h('div.pl-controls', null,
     h('div.pl-group', null, prevBtn, btn(ICON.dblL, '10 שניות אחורה', () => nudge(-10)), playBtn, btn(ICON.dblR, '10 שניות קדימה', () => nudge(10)), nextBtn),
-    h('div.pl-group.end', null, muteBtn, qualityBtn, speedBtn, trackBtn));
+    h('div.pl-group.end', null, muteBtn, aspectBtn, qualityBtn, speedBtn, trackBtn));
   const status = h('div.pl-status', null, spinner());
   const subs = h('div.pl-subs');
   const upnext = h('div.pl-upnext');
@@ -90,10 +91,10 @@ function play(item, list, opts) {
   if (item.kind === 'audio') setAmbient(item.thumb ? td.thumbUrl(item.thumb) : item.mini);
 
   P = {
-    item, anchor, list, el, qualityBtn, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, muteBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
+    item, anchor, list, el, qualityBtn, aspectBtn, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, muteBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
     state: { pos: 0, dur: (item.duration || 0) * 1000, playing: false, buffering: true },
     target: -1, seekTimer: 0, hideTimer: 0, poll: 0, nudgeAcc: 0, nudgeTimer: 0, chipTimer: 0,
-    speed: store.get('speed', 1), tracks: [], ended: false, upnextTimer: 0, started: Date.now(),
+    speed: store.get('speed', 1), aspect: opts.aspect || '', tracks: [], ended: false, upnextTimer: 0, started: Date.now(),
   };
   prevBtn.classList.toggle('dim', !list || list.indexOf(anchor) <= 0);
   nextBtn.classList.toggle('dim', !nextInList(list || [], anchor));
@@ -111,6 +112,7 @@ function play(item, list, opts) {
   td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
   if (P.speed !== 1) td.player.speed(P.speed);
   applyMute();
+  applyAspect();
   speedBtn.lastChild.textContent = P.speed + 'x';
 
   pushScope(el, playBtn);
@@ -231,6 +233,48 @@ function toggleMute() {
   showControls();
 }
 
+// ------------------------------------------------------------------ picture size (aspect ratio)
+
+const ASPECTS = [
+  { id: 'fit', label: 'מקורי', sub: 'כל התמונה, בלי מתיחה (פסים שחורים אם צריך)' },
+  { id: 'zoom', label: 'זום למסך מלא', sub: 'ממלא את המסך בלי לעוות; הקצוות נחתכים' },
+  { id: 'fill', label: 'מתיחה למסך מלא', sub: 'ממלא את כל המסך; התמונה עלולה להימתח' },
+  { id: '16:9', label: '16:9', sub: 'מסך רחב רגיל' },
+  { id: '4:3', label: '4:3', sub: 'טלוויזיה ישנה' },
+  { id: '21:9', label: '21:9', sub: 'קולנוע רחב' },
+];
+
+function aspectFor(chatId) {
+  return store.get('aspectChats', {})[chatId] || store.get('aspect', 'fit');
+}
+
+function applyAspect() {
+  if (!P || P.item.kind !== 'video') return;
+  const mode = P.aspect || aspectFor(P.item.chatId);
+  P.aspect = mode;
+  td.player.aspect(mode);
+  const a = ASPECTS.find((x) => x.id === mode) || ASPECTS[0];
+  P.aspectBtn.lastChild.textContent = mode === 'fit' ? 'מסך' : a.label;
+}
+
+function pickAspect() {
+  const chatId = P.item.chatId;
+  const chat = chatTitle(chatId) || 'הצ׳אט הזה';
+  const pins = store.get('aspectChats', {});
+  const opts = ASPECTS.map((a) => ({ label: a.label, sub: a.sub, value: { kind: 'm', id: a.id }, selected: a.id === P.aspect }));
+  const curLabel = (ASPECTS.find((x) => x.id === P.aspect) || ASPECTS[0]).label;
+  opts.push({ label: 'להשתמש בזה תמיד', sub: `"${curLabel}" לכל הסרטונים`, value: { kind: 'all' } });
+  if (pins[chatId] !== P.aspect) opts.push({ label: 'לקבע לצ׳אט הזה', sub: `כל סרטון ב"${chat}" ייפתח ב"${curLabel}"`, value: { kind: 'pin' } });
+  if (pins[chatId]) opts.push({ label: 'ביטול הקיבוע לצ׳אט הזה', sub: `חוזר לברירת המחדל`, value: { kind: 'unpin' } });
+  sheet('גודל התמונה', opts, (v) => {
+    const all = store.get('aspectChats', {});
+    if (v.kind === 'm') { P.aspect = v.id; applyAspect(); return; }
+    if (v.kind === 'all') { store.set('aspect', P.aspect); delete all[chatId]; store.set('aspectChats', all); toast(`"${curLabel}" הוא עכשיו ברירת המחדל`); return; }
+    if (v.kind === 'pin') { all[chatId] = P.aspect; store.set('aspectChats', all); toast(`כל סרטון ב"${chat}" ייפתח ב"${curLabel}"`); return; }
+    delete all[chatId]; store.set('aspectChats', all); toast('הקיבוע בוטל');
+  });
+}
+
 async function pickQuality() {
   const cur = P.item, anchor = P.anchor, list = P.list;
   toast('בודקים אילו איכויות יש לסרטון…', 1500);
@@ -254,7 +298,7 @@ async function pickQuality() {
     const v = val.v;
     if (v.fileId === cur.fileId) return;
     const pos = P.state.pos;
-    play(v, list, { anchor, startMs: Math.max(0, pos - 2000) });
+    play(v, list, { anchor, startMs: Math.max(0, pos - 2000), aspect: P.aspect });
     toast('עוברים ל־' + quality.qualityLabel(v._h));
   });
 }

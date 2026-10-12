@@ -373,6 +373,16 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
         }
 
         @JavascriptInterface
+        public void aspect(final String mode) {
+            main.post(new Runnable() {
+                @Override
+                public void run() {
+                    player.setAspect(mode);
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void mute(final boolean on) {
             main.post(new Runnable() {
                 @Override

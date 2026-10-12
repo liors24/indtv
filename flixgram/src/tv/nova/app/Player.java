@@ -299,12 +299,36 @@ final class Player implements SurfaceHolder.Callback {
         updateState();
     }
 
+    /** fit (original proportions) | fill (stretch to the screen) | zoom (fill, crop edges) | 16:9 | 4:3 | 21:9 */
+    private String aspectMode = "fit";
+
+    void setAspect(String mode) {
+        aspectMode = mode == null ? "fit" : mode;
+        layoutSurface();
+    }
+
     private void layoutSurface() {
         int pw = root.getWidth(), ph = root.getHeight();
         if (pw == 0 || ph == 0 || videoW == 0 || videoH == 0) return;
         float va = (float) videoW / videoH, pa = (float) pw / ph;
         int w, h;
-        if (va > pa) {
+        if ("fill".equals(aspectMode)) {
+            surface.setLayoutParams(new FrameLayout.LayoutParams(pw, ph, Gravity.CENTER));
+            return;
+        }
+        if ("16:9".equals(aspectMode)) va = 16f / 9f;
+        else if ("4:3".equals(aspectMode)) va = 4f / 3f;
+        else if ("21:9".equals(aspectMode)) va = 21f / 9f;
+        if ("zoom".equals(aspectMode)) {
+            // cover the whole screen, keeping proportions; the overflow is cropped by the parent
+            if (va > pa) {
+                h = ph;
+                w = Math.round(ph * va);
+            } else {
+                w = pw;
+                h = Math.round(pw / va);
+            }
+        } else if (va > pa) {
             w = pw;
             h = Math.round(pw / va);
         } else {

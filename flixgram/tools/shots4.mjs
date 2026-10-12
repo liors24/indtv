@@ -1,0 +1,15 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const b = await chromium.launch(); const errors = [];
+const p = await (await b.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();
+p.on('pageerror', (e) => errors.push(e.message));
+await p.goto('http://127.0.0.1:8777/?auth=ready'); await p.waitForTimeout(2800);
+await p.keyboard.press('Enter'); await p.waitForTimeout(2000);
+await p.evaluate(() => document.querySelector('.pl-pill.aspect')._onselect()); await p.waitForTimeout(700);
+await p.screenshot({ path: '/tmp/claude-0/shots3/aspect-sheet.png' });
+console.log(await p.evaluate(() => Array.from(document.querySelectorAll('.sheet-row')).map((r) => r.textContent).join(' | ')));
+await p.evaluate(() => document.querySelectorAll('.sheet-row')[1]._onselect()); await p.waitForTimeout(600);
+console.log('pill:', await p.evaluate(() => document.querySelector('.pl-pill.aspect').textContent));
+await p.screenshot({ path: '/tmp/claude-0/shots3/aspect-zoom.png' });
+console.log(errors.length ? errors.join('\n') : 'no errors'); await b.close();
