@@ -149,7 +149,7 @@ export function parseTitle(item) {
   return { series: '', season: 0, episode: 0, title, line: title };
 }
 
-function seriesKey(s) {
+export function seriesKey(s) {
   return s.toLowerCase().replace(/[^a-z0-9֐-׿]+/g, '');
 }
 

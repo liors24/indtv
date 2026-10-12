@@ -49,12 +49,10 @@ img { display: block; }
 
 #ambient { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: var(--velvet); }
 .amb-layer {
-  position: absolute; top: -8%; bottom: -8%; left: -6%; width: 78%;
+  position: absolute; top: -8%; bottom: -8%; left: -6%; right: -6%;
   background-size: cover; background-position: center;
-  opacity: 0; transition: opacity 1100ms var(--inout);
-  transform: scale(1.04);
-  -webkit-mask-image: linear-gradient(to right, #000 55%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 55%, transparent 100%);
+  opacity: 0; transition: opacity 700ms var(--inout);
+  transform: scale(1.04); will-change: opacity;
 }
 .amb-layer.on { opacity: 0.78; }
 #vignette {
@@ -64,10 +62,7 @@ img { display: block; }
     linear-gradient(to top, var(--velvet) 22%, rgba(14, 11, 20, 0) 62%),
     radial-gradient(120% 90% at 20% 30%, rgba(var(--amb), 0.0), rgba(var(--amb), 0.35));
 }
-#vignette::after { /* fine grain so gradients don't band on cheap panels */
-  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
-}
+#vignette { transform: translateZ(0); will-change: transform; } /* own GPU layer: never re-rasterised */
 
 #app[data-mode='gate'] #shell, #app[data-mode='boot'] #shell { display: none; }
 #app[data-mode='shell'] #gate, #app[data-mode='boot'] #gate { display: none; }
@@ -105,7 +100,7 @@ img { display: block; }
 
 .hero { position: absolute; top: 0; right: 0; left: 0; height: 420px; padding: 34px var(--edge) 0; pointer-events: none; }
 .hero-text { max-width: 1060px; opacity: 0; transform: translate3d(0, 10px, 0); }
-.hero-text.in { opacity: 1; transform: none; transition: opacity 320ms var(--out), transform 420ms var(--out); }
+.hero-text.in { opacity: 1; transform: none; transition: opacity 220ms var(--out), transform 300ms var(--out); }
 .hero-sub { font-size: 26px; font-weight: 500; color: var(--haze); min-height: 36px; }
 .hero-title {
   font-family: 'Karantina'; font-weight: 700; font-size: 168px; line-height: 0.86; margin: 6px 0 18px;
@@ -129,13 +124,13 @@ img { display: block; }
 /* ---------------------------------------------------------------- shelves & rails */
 
 .home-body { position: absolute; top: 430px; left: 0; right: 0; bottom: 0; overflow: hidden; }
-.rows, .lib-content { transition: transform 520ms var(--out); will-change: transform; }
+.rows, .lib-content { transition: transform 360ms var(--out); will-change: transform; }
 .shelf { margin-bottom: 18px; }
 .shelf-head { display: flex; align-items: baseline; padding: 0 var(--edge); margin-bottom: 2px; }
 .shelf-title { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.005em; }
 .shelf-meta { margin-right: 16px; font-size: 22px; color: var(--haze); font-variant-numeric: tabular-nums; }
 .rail { overflow: hidden; padding: 22px 0 26px; }
-.rail-track { display: flex; padding: 0 var(--edge); transition: transform 460ms var(--out); will-change: transform; }
+.rail-track { display: flex; padding: 0 var(--edge); transition: transform 300ms var(--out); will-change: transform; }
 
 /* ---------------------------------------------------------------- cards */
 
@@ -152,8 +147,8 @@ img { display: block; }
 }
 .card::before { /* the beam: pre-rendered glow that only fades in */
   content: ''; position: absolute; top: 0; left: 0; right: 0; padding-top: 56.25%; border-radius: 16px;
-  box-shadow: 0 0 0 4px var(--lamp), 0 26px 70px -12px rgba(var(--amb), 1), 0 0 90px rgba(var(--lamp-rgb), 0.14);
-  opacity: 0; transform: scale(1.075); transition: opacity 260ms var(--out);
+  box-shadow: 0 0 0 4px var(--lamp), 0 22px 44px -14px rgba(var(--amb), 1);
+  opacity: 0; transform: scale(1.075); transition: opacity 180ms var(--out);
 }
 .card.is-focus::before { opacity: 1; }
 .card.is-focus .card-art { transform: scale(1.075); }
@@ -538,3 +533,46 @@ html.playing #app { visibility: hidden; }
 
 /* positioned containers so offset maths (focus.js) measures against them */
 .rail-track, .rows, .lib-content, .lib-side-list, .chat-list, .msgs, .set-list, .sheet-inner, .search-results { position: relative; }
+
+/* Holding a key: short, snappy transitions so the UI never lags behind the remote. */
+html.fast .rail-track, html.fast .rows, html.fast .lib-content, html.fast .lib-side-list,
+html.fast .chat-list, html.fast .msgs, html.fast .set-list, html.fast .search-results { transition-duration: 150ms; }
+html.fast .card-art, html.fast .card::before, html.fast .card-text { transition-duration: 90ms; }
+html.fast .hero-text.in { transition: none; }
+/* Off-screen sections skip layout/paint work entirely on WebViews that support it. */
+.shelf { contain: layout style; }
+.card { contain: layout style; }
+
+.pl-pill.mute.on { background: rgba(var(--lamp-rgb), 0.22); }
+.pl-muted { position: absolute; top: 64px; left: var(--edge); width: 64px; height: 64px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: rgba(10, 8, 14, 0.66); color: var(--lamp); }
+.player.is-muted .pl-muted { display: flex; }
+
+/* ---------------------------------------------------------------- collapsible side panels (☰) */
+.lib-side, .chat-side { display: flex; flex-direction: column; padding-top: 0; transition: flex-basis 260ms var(--out); }
+.side-head { flex: 0 0 auto; display: flex; align-items: center; padding: 14px 28px 10px; padding-right: 40px; }
+.side-title { font-size: 21px; font-weight: 500; color: var(--haze); margin-right: 16px; white-space: nowrap; }
+.side-scroll { flex: 1; position: relative; overflow: hidden; }
+.menu-btn {
+  width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--lamp);
+  background: rgba(var(--lamp-rgb), 0.07); transition: transform 180ms var(--out), background-color 180ms var(--out), color 180ms;
+}
+.menu-btn .ic { width: 30px; height: 30px; }
+.menu-btn.is-focus { background: var(--lamp); color: var(--velvet); transform: scale(1.08); }
+.side-collapsed .lib-side, .side-collapsed .chat-side { flex-basis: 132px; }
+.side-collapsed .side-head { padding: 14px 0 10px; justify-content: center; }
+.side-collapsed .side-title, .side-collapsed .src-text, .side-collapsed .chat-row-text { display: none; }
+.side-collapsed .src, .side-collapsed .chat-row { justify-content: center; padding: 12px 0; }
+.side-collapsed .src .avatar, .side-collapsed .chat-row .avatar { margin: 0; }
+.side-collapsed .src.is-focus, .side-collapsed .chat-row.is-focus { background: transparent; }
+.side-collapsed .src.is-focus .avatar, .side-collapsed .chat-row.is-focus .avatar { box-shadow: 0 0 0 4px var(--lamp); transform: scale(1.08); }
+.avatar { transition: transform 180ms var(--out); }
+
+/* ---------------------------------------------------------------- search scope bar */
+.scope-bar { padding: 18px 0 8px; flex: 0 0 auto; }
+.scope-bar .chip { margin: 0 0 0 14px; white-space: nowrap; flex: 0 0 auto; padding: 0 22px 0 26px; }
+.scope-bar .chip .avatar { margin-left: 12px; }
+.scope-bar .chip .ic { margin-left: 10px; }
+.chip.scope.on { background: rgba(var(--lamp-rgb), 0.14); color: var(--lamp); border-color: rgba(var(--lamp-rgb), 0.6); }
+.chip.scope.on.is-focus { background: var(--lamp); color: var(--velvet); }
+.search-top.tight { padding-top: 0; padding-bottom: 0; }
+.search-top.tight .recent { margin-top: 0; }

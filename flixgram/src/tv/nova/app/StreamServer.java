@@ -267,6 +267,21 @@ final class StreamServer implements Td.FileListener {
         return st;
     }
 
+    /** Warm up the first bytes of a video the user is hovering, so playback starts instantly. */
+    static void prefetch(int id, int bytes) {
+        try {
+            JSONObject r = new JSONObject();
+            r.put("@type", "downloadFile");
+            r.put("file_id", id);
+            r.put("priority", 1);
+            r.put("offset", 0);
+            r.put("limit", bytes);
+            r.put("synchronous", false);
+            Td.send(r.toString());
+        } catch (Exception ignored) {
+        }
+    }
+
     private static void startDownload(int id, long offset, int priority) {
         try {
             JSONObject r = new JSONObject();

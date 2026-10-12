@@ -6,7 +6,7 @@ import { confirmDialog, toast, sheet } from '../ui.js';
 import { focus } from '../focus.js';
 
 export function settingsScreen(app) {
-  const list = h('div.set-list', { data: { fgroup: 'set' } });
+  const list = h('div.set-list', { 'data-flist': '', data: { fgroup: 'set' } });
   const detail = h('div.set-detail');
   const el = h('div.screen.settings', null, h('div.set-col', { 'data-vscroll': '0' }, list), detail);
 

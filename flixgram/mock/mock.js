@@ -2,6 +2,10 @@
 (function () {
   const params = new URLSearchParams(location.search);
   const authMode = params.get('auth') || 'ready';
+  if (params.get('taste') === '1' && !localStorage.getItem('nova.taste')) {
+    // pretend the viewer has watched a lot of Grey's Anatomy and the nature channel
+    localStorage.setItem('nova.taste', JSON.stringify({ chats: { '-1004': 9000, '-1003': 3000 }, series: { 'greysanatomy': { name: "Grey's Anatomy", chatId: -1004, secs: 9000, season: 20, ep: 3, last: Date.now() } }, words: { greys: 9000, anatomy: 9000, planet: 2000, earth: 2000 }, kinds: { movie: 100, episode: 9000, clip: 300 }, done: [], total: 12000 }));
+  }
   const port = location.port;
   let seq = 1;
   const out = [];
@@ -134,6 +138,7 @@
     },
     searchChatMessages: (r) => {
       let list = search(msgs[r.chat_id] || [], r.filter['@type']);
+      if (r.query) list = list.filter((m) => ((m.content.caption && m.content.caption.text) || '').indexOf(r.query) >= 0);
       if (r.from_message_id) list = list.filter((m) => m.id < r.from_message_id);
       const page = list.slice(0, r.limit);
       reply(r, { '@type': 'foundChatMessages', total_count: list.length, messages: page, next_from_message_id: page.length === r.limit ? page[page.length - 1].id : 0 });
@@ -179,6 +184,8 @@
     resume: () => { playState.playing = true; },
     seek: (ms) => { playState.pos = ms; },
     speed: () => {},
+    mute: (m) => { playState.muted = m; },
+    prefetch: () => {},
     track: () => {},
     stop: () => { playState = { active: false }; clearInterval(playT); const v = document.getElementById('mockvideo'); if (v) v.style.display = 'none'; },
     state: () => JSON.stringify(playState),

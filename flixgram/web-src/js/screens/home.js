@@ -6,6 +6,7 @@ import { createHero } from '../hero.js';
 import { chatTitle, getChat } from '../state.js';
 import { openItem } from '../player.js';
 import { focusFirst, focused } from '../focus.js';
+import * as reco from '../reco.js';
 
 export function homeScreen(app) {
   const hero = createHero();
@@ -16,6 +17,8 @@ export function homeScreen(app) {
   let firstRender = true;
   let loading = false;
   let globalItems = [];
+  let pool = [];          // candidates for recommendations: latest everywhere + your favourite chats
+  let poolDay = 0;
   let nextOffset = '';
 
   const onFocusItem = debounce((item, kicker) => hero.show(item, { kicker }), 90);
@@ -42,6 +45,15 @@ export function homeScreen(app) {
       });
       nextOffset = res.next_offset || '';
       globalItems = res.messages.map(itemFromMessage).filter(Boolean);
+      // a deeper pool from the chats you actually watch
+      const fav = reco.topChats(4);
+      const extra = await Promise.all(fav.map((chatId) => td.send({
+        '@type': 'searchChatMessages', chat_id: chatId, query: '', sender_id: null, from_message_id: 0, offset: 0, limit: 80,
+        filter: { '@type': 'searchMessagesFilterVideo' }, message_thread_id: 0, saved_messages_topic_id: 0,
+      }).then((r) => r.messages.map(itemFromMessage).filter(Boolean)).catch(() => [])));
+      const seen = new Set();
+      pool = globalItems.concat.apply(globalItems, extra).filter((i) => !seen.has(i.key) && seen.add(i.key));
+      poolDay = reco.dayKey();
       // make sure chat titles are known
       await Promise.all(Array.from(new Set(globalItems.map((i) => i.chatId))).map((id) => getChat(id)));
     } catch (e) {
@@ -60,6 +72,45 @@ export function homeScreen(app) {
       const r = rail('continue', 'המשך צפייה', '', recents, cardFor(recents, 'המשך צפייה'));
       rows.appendChild(r);
       first = first || r;
+    }
+    let pick = null;
+    if (pool.length) {
+      const inProgress = new Set(recents.map((i) => i.key));
+      const nexts = reco.nextEpisodes(pool).filter((i) => !inProgress.has(i.key));
+      if (nexts.length) {
+        const r = rail('next', 'הפרקים הבאים שלך', 'ממשיכים מאיפה שעצרת', nexts, (item) => {
+          const c = mediaCard(item, {});
+          c._onfocus = () => onFocusItem(item, 'הפרק הבא בשבילך');
+          c._onselect = () => openItem(item, nexts);
+          return c;
+        });
+        rows.appendChild(r);
+        first = first || r;
+      }
+      const exclude = new Set(nexts.map((i) => i.key).concat(Array.from(inProgress)));
+      const recs = reco.recommend(pool, exclude, 16);
+      if (recs.length) {
+        const learned = reco.hasHistory();
+        const r = rail('reco', learned ? 'המומלצים שלך להיום' : 'בחירות היום',
+          learned ? 'לפי מה שאתה הכי צופה, מתחלף כל יום' : 'מתחלף כל יום, ולומד ממה שאתה צופה', recs, (item) => {
+            const c = mediaCard(item, {});
+            c._onfocus = () => onFocusItem(item, item._why && item._why.indexOf('chat:') !== 0 ? `כי אתה צופה ב־${item._why}` : (learned ? 'מומלץ בשבילך' : 'בחירת היום'));
+            c._onselect = () => openItem(item, recs);
+            return c;
+          });
+        rows.appendChild(r);
+        first = first || r;
+        pick = recs[0];
+        // "because you watch X": the favourite series/chat gets its own shelf
+        const fav = reco.favouriteSeriesName();
+        const favChat = reco.topChats(1)[0];
+        if (learned && favChat) {
+          const more = pool.filter((i) => i.chatId === favChat && !exclude.has(i.key) && recs.indexOf(i) < 0).slice(0, 20);
+          if (more.length >= 3) {
+            rows.appendChild(rail('because', `כי אתה אוהב את ${chatTitle(favChat) || fav}`, '', more, cardFor(more)));
+          }
+        }
+      }
     }
     if (globalItems.length) {
       const latest = globalItems.slice();
@@ -110,7 +161,11 @@ export function homeScreen(app) {
       rows.appendChild(emptyState('הספרייה ריקה', 'אפשר לבחור ערוץ ספציפי בספרייה', button('לספרייה', () => app.go('library'), { primary: true })));
     }
     const f = focused();
-    if (app.current === 'home' && (firstRender || !f || !document.body.contains(f))) focusFirst(rows);
+    if (app.current === 'home' && (firstRender || !f || !document.body.contains(f))) {
+      // land on today's pick so the hero opens with a recommendation
+      const pickCard = pick && rows.querySelector('[data-row="reco"] .card');
+      if (pickCard && !recents.length) focusFirst(rows, pickCard); else focusFirst(rows);
+    }
     else if (first) { const c = first.querySelector('.card'); if (c && c._item) hero.show(c._item, {}); }
     firstRender = false;
   }
@@ -118,8 +173,8 @@ export function homeScreen(app) {
   return {
     el,
     show() {
-      if (!loaded) load();
-      else if (app.isStale('home')) load();
+      // a new day means new picks
+      if (!loaded || app.isStale('home') || poolDay !== reco.dayKey()) load();
     },
     refresh: load,
     focusContent() {

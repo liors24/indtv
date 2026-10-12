@@ -1,7 +1,7 @@
 import { h, debounce, svg, ICON } from '../util.js';
 import * as td from '../td.js';
 import { itemFromMessage, organise } from '../media.js';
-import { mediaCard, rail, spinner, emptyState, avatar } from '../components.js';
+import { mediaCard, rail, spinner, emptyState, avatar, sidePanel } from '../components.js';
 import { createHero } from '../hero.js';
 import { orderedChats, subscribe, chatKind, getChat } from '../state.js';
 import { openItem } from '../player.js';
@@ -41,8 +41,7 @@ function pager(chatId, filter, accept) {
 }
 
 export function libraryScreen(app) {
-  const side = h('div.lib-side-list');
-  const sideWrap = h('aside.lib-side', { 'data-vscroll': '0', data: { fgroup: 'side' } }, side);
+  const side = h('div.lib-side-list', { 'data-flist': '' });
   const titleEl = h('h1.lib-title');
   const tabs = h('div.chips', { data: { fgroup: 'tabs' } });
   const hero = createHero();
@@ -50,7 +49,11 @@ export function libraryScreen(app) {
   const contentInner = h('div.lib-content');
   const content = h('div.lib-scroll', { 'data-vscroll': '0' }, contentInner);
   const main = h('div.lib-main', null, h('div.lib-head', null, titleEl, tabs), hero.el, content);
-  const el = h('div.screen.library', null, sideWrap, main);
+  const el = h('div.screen.library');
+  const sideWrap = sidePanel('lib-side', 'library', 'ערוצים וצ׳אטים', side, el);
+  el.appendChild(sideWrap);
+  el.appendChild(main);
+  sideWrap._init();
 
   let chatId = 0;
   let tab = 'video';
@@ -67,6 +70,7 @@ export function libraryScreen(app) {
       }, svg(t.icon, 24), h('span', { text: t.label }));
       tabs.appendChild(chip);
     });
+    tabs.appendChild(h('div.chip.fx', { onselect: () => { if (chatId) app.go('search', { chatId }); } }, svg(ICON.search, 24), h('span', { text: 'חיפוש כאן' })));
   }
 
   function buildSide() {

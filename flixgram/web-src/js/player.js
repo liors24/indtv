@@ -8,6 +8,8 @@ import { pushScope, popScope, focus, focused } from './focus.js';
 import { progress, spinner, button } from './components.js';
 import { sheet, toast, modalOpen } from './ui.js';
 import { setAmbient } from './ambient.js';
+import * as warm from './prefetch.js';
+import * as reco from './reco.js';
 
 let P = null; // active player session
 
@@ -51,9 +53,10 @@ function play(item, list) {
   const nextBtn = btn(ICON.skipR, 'הבא', () => step(1));
   const speedBtn = h('div.pl-pill.fx', { onselect: () => pickSpeed() }, svg(ICON.speed, 26), h('span', { text: '1x' }));
   const trackBtn = h('div.pl-pill.fx', { onselect: () => pickTracks() }, svg(ICON.cc, 26), h('span', { text: 'שמע וכתוביות' }));
+  const muteBtn = h('div.pl-pill.fx.mute', { onselect: () => toggleMute() }, svg(ICON.vol, 26), h('span', { text: 'השתקה' }));
   const controls = h('div.pl-controls', null,
     h('div.pl-group', null, prevBtn, btn(ICON.dblL, '10 שניות אחורה', () => nudge(-10)), playBtn, btn(ICON.dblR, '10 שניות קדימה', () => nudge(10)), nextBtn),
-    h('div.pl-group.end', null, speedBtn, trackBtn));
+    h('div.pl-group.end', null, muteBtn, speedBtn, trackBtn));
   const status = h('div.pl-status', null, spinner());
   const subs = h('div.pl-subs');
   const upnext = h('div.pl-upnext');
@@ -64,13 +67,14 @@ function play(item, list) {
     h('h1.pl-title', { text: t.main }),
     t.sub ? h('div.pl-sub', { text: t.sub }) : null);
   const bottom = h('div.pl-bottom', null, h('div.pl-times', null, cur, seekChip, dur), bar, controls);
-  const el = h('div.player' + (item.kind === 'audio' ? '.audio' : ''), null, h('div.pl-shade'), art, top, status, subs, upnext, err, bottom);
+  const mutedBadge = h('div.pl-muted', null, svg(ICON.muted, 30));
+  const el = h('div.player' + (item.kind === 'audio' ? '.audio' : ''), null, h('div.pl-shade'), art, top, status, subs, upnext, err, mutedBadge, bottom);
   document.getElementById('overlay').appendChild(el);
   document.documentElement.classList.add('playing');
   if (item.kind === 'audio') setAmbient(item.thumb ? td.thumbUrl(item.thumb) : item.mini);
 
   P = {
-    item, list, el, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
+    item, list, el, bar, fill, ghost, knob, cur, dur, playBtn, speedBtn, muteBtn, prevBtn, nextBtn, status, subs, upnext, err, seekChip,
     state: { pos: 0, dur: (item.duration || 0) * 1000, playing: false, buffering: true },
     target: -1, seekTimer: 0, hideTimer: 0, poll: 0, nudgeAcc: 0, nudgeTimer: 0, chipTimer: 0,
     speed: store.get('speed', 1), tracks: [], ended: false, upnextTimer: 0, started: Date.now(),
@@ -87,8 +91,10 @@ function play(item, list) {
 
   const resume = progress.get(item.key);
   const startMs = resume && resume.pos ? Math.max(0, resume.pos - 3) * 1000 : 0;
+  warm.playing(item.fileId);
   td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
   if (P.speed !== 1) td.player.speed(P.speed);
+  applyMute();
   speedBtn.lastChild.textContent = P.speed + 'x';
 
   pushScope(el, playBtn);
@@ -102,6 +108,7 @@ function tick() {
   const s = td.player.state();
   if (!s.active) return;
   const st = P.state;
+  if (s.prepared && s.playing) P.watched = (P.watched || 0) + 0.5;
   if (s.prepared) {
     st.pos = s.pos;
     if (s.dur > 0) st.dur = s.dur;
@@ -192,6 +199,22 @@ function step(dir) {
   play(target, list);
 }
 
+function applyMute() {
+  const m = store.get('muted', false);
+  td.player.mute(m);
+  if (!P) return;
+  P.muteBtn.classList.toggle('on', m);
+  P.muteBtn.firstChild.innerHTML = `<svg viewBox="0 0 24 24" width="26" height="26">${m ? ICON.muted : ICON.vol}</svg>`;
+  P.muteBtn.lastChild.textContent = m ? 'מושתק' : 'השתקה';
+  P.el.classList.toggle('is-muted', m);
+}
+
+function toggleMute() {
+  store.set('muted', !store.get('muted', false));
+  applyMute();
+  showControls();
+}
+
 function pickSpeed() {
   sheet('מהירות ניגון', SPEEDS.map((s) => ({ label: s === 1 ? 'רגילה' : s + 'x', value: s, selected: s === P.speed })), (s) => {
     P.speed = s;
@@ -269,6 +292,9 @@ window.__player = function (ev) {
       break;
     case 'ended': {
       progress.set(P.item, P.state.dur / 1000, P.state.dur / 1000);
+      reco.record(P.item, P.watched || 0, true);
+      P.watched = 0;
+      P.recorded = true;
       const nx = store.get('autoplay', true) ? nextInList(P.list || [], P.item) : null;
       if (nx) showUpNext(nx, true);
       else { P.el.classList.add('ui'); P.el.classList.add('paused'); }
@@ -306,6 +332,7 @@ function teardown(switching) {
   clearTimeout(s.seekTimer);
   clearTimeout(s.nudgeTimer);
   if (s.state.dur) progress.set(s.item, s.state.pos / 1000, s.state.dur / 1000);
+  if (s.watched > 3) reco.record(s.item, s.watched, !s.recorded && s.state.dur > 0 && s.state.pos / s.state.dur > 0.94);
   td.player.stop();
   // free the space: nothing stays on the device after watching
   td.fire({ '@type': 'cancelDownloadFile', file_id: s.item.fileId, only_if_pending: false });
@@ -313,6 +340,7 @@ function teardown(switching) {
   popScope(s.el);
   s.el.remove();
   P = null;
+  warm.stopped();
   if (!switching) {
     document.documentElement.classList.remove('playing');
     window.dispatchEvent(new Event('nova:playerclosed'));
@@ -326,6 +354,8 @@ export function closePlayer() {
 // Remote handling while the player is up. Returns true if consumed.
 export function playerKey(name) {
   if (!P) return false;
+  if (name === 'enter' && Date.now() - P.started < 700) return true; // the press that opened the video
+  if (name === 'mute') { toggleMute(); return true; }
   const visible = P.el.classList.contains('ui');
   switch (name) {
     case 'back':

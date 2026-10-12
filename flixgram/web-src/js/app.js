@@ -102,6 +102,12 @@ setInterval(tickClock, 15000);
 // ------------------------------------------------------------------ keys
 
 let lastMove = 0;
+let fastMode = false;
+document.addEventListener('keyup', () => {
+  if (!fastMode) return;
+  fastMode = false;
+  setTimeout(() => { if (!fastMode) document.documentElement.classList.remove('fast'); }, 220);
+}, true);
 const KEYS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down', 13: 'enter', 23: 'enter', 66: 'enter' };
 
 document.addEventListener('keydown', (e) => {
@@ -115,10 +121,13 @@ document.addEventListener('keydown', (e) => {
   }
   if (!name) return;
   e.preventDefault();
+  if (e.repeat && name === 'enter') return; // holding OK must not fire twice (it used to pause a fresh video)
   if (e.repeat) {
     const now = Date.now();
     if (now - lastMove < 70) return;
     lastMove = now;
+    // holding a direction: switch to short transitions so scrolling keeps up with the key
+    if (!fastMode) { fastMode = true; document.documentElement.classList.add('fast'); }
   }
   if (playerActive() && playerKey(name)) return;
   if (name === 'enter') { select(); return; }

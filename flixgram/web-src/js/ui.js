@@ -46,7 +46,7 @@ export function confirmDialog(title, body, okLabel, onOk, opts) {
 
 // A side sheet with a list of choices. options: [{label, sub, value, selected}]
 export function sheet(title, options, onPick) {
-  const list = h('div.sheet-list');
+  const list = h('div.sheet-list', { 'data-flist': '' });
   options.forEach((o) => {
     const row = h('div.sheet-row.fx' + (o.selected ? '.is-default.sel' : ''), {
       onselect: () => { closeModal(); onPick(o.value); },

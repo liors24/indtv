@@ -7,6 +7,7 @@ import android.media.TimedText;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
@@ -32,6 +33,10 @@ final class Player implements SurfaceHolder.Callback {
     private boolean surfaceReady;
     private boolean prepared;
     private boolean buffering;
+    private boolean userPaused;
+    private boolean completed;
+    private boolean muted;
+    private long preparedAt;
     private int startAt;
     private float speed = 1f;
     private int videoW, videoH;
@@ -51,6 +56,15 @@ final class Player implements SurfaceHolder.Callback {
         @Override
         public void run() {
             updateState();
+            // Autoplay watchdog: some TV firmwares ignore the first start() while the surface or the
+            // audio sink is still coming up. If nobody paused on purpose, keep nudging it to play.
+            try {
+                if (mp != null && prepared && !userPaused && !completed && !mp.isPlaying()
+                        && SystemClock.uptimeMillis() - preparedAt > 600) {
+                    mp.start();
+                }
+            } catch (Exception ignored) {
+            }
             main.postDelayed(this, 250);
         }
     };
@@ -72,6 +86,7 @@ final class Player implements SurfaceHolder.Callback {
                     o.put("playing", mp.isPlaying());
                 }
                 o.put("speed", speed);
+                o.put("muted", muted);
                 o.put("w", videoW);
                 o.put("h", videoH);
             }
@@ -85,6 +100,8 @@ final class Player implements SurfaceHolder.Callback {
         final int my = ++session;
         prepared = false;
         buffering = true;
+        userPaused = false;
+        completed = false;
         startAt = startMs;
         videoW = videoH = 0;
         try {
@@ -102,9 +119,11 @@ final class Player implements SurfaceHolder.Callback {
                     if (my != session) return;
                     prepared = true;
                     buffering = false;
+                    preparedAt = SystemClock.uptimeMillis();
                     if (startAt > 0) p.seekTo(startAt);
                     applySpeed();
-                    p.start();
+                    applyVolume();
+                    if (!userPaused) p.start();
                     emit("prepared", tracksJson());
                 }
             });
@@ -137,6 +156,7 @@ final class Player implements SurfaceHolder.Callback {
                 @Override
                 public void onCompletion(MediaPlayer p) {
                     if (my != session) return;
+                    completed = true;
                     emit("ended", null);
                 }
             });
@@ -208,12 +228,29 @@ final class Player implements SurfaceHolder.Callback {
         }
     }
 
+    void setMuted(boolean m) {
+        muted = m;
+        applyVolume();
+    }
+
+    private void applyVolume() {
+        if (mp == null) return;
+        try {
+            float v = muted ? 0f : 1f;
+            mp.setVolume(v, v);
+        } catch (Exception ignored) {
+        }
+    }
+
     void pause() {
+        userPaused = true;
         if (mp != null && prepared && mp.isPlaying()) mp.pause();
         updateState();
     }
 
     void resume() {
+        userPaused = false;
+        completed = false;
         if (mp != null && prepared && !mp.isPlaying()) mp.start();
         updateState();
     }
@@ -223,6 +260,7 @@ final class Player implements SurfaceHolder.Callback {
             startAt = ms;
             return;
         }
+        completed = false;
         if (Build.VERSION.SDK_INT >= 26) mp.seekTo(ms, MediaPlayer.SEEK_PREVIOUS_SYNC);
         else mp.seekTo(ms);
         updateState();

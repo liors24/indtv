@@ -58,7 +58,6 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
 
         web = new WebView(this);
         web.setBackgroundColor(Color.TRANSPARENT);
-        web.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -68,8 +67,11 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
         s.setLoadWithOverviewMode(false);
         s.setUseWideViewPort(false);
         s.setTextZoom(100);
+        if (Build.VERSION.SDK_INT >= 23) s.setOffscreenPreRaster(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         if (Build.VERSION.SDK_INT >= 21) s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        if (Build.VERSION.SDK_INT >= 23) s.setOffscreenPreRaster(true); // smoother scrolling: raster ahead of time
+        s.setRenderPriority(WebSettings.RenderPriority.HIGH);
         web.setVerticalScrollBarEnabled(false);
         web.setHorizontalScrollBarEnabled(false);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -192,6 +194,7 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
             case KeyEvent.KEYCODE_INFO: media = "info"; break;
             case KeyEvent.KEYCODE_SEARCH: media = "search"; break;
             case KeyEvent.KEYCODE_PROG_RED: media = "red"; break;
+            case KeyEvent.KEYCODE_MUTE: media = "mute"; break;
             default: break;
         }
         if (media != null) {
@@ -367,6 +370,21 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
                     player.selectTrack(index, select);
                 }
             });
+        }
+
+        @JavascriptInterface
+        public void mute(final boolean on) {
+            main.post(new Runnable() {
+                @Override
+                public void run() {
+                    player.setMuted(on);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void prefetch(final int fileId, final int bytes) {
+            StreamServer.prefetch(fileId, bytes);
         }
 
         @JavascriptInterface

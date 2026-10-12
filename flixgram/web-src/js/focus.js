@@ -43,9 +43,61 @@ export function focused() {
 }
 
 function visible(el) {
-  if (!el.isConnected) return false;
-  if (el.offsetParent === null && getComputedStyle(el).position !== 'fixed') return false;
+  // offsetParent is null for display:none subtrees (no focusable element here is position:fixed itself)
+  if (!el.isConnected || el.offsetParent === null) return false;
   return !el.closest('[hidden],.is-hidden');
+}
+
+function isRtl(node) {
+  if (node._rtl == null) node._rtl = getComputedStyle(node).direction === 'rtl';
+  return node._rtl;
+}
+
+function sibFx(el, forward) {
+  let n = forward ? el.nextElementSibling : el.previousElementSibling;
+  while (n && !(n.classList.contains('fx') && visible(n))) n = forward ? n.nextElementSibling : n.previousElementSibling;
+  return n;
+}
+
+// Cheap, layout-free answers for the common cases (moving along a rail, a grid row, a list).
+// Returns undefined when the generic geometric search should decide.
+function fastMove(dir) {
+  const parent = current.parentNode;
+  if (!parent || !parent.classList) return undefined;
+  const horizontal = dir === 'left' || dir === 'right';
+  if (parent.classList.contains('rail-track') || parent.classList.contains('chips')) {
+    if (!horizontal) return undefined;
+    const forward = (dir === 'left') === isRtl(parent);
+    return sibFx(current, forward) || undefined;
+  }
+  if (parent.classList.contains('grid')) {
+    const kids = parent.children;
+    const idx = Array.prototype.indexOf.call(kids, current);
+    if (horizontal) {
+      const forward = (dir === 'left') === isRtl(parent);
+      const n = forward ? kids[idx + 1] : kids[idx - 1];
+      // stay on the same visual row
+      if (n && n.offsetTop === current.offsetTop) return n;
+      return undefined;
+    }
+    let cols = parent._cols;
+    if (!cols) {
+      cols = 0;
+      const top = kids[0].offsetTop;
+      while (cols < kids.length && kids[cols].offsetTop === top) cols++;
+      parent._cols = cols;
+    }
+    const t = dir === 'down' ? idx + cols : idx - cols;
+    if (t >= 0 && t < kids.length) return kids[t];
+    if (dir === 'down' && Math.floor(idx / cols) < Math.floor((kids.length - 1) / cols)) return kids[kids.length - 1];
+    return undefined;
+  }
+  if (parent.dataset && parent.dataset.flist != null) {
+    if (horizontal) return undefined;
+    const n = sibFx(current, dir === 'down');
+    return n || undefined;
+  }
+  return undefined;
 }
 
 export function focusFirst(root, preferred) {
@@ -156,6 +208,12 @@ export function move(dir) {
     return true;
   }
   if (current._onkey && current._onkey(dir)) return true;
+  const quick = fastMove(dir);
+  if (quick) { focus(quick); return true; }
+  if (quick === null) {
+    if (current._onedge) current._onedge(dir);
+    return false;
+  }
   const cr = current.getBoundingClientRect();
   const cc = center(cr);
   const cands = $$('.fx', root);

@@ -80,6 +80,8 @@ export const player = {
   speed: (s) => host.speed(s),
   track: (i, on) => host.track(i, !!on),
   stop: () => host.stop(),
+  mute: (on) => host.mute(!!on),
+  prefetch: (fileId, bytes) => { try { host.prefetch(fileId, bytes); } catch (e) { /* older host */ } },
   state: () => {
     try { return JSON.parse(host.state()); } catch (e) { return { active: false }; }
   },

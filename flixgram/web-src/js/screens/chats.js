@@ -1,15 +1,14 @@
 import { h, debounce, fmtDate, svg, ICON, pad2 } from '../util.js';
 import * as td from '../td.js';
 import { orderedChats, subscribe, previewText, senderName, chatKind, getChat } from '../state.js';
-import { avatar, lazyImg, spinner, emptyState } from '../components.js';
+import { avatar, lazyImg, spinner, emptyState, sidePanel } from '../components.js';
 import { itemFromMessage } from '../media.js';
 import { openItem } from '../player.js';
 import { focus, focusFirst } from '../focus.js';
 import { toast } from '../ui.js';
 
 export function chatsScreen(app) {
-  const list = h('div.chat-list');
-  const listWrap = h('aside.chat-side', { 'data-vscroll': '0', data: { fgroup: 'side' } }, list);
+  const list = h('div.chat-list', { 'data-flist': '' });
   const msgs = h('div.msgs');
   const msgScroll = h('div.msg-scroll', { 'data-vscroll': '0' }, msgs);
   const head = h('div.conv-head');
@@ -17,7 +16,11 @@ export function chatsScreen(app) {
   const sendBtn = h('div.pl-btn.fx.send', { 'aria-label': 'שליחה' }, svg(ICON.send, 28));
   const composer = h('div.composer', null, input, sendBtn);
   const conv = h('div.conv', null, head, msgScroll, composer);
-  const el = h('div.screen.chats', null, listWrap, conv);
+  const el = h('div.screen.chats');
+  const listWrap = sidePanel('chat-side', 'chats', 'צ׳אטים', list, el);
+  el.appendChild(listWrap);
+  el.appendChild(conv);
+  listWrap._init();
 
   let openId = 0;
   let token = 0;

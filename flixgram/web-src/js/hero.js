@@ -5,6 +5,7 @@ import { thumbUrl } from './td.js';
 import { chatTitle } from './state.js';
 import { setAmbient } from './ambient.js';
 import { progress } from './components.js';
+import { hover } from './prefetch.js';
 
 export function createHero() {
   const title = h('h1.hero-title');
@@ -42,6 +43,7 @@ export function createHero() {
       text.classList.add('in');
     });
     setAmbient(item.thumb ? thumbUrl(item.thumb) : item.mini);
+    hover(item);
   }
 
   function showText(kicker, main, line) {

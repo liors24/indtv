@@ -104,7 +104,7 @@ export function rail(id, title, meta, items, render, opts) {
   const track = h('div.rail-track');
   const railEl = h('div.rail', { data: { fgroup: id, pad: opts.pad || 120 } }, track);
   let rendered = 0;
-  const CHUNK = 14;
+  const CHUNK = 9;
   function more() {
     const end = Math.min(items.length, rendered + CHUNK);
     for (let i = rendered; i < end; i++) {
@@ -133,6 +133,22 @@ export function rail(id, title, meta, items, render, opts) {
     more();
   };
   return section;
+}
+
+// Side panel with a ☰ button that folds it down to a slim strip of avatars (remembered per screen).
+export function sidePanel(cls, key, title, list, screenEl) {
+  const btn = h('div.menu-btn.fx', { role: 'button', 'aria-label': 'הצגה או הסתרה של התפריט' }, svg(ICON.menu, 30));
+  const head = h('div.side-head', null, btn, h('span.side-title', { text: title }));
+  const scroll = h('div.side-scroll', { 'data-vscroll': '0' }, list);
+  const aside = h('aside.' + cls, { data: { fgroup: 'side' } }, head, scroll);
+  const apply = (collapsed) => screenEl.classList.toggle('side-collapsed', collapsed);
+  btn._onselect = () => {
+    const c = !screenEl.classList.contains('side-collapsed');
+    store.set('side.' + key, c);
+    apply(c);
+  };
+  aside._init = () => apply(store.get('side.' + key, false));
+  return aside;
 }
 
 export function spinner() {
