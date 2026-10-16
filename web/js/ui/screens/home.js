@@ -107,10 +107,25 @@
         Home.scroller.appendChild(Home._row(t('popularChannels'), '', pop, 'h-pop'));
         first = first || pop[0];
       }
-      Cat.ranked().forEach(function (c) {
-        Home.scroller.appendChild(Home._row(Cat.name(c.id), U.count(c.count, 'channel', 'channels'), c.channels, 'h-c-' + U.hash(c.id), { cat: c.id }));
-        first = first || c.channels[0];
-      });
+      // Category rows are built a few at a time as you move down: Home opens instantly even with 30 categories.
+      var cats = Cat.ranked(), built = 0;
+      first = first || (cats[0] && cats[0].channels[0]);
+      var more = function (n) {
+        var end = Math.min(cats.length, built + n);
+        for (var i = built; i < end; i++) {
+          var c = cats[i];
+          var row = Home._row(Cat.name(c.id), U.count(c.count, 'channel', 'channels'), INDTV.StreamScan.sort(c.channels), 'h-c-' + U.hash(c.id), { cat: c.id });
+          row.setAttribute('data-cat-row', String(i));
+          Home.scroller.appendChild(row);
+        }
+        built = end;
+      };
+      more(5);
+      Home.scroller.onfocusin = function (e) {
+        var row = e.target.closest && e.target.closest('[data-cat-row]');
+        if (row && +row.getAttribute('data-cat-row') >= built - 2 && built < cats.length) more(4);
+      };
+      if (activeKey && /^h-c-/.test(activeKey)) more(cats.length);   // restoring focus deep in the list
       if (!Home._heroCh || !CR.get(Home._heroCh.id)) Home.setHero(first);
       else Home.setHero(CR.get(Home._heroCh.id));
       if (activeKey) INDTV.Focus.restore(activeKey, Home.el);

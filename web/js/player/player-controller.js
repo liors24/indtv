@@ -8,11 +8,15 @@
   var Bus = INDTV.Bus;
 
   var DASH_SRC = 'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js';
-  var START_TIMEOUT = 20000;
+  var START_TIMEOUT = 13000;
+  var EXO_TIMEOUT = 15000;
+  /** The TV's own video engine (Android app only): plays what the web player cannot. */
+  var Exo = { available: function () { try { return !!(root.INDTVNative && root.INDTVNative.hasExo && root.INDTVNative.hasExo()); } catch (e) { return false; } } };
 
   function typeOf(url) {
     var path = url.split('?')[0].split('#')[0].toLowerCase();
     if (/\.mpd$/.test(path)) return 'dash';
+    if (/\.ts$/.test(path) || /[?&](extension|output)=ts\b/i.test(url)) return 'ts';
     if (/\.(mp4|m4v|webm|ogv|mov|mp3|aac|m4a|ogg|opus|wav)$/.test(path)) return 'progressive';
     return 'hls'; // .m3u8, .m3u8-like paths and extensionless live URLs
   }
@@ -53,6 +57,12 @@
       var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 3200);
       return fetch(src.url, { signal: ctrl ? ctrl.signal : undefined, credentials: 'omit', cache: 'no-store' }).then(function (r) {
         if (!r.ok) return { src: src, state: 'failed' };
+        if (typeOf(src.url) !== 'hls') {
+          // a continuous stream (MPEG-TS, MP4): answering is enough, do not download it
+          clearTimeout(timer);
+          if (ctrl) ctrl.abort();
+          return { src: src, state: 'ok', height: parseInt(src.quality, 10) || 0, ms: Date.now() - started };
+        }
         return r.text().then(function (txt) {
           clearTimeout(timer);
           var ms = Date.now() - started;
@@ -80,20 +90,40 @@
         sources.forEach(function (s) { if (ordered.indexOf(s) < 0) ordered.push(s); });
         return Promise.resolve({ sources: ordered, bestLabel: hit.bestLabel });
       }
-      var candidates = sources.filter(function (s) { return !s.insecure; }).slice(0, 8);
-      var rest = sources.filter(function (s) { return candidates.indexOf(s) < 0; });
-      return Promise.all(candidates.map(Ranker.probe)).then(function (results) {
-        function score(r) {
-          if (r.state === 'failed') return -1e9 + (r.src.priority ? -r.src.priority : 0);
-          var base = r.state === 'ok' ? 1e8 : 5e7;
-          return base + (r.height || 0) * 1e4 + Math.min(r.bw || 0, 2e7) / 1e4 - (r.ms || 1500) + (r.src.preferred ? 500 : 0);
-        }
+      function score(r) {
+        if (r.state === 'failed') return -1e9 + (r.src.priority ? -r.src.priority : 0);
+        var base = r.state === 'ok' ? 1e8 : 5e7;
+        return base + (r.height || 0) * 1e4 + Math.min(r.bw || 0, 2e7) / 1e4 - (r.ms || 1500) + (r.src.preferred ? 500 : 0) + (INDTV.StreamHealth.worked(r.src.id) ? 3e7 : 0);
+      }
+      function finish(results, rest) {
         results.sort(function (a, b) { return score(b) - score(a) || (a.src.priority - b.src.priority); });
+        results.forEach(function (r) { r.src._probe = r.state; });
         var ordered = results.map(function (r) { return r.src; }).concat(rest);
         var top = results[0];
         var bestLabel = top && top.state === 'ok' ? qualityLabel(top.height) : null;
         Ranker.cache[channel.id] = { at: Date.now(), order: ordered.map(function (s) { return s.id; }), bestLabel: bestLabel };
         return { sources: ordered, bestLabel: bestLabel };
+      }
+      // 1. the background scan already knows every stream: order instantly, no waiting
+      var Scan = INDTV.StreamScan;
+      var known = Scan ? sources.map(function (s) { return Scan.result(s); }) : [];
+      if (known.length && known.every(Boolean)) return Promise.resolve(finish(known, []));
+      // 2. otherwise probe in parallel, but never wait more than ~1.6 s: late answers count as unknown
+      var candidates = sources.filter(function (s) { return !s.insecure; }).slice(0, 10);
+      var rest = sources.filter(function (s) { return candidates.indexOf(s) < 0; });
+      return new Promise(function (resolve) {
+        var results = candidates.map(function (s) { return { src: s, state: 'unknown', height: parseInt(s.quality, 10) || 0 }; });
+        var left = candidates.length, done = false;
+        function end() { if (done) return; done = true; resolve(finish(results.slice(), rest)); }
+        var limit = setTimeout(end, 1600);
+        candidates.forEach(function (s, i) {
+          Ranker.probe(s).then(function (r) {
+            results[i] = r;
+            if (Scan) Scan.store(s, r);
+            if (--left === 0) { clearTimeout(limit); end(); }
+          });
+        });
+        if (!left) end();
       });
     }
   };
@@ -166,6 +196,8 @@
           .concat(item.sources.filter(function (s) { return INDTV.StreamHealth.recentlyFailed(s.id); }));
       }
       P._sources = sources;
+      P._tried = {};
+      P._exoRetried = false;
       P.state.set({                        // 4. selected item is now B everywhere
         phase: 'loading', item: item, kind: ref.kind, sourceIndex: 0, sourceCount: sources.length,
         sourceName: null, error: null, insecureSkipped: 0, quality: null,
@@ -222,6 +254,20 @@
         return;
       }
       var kind = typeOf(src.url);
+      var tried = P._tried[idx] = P._tried[idx] || {};
+      if (Exo.available() && !tried.exo && (kind === 'ts' || kind === 'progressive' || INDTV.StreamHealth.engine(src.id) === 'exo')) {
+        P._startExo(token, src);
+        return;
+      }
+      tried.web = true;
+      P._attemptWeb(token, src);
+    },
+
+    /** The page's own player: hls.js for HLS, dash.js for DASH, the browser for the rest. */
+    _attemptWeb: function (token, src) {
+      clearTimeout(P._watchdog);
+      P._watchdog = setTimeout(function () { P._fail(token, 'timeout'); }, START_TIMEOUT);
+      var kind = typeOf(src.url);
       if (kind === 'dash') {
         loadDash().then(function (dashjs) {
           if (token !== P.token) return;
@@ -238,6 +284,42 @@
         return;
       }
       P._startNative(token, src);
+    },
+
+    /** The TV's own engine (ExoPlayer, Android app): draws behind the transparent page. */
+    _startExo: function (token, src) {
+      var idx = P._srcIndex;
+      P._tried[idx] = P._tried[idx] || {};
+      P._tried[idx].exo = true;
+      P._destroyEngines();
+      try { P.video.pause(); P.video.removeAttribute('src'); P.video.load(); } catch (e) { /* ignore */ }
+      P._exo = true; P._exoToken = token; P._exoH = 0; P._exoTracks = [];
+      document.documentElement.classList.add('exo-on');
+      clearTimeout(P._watchdog);
+      P._watchdog = setTimeout(function () { P._fail(token, 'exo_timeout'); }, EXO_TIMEOUT);
+      var pic = INDTV.Picture ? INDTV.Picture.current() : { aspect: 'fit', q: 0 };
+      try {
+        root.INDTVNative.exoPlay(src.url, src.userAgent || '', src.referrer || '', pic.q || 0);
+        root.INDTVNative.exoAspect(pic.aspect || 'fit');
+        if (P.state.get().muted) root.INDTVNative.exoMute(true);
+      } catch (e) { P._exo = false; P._fail(token, 'exo_bridge'); }
+    },
+    /** Events from the TV engine: playing, buffering, paused, size, tracks, error, ended. */
+    _exoEvent: function (type, a, b) {
+      var token = P._exoToken;
+      if (!P._exo || token !== P.token) return;
+      if (type === 'playing') { P._onPlaying(token); return; }
+      if (type === 'buffering') { if (P.state.get().phase === 'playing') P.state.update({ buffering: a === '1' }); return; }
+      if (type === 'paused') { if (P.state.get().phase === 'playing') P.state.update({ paused: a === '1' }); return; }
+      if (type === 'size') { P._exoH = parseInt(b, 10) || 0; if (P.state.get().phase === 'playing') P.state.update({ quality: qualityLabel(P._exoH) }); return; }
+      if (type === 'tracks') { P._exoTracks = a ? a.split(',').map(Number).filter(Boolean) : []; Bus.emit('player-tracks'); return; }
+      if (type === 'error') {
+        if (root.console) console.warn('[INDTV player] TV engine error:', a);
+        if (b === '1' && !P._exoRetried) { P._exoRetried = true; P._startExo(token, P._sources[P._srcIndex]); return; }   // dropped while playing: reconnect once
+        P._fail(token, 'exo:' + a);
+        return;
+      }
+      if (type === 'ended' && P.state.get().kind === 'channel') P._fail(token, 'ended');
     },
 
     _startHls: function (token, src, opts) {
@@ -285,7 +367,7 @@
           recovered.network = true; hls.startLoad(); return;
         }
         // Manifest blocked (often CORS): the TV's native player may still accept it.
-        if (!playing && !P._triedNative && P.video.canPlayType('application/vnd.apple.mpegurl')) {
+        if (!playing && !P._triedNative && !Exo.available() && P.video.canPlayType('application/vnd.apple.mpegurl')) {
           P._triedNative = true;
           P._destroyEngines();
           P._startNative(token, src);
@@ -335,14 +417,20 @@
       if (st.phase !== 'loading' && st.phase !== 'playing') return;
       clearTimeout(P._watchdog);
       var src = P._sources[P._srcIndex];
-      if (st.kind === 'channel' && st.item && src) INDTV.StreamHealth.markWorking(st.item.id, src.id);
-      var q = qualityLabel(P.video.videoHeight) || st.quality;
+      if (st.kind === 'channel' && st.item && src) {
+        INDTV.StreamHealth.markWorking(st.item.id, src.id);
+        INDTV.StreamHealth.setEngine(src.id, P._exo ? 'exo' : 'web');
+      }
+      P._exoRetried = false;
+      var q = qualityLabel(P._exo ? P._exoH : P.video.videoHeight) || st.quality;
       var canSeek = st.kind === 'vod' || (P.video.seekable && P.video.seekable.length > 0 &&
         (P.video.seekable.end(0) - P.video.seekable.start(0)) > 30);
       if (st.kind === 'rec' || P._shift) canSeek = true;
+      if (P._exo) canSeek = false;
       P.state.update({ phase: 'playing', error: null, quality: q, paused: false, buffering: false, canSeek: canSeek });
-      if (st.kind === 'channel' && P.hls && !P._shift && INDTV.DVR && src && !P._native) {
-        var lv = P.hls.levels && P.hls.levels[P.hls.currentLevel];
+      if (INDTV.Picture) INDTV.Picture.onStart();
+      if (st.kind === 'channel' && (P.hls || P._exo) && !P._shift && INDTV.DVR && src && !P._native) {
+        var lv = P.hls && P.hls.levels && P.hls.levels[P.hls.currentLevel];
         INDTV.DVR.watch(st.item, src.url, lv ? { uri: (lv.url && lv.url[0]) || lv.uri || null, height: lv.height || 0 } : {});
         P._syncDvr();
       }
@@ -378,6 +466,12 @@
       if (token !== P.token) return;
       clearTimeout(P._watchdog);
       var src = P._sources && P._sources[P._srcIndex];
+      var tried = (P._tried && P._tried[P._srcIndex]) || {};
+      if (src && !src.dvrRec && !P._shift && src._probe !== 'failed' && P.state.get().kind !== 'rec') {
+        // The same stream may still play in the other engine (the TV's own player handles more formats).
+        if (!tried.exo && Exo.available()) { if (root.console) console.warn('[INDTV player] web engine failed (' + reason + '), trying the TV engine'); P._startExo(token, src); return; }
+        if (!tried.web && P._exo) { P._destroyEngines(); tried.web = true; P._tried[P._srcIndex] = tried; P._attemptWeb(token, src); return; }
+      }
       if (src && P.state.get().kind === 'channel') INDTV.StreamHealth.markFailed(src.id);
       if (root.console) console.warn('[INDTV player] source failed:', reason, src ? INDTV.Util.redactUrl(src.url) : '');
       P._attempt(token, P._srcIndex + 1);   // next source, never wraps around
@@ -388,6 +482,11 @@
       if (P.dash) { try { P.dash.reset(); } catch (e) { /* ignore */ } P.dash = null; }
       P._native = false;
       P._playFrag = null;
+      if (P._exo) {
+        P._exo = false;
+        try { root.INDTVNative.exoStop(); } catch (e) { /* ignore */ }
+        document.documentElement.classList.remove('exo-on');
+      }
     },
 
     _teardown: function () {
@@ -430,9 +529,20 @@
         if (st.item) P.open({ kind: st.kind, id: st.item.id });
         return;
       }
+      if (P._exo) {
+        var paused = !st.paused;
+        try { root.INDTVNative.exoPause(paused); } catch (e) { /* ignore */ }
+        P.state.update({ paused: paused });
+        return;
+      }
       if (P.video.paused) P._play(P.token); else P.video.pause();
     },
-    toggleMute: function () { P.video.muted = !P.video.muted; P.state.update({ muted: P.video.muted }); },
+    toggleMute: function () {
+      P.video.muted = !P.state.get().muted;
+      if (P._exo) { try { root.INDTVNative.exoMute(P.video.muted); } catch (e) { /* ignore */ } }
+      P.state.update({ muted: P.video.muted });
+    },
+    usingTvEngine: function () { return !!P._exo; },
     seekBy: function (sec) {
       var v = P.video, kind = P.state.get().kind;
       try {
@@ -568,6 +678,7 @@
   };
 
   if (Bus && Bus.on) Bus.on('dvr', function () { if (P.state.get().kind === 'channel') P._syncDvr(); });
+  root.INDTVExo = function (type, a, b) { P._exoEvent(type, a, b); };
   INDTV.Player = P;
   INDTV._ranker = Ranker;
   INDTV._playerTypeOf = typeOf;

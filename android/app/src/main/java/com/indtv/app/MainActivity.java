@@ -15,6 +15,8 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.Window;
+import android.widget.FrameLayout;
+import android.graphics.Color;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -58,6 +60,8 @@ public class MainActivity extends Activity {
     private static final int MAX_REDIRECTS = 5;
 
     private WebView web;
+    private FrameLayout rootView;
+    private NativePlayer exo;
     /** True while the page is recording a programme: the app then keeps running in the background. */
     private volatile boolean recording = false;
     private String recTitle = "";
@@ -83,10 +87,15 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         // Keep the page's renderer at high priority so a recording keeps running while the app is in the background.
         if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
-        web.setBackgroundColor(0xFF0E0B14);
+        // Transparent page over a dark room: the TV's own video engine draws behind it when it is in use.
+        web.setBackgroundColor(Color.TRANSPARENT);
         web.setFocusable(true);
         web.setFocusableInTouchMode(true);
-        setContentView(web);
+        rootView = new FrameLayout(this);
+        rootView.setBackgroundColor(0xFF0E0B14);
+        rootView.addView(web, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        setContentView(rootView);
+        exo = new NativePlayer(this, rootView, web);
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -198,6 +207,40 @@ public class MainActivity extends Activity {
             }
         }
 
+        /* ---- the TV's own video engine (see NativePlayer) ---- */
+        @JavascriptInterface
+        public boolean hasExo() { return true; }
+
+        @JavascriptInterface
+        public void exoPlay(final String url, final String userAgent, final String referrer, final int maxHeight) {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) exo.play(url, userAgent, referrer, maxHeight); } });
+        }
+
+        @JavascriptInterface
+        public void exoStop() {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) exo.stop(); } });
+        }
+
+        @JavascriptInterface
+        public void exoPause(final boolean paused) {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) { if (paused) exo.pause(); else exo.resume(); } } });
+        }
+
+        @JavascriptInterface
+        public void exoMute(final boolean on) {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) exo.mute(on); } });
+        }
+
+        @JavascriptInterface
+        public void exoQuality(final int maxHeight) {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) exo.quality(maxHeight); } });
+        }
+
+        @JavascriptInterface
+        public void exoAspect(final String mode) {
+            runOnUiThread(new Runnable() { @Override public void run() { if (exo != null) exo.aspect(mode); } });
+        }
+
         @JavascriptInterface
         public String platform() { return "android-tv"; }
 
@@ -286,7 +329,8 @@ public class MainActivity extends Activity {
             Map<String, String> headers = request.getRequestHeaders();
             String accept = headers == null ? null : headerValue(headers, "Accept");
             // Images and fonts load fine without help; let the WebView cache handle them.
-            if (accept != null && (accept.startsWith("image/") || accept.contains("font/"))) return null;
+            boolean cors = headers != null && headerValue(headers, "Origin") != null;
+            if (accept != null && (accept.startsWith("image/") || accept.contains("font/")) && !cors) return null;
             if (host != null && (host.endsWith("fonts.googleapis.com") || host.endsWith("fonts.gstatic.com"))) return null;
 
             try {
@@ -460,6 +504,7 @@ public class MainActivity extends Activity {
     private void pauseForLeaving() {
         backgroundPlay = false;
         applyService();
+        if (exo != null) exo.pause();
         if (web == null) return;
         // Leaving for another app pauses the stream so it does not keep playing behind it...
         web.evaluateJavascript("window.INDTV && INDTV.Player && INDTV.Player.video && INDTV.Player.video.pause()", null);
@@ -495,6 +540,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         ui.removeCallbacks(decideBackground);
+        if (exo != null) { exo.stop(); exo = null; }
         try { if (screenReceiver != null) unregisterReceiver(screenReceiver); } catch (Exception ignored) { }
         if (recording || backgroundPlay) {
             recording = false;

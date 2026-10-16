@@ -76,12 +76,8 @@
         var b = U.el('button', { class: 'fx cat-row' + (c.id === CS.sel ? ' is-sel' : ''), type: 'button', dataset: { key: 'cat:' + c.id, cat: c.id }, 'aria-label': name });
         b.innerHTML = '<span class="cat-disc" style="--c:' + color + '"><span>' + U.escapeHtml(c.id === 'all' ? '∗' : name.charAt(0)) + '</span></span>' +
           '<span class="cat-row-text"><span class="cat-name" dir="auto">' + U.escapeHtml(name) + '</span><span class="cat-num">' + U.escapeHtml(U.count(c.count, 'channel', 'channels')) + '</span></span>';
-        b.addEventListener('focus', function () {
-          clearTimeout(CS._selT);
-          CS._selT = setTimeout(function () { CS.select(c.id); }, 220);
-        });
+        // highlighting a category only moves the light; OK opens it
         b.addEventListener('click', function () {
-          clearTimeout(CS._selT);
           CS.select(c.id);
           var f = CS.scroller.querySelector('.tile') || CS.input;
           INDTV.Focus.focus(f);
@@ -104,7 +100,7 @@
       var activeKey = keepFocus && CS.scroller.contains(document.activeElement) ? document.activeElement.getAttribute('data-key') : null;
       var q = CS.query.toLowerCase();
       var base = CS.sel === 'all' ? INDTV.ChannelRepository.all() : Cat.channels(CS.sel);
-      var list = q ? base.filter(function (c) { return matches(c, q); }) : base;
+      var list = INDTV.StreamScan.sort(q ? base.filter(function (c) { return matches(c, q); }) : base);
       CS.title.textContent = CS.sel === 'all' ? t('allCategories') : Cat.name(CS.sel);
       CS.count.textContent = (q ? list.length + ' / ' : '') + U.count(base.length, 'channel', 'channels');
       CS.clear.hidden = !q;

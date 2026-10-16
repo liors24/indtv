@@ -94,16 +94,22 @@
    * ========================================================= */
   var FAIL_TTL = 10 * 60 * 1000;
   var StreamHealth = {
-    _fail: {}, _ok: {},
+    _fail: {}, _ok: {}, _eng: {}, _srcOk: {},
     load: function () {
       return Store.get('health').then(function (h) {
-        if (h && typeof h === 'object') { StreamHealth._fail = h.fail || {}; StreamHealth._ok = h.ok || {}; }
+        if (h && typeof h === 'object') { StreamHealth._fail = h.fail || {}; StreamHealth._ok = h.ok || {}; StreamHealth._eng = h.eng || {}; StreamHealth._srcOk = h.srcOk || {}; }
       });
     },
-    _save: U.debounce(function () { Store.set('health', { fail: StreamHealth._fail, ok: StreamHealth._ok }); }, 1500),
+    _save: U.debounce(function () { Store.set('health', { fail: StreamHealth._fail, ok: StreamHealth._ok, eng: StreamHealth._eng, srcOk: StreamHealth._srcOk }); }, 1500),
+    /** Which engine played this stream last time ('web' = the page's player, 'exo' = the TV's own engine). */
+    engine: function (sourceId) { return StreamHealth._eng[sourceId] || null; },
+    setEngine: function (sourceId, e) { if (StreamHealth._eng[sourceId] !== e) { StreamHealth._eng[sourceId] = e; StreamHealth._save(); } },
+    /** This exact stream played within the last week. */
+    worked: function (sourceId) { var t = StreamHealth._srcOk[sourceId]; return !!t && Date.now() - t < 7 * 86400000; },
     markFailed: function (sourceId) { StreamHealth._fail[sourceId] = Date.now(); StreamHealth._save(); },
     markWorking: function (channelId, sourceId) {
       StreamHealth._ok[channelId] = Date.now();
+      StreamHealth._srcOk[sourceId] = Date.now();
       delete StreamHealth._fail[sourceId];
       StreamHealth._save();
     },

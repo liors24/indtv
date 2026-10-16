@@ -34,12 +34,14 @@
       wrap.appendChild(img);
       wrap.appendChild(fb);
       wrap.setAttribute('data-logo-url', url);
+      if (INDTV.LogoTone) INDTV.LogoTone.mark(wrap, url);
     } else {
       wrap.classList.add('is-failed');
       wrap.appendChild(fb);
     }
     return wrap;
   }
+
 
   function liveBadge(extraCls) {
     return U.el('span', { class: 'badge-live' + (extraCls ? ' ' + extraCls : ''), text: t('liveBadge') });
@@ -89,6 +91,10 @@
     b.appendChild(disc);
     if (INDTV.FavoritesRepository.has(ch.id)) b.appendChild(U.el('span', { class: 'tile-fav', html: INDTV.icon('heartFill') }));
     if (INDTV.DVR && INDTV.DVR.isRecording(ch.id)) b.appendChild(U.el('span', { class: 'tile-rec' }));
+    if (INDTV.StreamScan && INDTV.StreamScan.enabled() && INDTV.StreamScan.channelState(ch) === 'dead') {
+      b.classList.add('is-off');
+      b.setAttribute('aria-label', ch.name + ' — ' + t('offlineCh'));
+    }
     b.appendChild(U.el('span', { class: 'tile-name', text: ch.name }));
     b.addEventListener('focus', function () {
       Ambient.channel(ch);

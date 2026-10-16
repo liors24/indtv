@@ -61,6 +61,8 @@
         if (!INDTV.LiveTranslate.isConfigured()) { UI.toast(t('translateSetup')); return; }
         INDTV.LiveTranslate.toggle(PS.video);
       }, 'ctl-sm'));
+      secondary.appendChild(ctl('aspect', 'aspect', t('picSize'), function () { PS.openSheet('aspect'); }, 'ctl-sm'));
+      secondary.appendChild(ctl('q', 'quality', t('quality'), function () { PS.openSheet('q'); }, 'ctl-sm'));
       secondary.appendChild(ctl('mute', 'volume', t('mute'), function () { P.toggleMute(); }, 'ctl-sm'));
       secondary.appendChild(ctl('stop', 'stop', t('stop'), function () { P.stop(); }, 'ctl-sm'));
       secondary.appendChild(ctl('fs', 'fullscreen', t('fullscreen'), function () { PS.toggleFullscreen(); }, 'ctl-sm'));
@@ -79,6 +81,7 @@
       INDTV.LiveTranslate.state.subscribe(function (ts) { PS.renderSubs(ts); }, false);
       P.state.subscribe(PS.render, false);
       INDTV.Bus.on('epg', function () { if (PS._open) PS.renderProgramme(); });
+      INDTV.Bus.on('player-tracks', function () { if (PS._sheet) PS._sheet.rebuild(); });
       // Labels are rebuilt for the new language while the player is closed (it covers the language toggle).
       INDTV.Bus.on('lang', function () { if (!PS._open) PS.build(); });
       setInterval(function () { if (PS._open && P.state.get().kind === 'channel') PS.renderProgramme(); }, 30000);
@@ -103,6 +106,7 @@
 
     close: function (opts) {
       if (!PS._open) return;
+      PS.closeSheet();
       PS._open = false;
       INDTV.LiveTranslate.stop();
       P.close();
@@ -154,6 +158,7 @@
       PS.el.classList.add('osd-on');
       clearTimeout(PS._osdTimer);
       PS._osdTimer = setTimeout(function () {
+        if (PS._sheet) return;
         var st = P.state.get();
         if (st.phase === 'playing' && !st.paused) PS.hideOsd();
         else PS.showOsd();
@@ -183,6 +188,71 @@
       else if (r === 'busy') UI.toast(t('recBusy'), 'error');
       else UI.toast(t('recUnavailable'), 'error');
     },
+    /* ---------- picture size / quality sheet ---------- */
+    openSheet: function (kind) {
+      PS.closeSheet();
+      var Pic = INDTV.Picture, st = P.state.get(), isCh = st.kind === 'channel';
+      var wrap = U.el('div', { class: 'psheet', role: 'dialog' });
+      var panel = U.el('div', { class: 'psheet-panel' });
+      wrap.appendChild(panel);
+      var sheetBack = PS.btn[kind];
+      function build() {
+        var cur = Pic.current();
+        var keyFocus = panel.contains(document.activeElement) ? document.activeElement.getAttribute('data-key') : null;
+        panel.innerHTML = '';
+        panel.appendChild(U.el('h2', { class: 'psheet-title', text: kind === 'aspect' ? t('picSize') : t('quality') }));
+        var opts;
+        if (kind === 'aspect') opts = Pic.modes.map(function (m) { return { v: m, label: t('pic_' + m.replace(':', '_')) }; });
+        else {
+          var lv = Pic.levels();
+          opts = [{ v: 0, label: t('qAuto') }].concat(lv.map(function (h) { return { v: h, label: Pic.label(h) }; }));
+          if (cur.q && lv.indexOf(cur.q) < 0) opts.push({ v: cur.q, label: Pic.label(cur.q) });
+        }
+        var list = U.el('div', { class: 'psheet-list', 'data-fgroup': 'psheet-list', 'data-faxis': 'v' });
+        var curV = kind === 'aspect' ? cur.aspect : cur.q;
+        opts.forEach(function (o) {
+          var on = o.v === curV;
+          var b = U.el('button', { class: 'fx psheet-row' + (on ? ' is-on' : ''), type: 'button', dataset: { key: 'ps:' + kind + ':' + o.v } });
+          b.innerHTML = '<span class="psheet-check">' + (on ? INDTV.icon('check') : '') + '</span><span dir="auto">' + U.escapeHtml(o.label) + '</span>';
+          b.addEventListener('click', function () { Pic.set(kind, o.v, 'now'); build(); INDTV.Focus.restore('ps:' + kind + ':' + o.v, panel); });
+          list.appendChild(b);
+        });
+        if (kind === 'q' && opts.length < 2) list.appendChild(U.el('p', { class: 'psheet-note', text: t('qSingle') }));
+        panel.appendChild(list);
+        var pinned = kind === 'aspect' ? cur.pinnedAspect : cur.pinnedQ;
+        var acts = U.el('div', { class: 'psheet-acts', 'data-fgroup': 'psheet-acts', 'data-faxis': 'v' });
+        if (isCh) {
+          var pin = U.el('button', { class: 'fx psheet-row psheet-toggle' + (pinned ? ' is-on' : ''), type: 'button', dataset: { key: 'ps:pin' } });
+          pin.innerHTML = '<span class="psheet-check">' + (pinned ? INDTV.icon('check') : '') + '</span><span dir="auto">' + U.escapeHtml(t('picPin').replace('{ch}', st.item.name)) + '</span>';
+          pin.addEventListener('click', function () { Pic.pin(kind, !pinned); build(); INDTV.Focus.restore('ps:pin', panel); UI.toast(!pinned ? t('picPinned') : t('picUnpinned')); });
+          acts.appendChild(pin);
+        }
+        var def = U.el('button', { class: 'fx psheet-row', type: 'button', dataset: { key: 'ps:def' } });
+        def.innerHTML = '<span class="psheet-check">' + INDTV.icon('globe') + '</span><span>' + U.escapeHtml(t('picDefault')) + '</span>';
+        def.addEventListener('click', function () { Pic.set(kind, kind === 'aspect' ? cur.aspect : cur.q, 'default'); UI.toast(t('picDefaultSaved')); build(); INDTV.Focus.restore('ps:def', panel); });
+        acts.appendChild(def);
+        panel.appendChild(acts);
+        if (keyFocus) INDTV.Focus.restore(keyFocus, panel);
+      }
+      build();
+      PS.el.appendChild(wrap);
+      PS._sheet = { el: wrap, back: sheetBack, prevScope: Focus.scope, handler: { onBack: function () { PS.closeSheet(); return true; } }, rebuild: build };
+      Focus.pushHandler(PS._sheet.handler);
+      Focus.scope = wrap;
+      clearTimeout(PS._osdTimer);
+      Focus.focus(panel.querySelector('.psheet-row.is-on') || panel.querySelector('.psheet-row'));
+    },
+    closeSheet: function () {
+      var sh = PS._sheet;
+      if (!sh) return;
+      PS._sheet = null;
+      Focus.popHandler(sh.handler);
+      Focus.scope = PS._open ? PS.el : sh.prevScope;
+      if (sh.el.parentNode) sh.el.parentNode.removeChild(sh.el);
+      if (PS._open && sh.back) Focus.focus(sh.back, { noScroll: true });
+      PS.showOsd();
+    },
+
     doFavorite: function () {
       var st = P.state.get();
       if (st.kind !== 'channel' || !st.item) return;

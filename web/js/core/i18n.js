@@ -290,3 +290,23 @@ INDTV.I18n.extend({
     language: 'שפה'
   }
 });
+
+INDTV.I18n.extend({
+  en: {
+    picSize: 'Picture size', quality: 'Quality', qAuto: 'Automatic (best for the connection)', qSingle: 'This stream comes in one quality only.',
+    pic_fit: 'Original', pic_zoom: 'Zoom to fill', pic_fill: 'Stretch to screen', pic_16_9: '16:9', pic_4_3: '4:3', pic_21_9: '21:9 (cinema)',
+    picPin: 'Always like this on {ch}', picPinned: 'Saved for this channel', picUnpinned: 'No longer fixed for this channel',
+    picDefault: 'Make this the default for all channels', picDefaultSaved: 'Saved as the default',
+    scanTitle: 'Stream check', scanNow: 'Check all streams now', scanIdle: 'Streams are checked in the background so the working one plays first.',
+    scanRunning: 'Checking streams… {d} of {n}', scanDone: '{ok} of {n} streams answer · checked {t}', offlineCh: 'Not answering right now'
+  },
+  he: {
+    picSize: 'גודל תמונה', quality: 'איכות', qAuto: 'אוטומטי (הכי טוב לחיבור)', qSingle: 'השידור הזה מגיע באיכות אחת בלבד.',
+    pic_fit: 'מקורי', pic_zoom: 'הגדלה למילוי', pic_fill: 'מתיחה למסך', pic_16_9: '16:9', pic_4_3: '4:3', pic_21_9: '21:9 (קולנוע)',
+    picPin: 'תמיד כך בערוץ {ch}', picPinned: 'נשמר לערוץ הזה', picUnpinned: 'כבר לא קבוע לערוץ הזה',
+    picDefault: 'להגדיר כברירת מחדל לכל הערוצים', picDefaultSaved: 'נשמר כברירת מחדל',
+    scanTitle: 'בדיקת שידורים', scanNow: 'לבדוק עכשיו את כל השידורים', scanIdle: 'השידורים נבדקים ברקע כדי שהשידור שעובד יתנגן ראשון.',
+    scanRunning: 'בודק שידורים… {d} מתוך {n}', scanDone: '{ok} מתוך {n} שידורים עונים · נבדק {t}', offlineCh: 'לא עונה כרגע'
+  }
+});
+

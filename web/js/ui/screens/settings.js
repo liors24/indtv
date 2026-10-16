@@ -116,6 +116,23 @@
       ]);
       Settings.addBox = U.el('div', { class: 'add-box' });
       put('sources', Settings.section(t('sources'), U.el('div', {}, [Settings.sourcesBox, head, Settings.addBox])));
+
+      // Stream check: every stream of every channel, all playlists cross-matched
+      var scanLine = U.el('p', { class: 'set-status' });
+      var paintScan = function () {
+        var S = INDTV.StreamScan, pr = S.progress(), sm = S.summary();
+        if (!S.enabled()) { scanLine.textContent = t('scanIdle'); return; }
+        if (pr.active) scanLine.textContent = t('scanRunning').replace('{d}', pr.done).replace('{n}', pr.total);
+        else if (sm.n) scanLine.textContent = t('scanDone').replace('{ok}', sm.ok).replace('{n}', sm.n).replace('{t}', U.formatTime(sm.at, INDTV.I18n.lang()));
+        else scanLine.textContent = t('scanIdle');
+      };
+      paintScan();
+      if (!Settings._scanBound) { Settings._scanBound = true; INDTV.Bus.on('scan-progress', function () { if (Settings._paintScan) Settings._paintScan(); }); INDTV.Bus.on('scan', function () { if (Settings._paintScan) Settings._paintScan(); }); }
+      Settings._paintScan = paintScan;
+      var scanRow = U.el('div', { class: 'set-row', 'data-fgroup': 'set-scan' }, [
+        UI.button(t('scanNow'), 'refresh', function () { INDTV.StreamScan.run(true); paintScan(); }, { cls: 'btn-ghost', key: 'scan:now' })
+      ]);
+      put('sources', Settings.section(t('scanTitle'), U.el('div', {}, [scanLine, scanRow])));
       Settings.renderSources();
       Settings.renderAdd();
 

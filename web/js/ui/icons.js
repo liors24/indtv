@@ -5,6 +5,8 @@
 
   var S = 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
   var ICONS = {
+    aspect: '<rect ' + S + ' x="2.5" y="5" width="19" height="14" rx="2"/><path ' + S + ' d="M6 9.5V8h2.5M18 14.5V16h-2.5M15.5 8H18v1.5M8.5 16H6v-1.5"/>',
+    quality: '<rect ' + S + ' x="2.5" y="5" width="19" height="14" rx="2"/><path ' + S + ' d="M6.5 9.5v5M6.5 12h3.2M9.7 9.5v5M13 9.5h2.3a2.5 2.5 0 0 1 0 5H13z"/>',
     home: '<path ' + S + ' d="M3.5 10.2 12 3.5l8.5 6.7V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-6h-5.6v6H5A1.5 1.5 0 0 1 3.5 19z"/>',
     live: '<rect ' + S + ' x="2.5" y="6.5" width="19" height="13" rx="2.2"/><path ' + S + ' d="M8 2.8 12 6.4l4-3.6"/><circle cx="7" cy="13" r="1.6" fill="currentColor"/>',
     movies: '<rect ' + S + ' x="3" y="3.5" width="18" height="17" rx="2.2"/><path ' + S + ' d="M7.5 3.5v17M16.5 3.5v17M3 8.2h4.5M3 12h4.5M3 15.8h4.5M16.5 8.2H21M16.5 12H21M16.5 15.8H21"/>',

@@ -59,7 +59,8 @@
       INDTV.RecentRepository.load(),
       INDTV.EpgRepository.load(),
       INDTV.ShowFavorites.load(),
-      INDTV.Categories.load()
+      INDTV.Categories.load(),
+      INDTV.StreamScan.load()
     ]).then(function () { return INDTV.VodRepository.load(); });
 
     withTimeout(local, 900).then(function () {
@@ -68,6 +69,7 @@
       // Programme guide: downloaded and parsed in the background once Home is up (never blocks the UI).
       setTimeout(function () { INDTV.EpgRepository.ensureFresh(); }, 3500);
       INDTV.ShowFavorites.startWatcher();
+      INDTV.StreamScan.start();
       if (INDTV.DVR) INDTV.DVR.load();
       INDTV.PlaylistRepository.startBackgroundPolicy();
 
