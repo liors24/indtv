@@ -238,6 +238,13 @@
       INDTV.I18n.applyDir();
       INDTV.Bus.emit('lang', lang);
     },
+    /** Adds strings from a feature module: extend({ en: {...}, he: {...} }). */
+    extend: function (dict) {
+      Object.keys(dict).forEach(function (l) {
+        STRINGS[l] = STRINGS[l] || {};
+        Object.keys(dict[l]).forEach(function (k) { STRINGS[l][k] = dict[l][k]; });
+      });
+    },
     applyDir: function () {
       var html = document.documentElement;
       html.setAttribute('lang', lang === 'he' ? 'he' : 'en');

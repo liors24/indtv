@@ -39,8 +39,11 @@
       var lang = U.el('button', { class: 'fx tb-lang', type: 'button', dataset: { key: 'tool:lang' }, 'aria-label': t('language') });
       lang.innerHTML = '<span class="lang-opt' + (INDTV.I18n.lang() === 'en' ? ' is-on' : '') + '">EN</span><span class="lang-sep">|</span><span class="lang-opt' + (INDTV.I18n.lang() === 'he' ? ' is-on' : '') + '" lang="he">עברית</span>';
       lang.addEventListener('click', function () { INDTV.I18n.setLang(INDTV.I18n.lang() === 'en' ? 'he' : 'en'); });
-      var profile = U.el('button', { class: 'fx tb-tool tb-profile', type: 'button', 'aria-label': t('profile'), dataset: { key: 'tool:profile' }, html: INDTV.icon('user') });
-      profile.addEventListener('click', function () { Router.go('settings', { focusContent: true }); });
+      var me = INDTV.Profiles && INDTV.Profiles.current();
+      var profile = U.el('button', { class: 'fx tb-tool tb-profile' + (me ? ' has-avatar' : ''), type: 'button',
+        'aria-label': me ? me.name + ' \u2014 ' + t('pfSwitch') : t('profile'), dataset: { key: 'tool:profile' },
+        html: me ? INDTV.Avatars.render(me.avatar, 'tb-av') : INDTV.icon('user') });
+      profile.addEventListener('click', function () { if (me) INDTV.Profiles.switchProfile(); else Router.go('settings', { focusContent: true }); });
       tools.appendChild(search); tools.appendChild(lang); tools.appendChild(profile);
       top.appendChild(tools);
 

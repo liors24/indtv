@@ -376,6 +376,8 @@
       DVR._active().forEach(function (s) { if (s.rec) live[s.rec.id] = s.rec; });
       var rows = DVR._rows.filter(function (r) { return !live[r.id]; }).concat(Object.keys(live).map(function (k) { return DVR._rowOf(live[k]); }));
       rows.sort(function (a, b) { return b.createdAt - a.createdAt; });
+      // every profile sees only its own recordings
+      if (INDTV.Profiles) rows = rows.filter(function (r) { return INDTV.Profiles.owns(r); });
       DVR.state.set(rows);
       DVR._syncNative();
     },
@@ -393,7 +395,7 @@
     _rowOf: function (rec) {
       var d = 0; rec.segs.forEach(function (m) { d += m.dur; });
       return { id: rec.id, chId: rec.chId, chName: rec.chName, title: rec.title, startWall: rec.startWall, endWall: rec.endWall || Date.now(),
-        status: rec.status, bytes: rec.bytes, dur: d, createdAt: rec.createdAt, lastPos: rec.lastPos || 0, init: rec.init, segs: rec.segs, error: rec.error || null };
+        status: rec.status, bytes: rec.bytes, dur: d, createdAt: rec.createdAt, lastPos: rec.lastPos || 0, init: rec.init, segs: rec.segs, error: rec.error || null, owner: rec.owner || null };
     },
 
     /* --- watching a channel --- */
@@ -440,7 +442,8 @@
       }
       if (!s || s.rec) return null;
       var rec = { id: newId('', 0), chId: s.chId, chName: s.chName, title: opts.title || s.chName, startWall: Date.now(), endWall: null,
-        status: 'recording', segs: [], count: 0, bytes: 0, init: null, createdAt: Date.now(), lastPos: 0, endAt: opts.endAt || null };
+        status: 'recording', segs: [], count: 0, bytes: 0, init: null, createdAt: Date.now(), lastPos: 0, endAt: opts.endAt || null,
+        owner: INDTV.Profiles ? INDTV.Profiles.currentId() : null };
       rec.id = newId('', 0);
       var from = opts.fromWall;
       var copied = {};
@@ -510,7 +513,7 @@
     _persist: function (rec, final) {
       var row = DVR._rowOf(rec);
       var plain = { id: row.id, chId: row.chId, chName: row.chName, title: row.title, startWall: row.startWall, endWall: row.endWall,
-        status: row.status, bytes: row.bytes, createdAt: row.createdAt, lastPos: row.lastPos, init: row.init, error: row.error,
+        status: row.status, bytes: row.bytes, createdAt: row.createdAt, lastPos: row.lastPos, init: row.init, error: row.error, owner: row.owner,
         segs: rec.segs.map(function (m) { return { i: m.i, k: m.k, dur: m.dur, disc: m.disc, wall: m.wall, sn: m.sn, bytes: m.bytes, rec: m.rec }; }) };
       return putRec(plain).catch(function () { /* ignore */ });
     },
@@ -534,6 +537,17 @@
       DVR._rows = DVR._rows.filter(function (r) { return r.id !== id; });
       DVR._publish();
       return delSegs(keys).then(function () { return delRec(id); }).catch(function () { /* ignore */ });
+    },
+    /** Deletes every recording a removed profile owned. */
+    removeOwned: function (owner) {
+      if (!root.indexedDB) return Promise.resolve();
+      var src = DVR._rows.length ? Promise.resolve(DVR._rows) : allRecs().catch(function () { return []; });
+      return src.then(function (all) { return Promise.all(all.filter(function (r) { return r.owner === owner; }).map(function (r) {
+        var keys = (r.segs || []).map(function (m) { return m.k; });
+        if (r.init) keys.push(r.init);
+        DVR._rows = DVR._rows.filter(function (x) { return x.id !== r.id; });
+        return delSegs(keys).then(function () { return delRec(r.id); }).catch(function () { /* ignore */ });
+      })); }).then(function () { DVR._publish(); });
     },
     saveProgress: function (id, pos) {
       var r = DVR._rows.filter(function (x) { return x.id === id; })[0];

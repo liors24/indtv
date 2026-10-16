@@ -18,8 +18,8 @@
     user: '<circle ' + S + ' cx="12" cy="8.3" r="3.8"/><path ' + S + ' d="M4.5 20.2c1.4-3.7 4.3-5.6 7.5-5.6s6.1 1.9 7.5 5.6"/>',
     play: '<path fill="currentColor" d="M8.2 4.9c0-.9 1-1.4 1.7-.9l9.8 6.6c.7.5.7 1.5 0 1.9l-9.8 6.7c-.7.5-1.7 0-1.7-.9z"/>',
     pause: '<rect x="6.3" y="4.5" width="4" height="15" rx="1.1" fill="currentColor"/><rect x="13.7" y="4.5" width="4" height="15" rx="1.1" fill="currentColor"/>',
-    rewind10: '<path ' + S + ' d="M4.6 13a7.6 7.6 0 1 0 2.3-5.6"/><path ' + S + ' d="M4.4 3.9v4h4"/><text x="12.4" y="15.6" text-anchor="middle" font-size="6.6" font-weight="700" fill="currentColor" font-family="Outfit, Arial, sans-serif">10</text>',
-    forward10: '<path ' + S + ' d="M19.4 13a7.6 7.6 0 1 1-2.3-5.6"/><path ' + S + ' d="M19.6 3.9v4h-4"/><text x="11.6" y="15.6" text-anchor="middle" font-size="6.6" font-weight="700" fill="currentColor" font-family="Outfit, Arial, sans-serif">10</text>',
+    rewind10: '<path ' + S + ' d="M4.6 13a7.6 7.6 0 1 0 2.3-5.6"/><path ' + S + ' d="M4.4 3.9v4h4"/><text x="12.4" y="15.6" text-anchor="middle" font-size="6.6" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">10</text>',
+    forward10: '<path ' + S + ' d="M19.4 13a7.6 7.6 0 1 1-2.3-5.6"/><path ' + S + ' d="M19.6 3.9v4h-4"/><text x="11.6" y="15.6" text-anchor="middle" font-size="6.6" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">10</text>',
     prev: '<path ' + S + ' d="M6 5v14"/><path fill="currentColor" d="M18.6 5.6c0-.8-.9-1.3-1.6-.8l-8.3 6.4c-.5.4-.5 1.2 0 1.6l8.3 6.4c.7.5 1.6 0 1.6-.8z"/>',
     next: '<path ' + S + ' d="M18 5v14"/><path fill="currentColor" d="M5.4 5.6c0-.8.9-1.3 1.6-.8l8.3 6.4c.5.4.5 1.2 0 1.6L7 19.2c-.7.5-1.6 0-1.6-.8z"/>',
     volume: '<path ' + S + ' d="M4 9.2h3.6L12.5 5v14l-4.9-4.2H4z"/><path ' + S + ' d="M16 8.8a4.6 4.6 0 0 1 0 6.4M18.6 6.2a8.3 8.3 0 0 1 0 11.6"/>',
@@ -55,10 +55,10 @@
     return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + body + '</svg>';
   };
 
-  /** Brand mark: a small orange broadcast arc paired with the INDTV wordmark. */
+  /** Brand mark: a lamp broadcasting into the room (with an on-air dot), paired with the INDTV wordmark. */
   INDTV.wordmark = function (cls) {
     return '<span class="wordmark' + (cls ? ' ' + cls : '') + '" dir="ltr" aria-label="INDTV">' +
-      '<svg class="wm-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.8 4.6A9 9 0 1 0 16.8 19.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M13.6 9.1a3.6 3.6 0 1 0 0 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".55"/></svg>' +
+      '<svg class="wm-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.6" cy="12.6" r="2.5" fill="currentColor"/><path d="M9.05 8.00A6.4 6.4 0 0 1 9.05 17.20" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M12.38 4.54A11.2 11.2 0 0 1 12.38 20.66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/><circle class="wm-live" cx="19.6" cy="3.9" r="2" fill="#ff4d5e"/></svg>' +
       '<span class="wm-ind">IND</span><span class="wm-tv">TV</span></span>';
   };
 })(typeof window !== 'undefined' ? window : globalThis);

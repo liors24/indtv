@@ -101,8 +101,17 @@
     delete memory[key];
   }
 
+  /* Per-profile data: these keys are stored separately for every profile (see js/core/profiles.js). */
+  var SCOPED = { favorites: 1, recent: 1, shows: 1, 'vod:progress': 1 };
+  var scope = null;
+  function sk(key) { return scope && SCOPED[key] ? 'u:' + scope + ':' + key : key; }
+
   INDTV.Store = {
+    setScope: function (profileId) { scope = profileId || null; },
+    scope: function () { return scope; },
+    scopedKey: sk,
     get: function (key) {
+      key = sk(key);
       return openDb().then(function (db) {
         if (!db) return lsGet(key);
         return new Promise(function (resolve) {
@@ -118,6 +127,7 @@
       });
     },
     set: function (key, value) {
+      key = sk(key);
       return openDb().then(function (db) {
         if (!db) return lsSet(key, value);
         return new Promise(function (resolve) {
@@ -134,6 +144,7 @@
       });
     },
     del: function (key) {
+      key = sk(key);
       lsDel(key);
       return openDb().then(function (db) {
         if (!db) return;
@@ -147,6 +158,8 @@
         });
       });
     },
+    /** Unscoped access, used once to move pre-profile data into the first profile. */
+    getRaw: function (key) { var prev = scope; scope = null; var p = INDTV.Store.get(key); scope = prev; return p; },
     /** Synchronous small-preference access (language etc.) so first paint is correct. */
     getSync: lsGet,
     setSync: lsSet

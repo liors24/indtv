@@ -41,6 +41,21 @@
     INDTV.Router.start();
     registerScreens();
 
+    root.INDTVKey = function (key) {
+      var target = document.activeElement || document.body;
+      target.dispatchEvent(new KeyboardEvent('keydown', { key: key, bubbles: true, cancelable: true }));
+      return 'ok';
+    };
+
+    // 0. "Who's watching?" — every person gets their own favourites, history and recordings.
+    INDTV.ProfileGate.open().then(function (p) {
+      try { localStorage.removeItem('indtv:ota-boot'); } catch (e) { /* ignore */ }
+      start(p);
+    });
+    try { localStorage.removeItem('indtv:ota-boot'); } catch (e) { /* the gate rendered: this bundle runs */ }
+  }
+
+  function start() {
     // 1. Local data only (IndexedDB). Capped so a slow storage layer never holds the splash.
     var local = Promise.all([
       INDTV.PlaylistRepository.init(),

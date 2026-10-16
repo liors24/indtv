@@ -1,0 +1,203 @@
+/* INDTV × Flixgram — the projector-room skin and the "Who's watching?" profile gate.
+   Loaded after app.css; only overrides and new components live here. */
+
+@font-face { font-family: 'Karantina'; font-weight: 400; font-display: swap; src: url('../fonts/Karantina-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Karantina'; font-weight: 700; font-display: swap; src: url('../fonts/Karantina-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Sans Hebrew'; font-weight: 400; font-display: swap; src: url('../fonts/IBMPlexSansHebrew-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Sans Hebrew'; font-weight: 500; font-display: swap; src: url('../fonts/IBMPlexSansHebrew-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Sans Hebrew'; font-weight: 600; font-display: swap; src: url('../fonts/IBMPlexSansHebrew-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Sans Hebrew'; font-weight: 700; font-display: swap; src: url('../fonts/IBMPlexSansHebrew-Bold.ttf') format('truetype'); }
+
+:root {
+  --velvet: #0e0b14;
+  --lamp: #fff3dd;
+  --haze: #a59db0;
+  --rose: #ff6b8a;
+  --violet: #8b6cff;
+  --lamp-ring: 0 0 0 0.16rem var(--lamp), 0 0 0 0.45rem rgba(255, 243, 221, 0.16), 0 0 2.6rem rgba(255, 243, 221, 0.22);
+}
+
+/* Projector light falling into the room from above. */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(60rem 26rem at 50% -8rem, rgba(255, 243, 221, 0.085), transparent 70%),
+    radial-gradient(48rem 40rem at 105% 110%, rgba(139, 108, 255, 0.08), transparent 70%),
+    radial-gradient(40rem 34rem at -6% 100%, rgba(255, 107, 138, 0.06), transparent 70%);
+}
+
+/* ----- Type ----- */
+.hero-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 6.6rem; line-height: 0.98; letter-spacing: 0.005em;
+  text-shadow: 0 0.3rem 2.4rem rgba(14, 11, 20, 0.6);
+}
+.rail-title, .screen-title, .page-title, .settings-title, .section-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 2.7rem; letter-spacing: 0.01em; line-height: 1;
+}
+.rail-meta { color: var(--haze); }
+.hero-cat { color: var(--lamp); opacity: 0.85; }
+
+/* ----- Buttons: the lamp ----- */
+.btn-primary {
+  background: var(--lamp); color: var(--velvet);
+  box-shadow: 0 0.9rem 2.6rem rgba(255, 243, 221, 0.16);
+}
+.btn-primary .ic { color: var(--velvet); }
+.btn-primary:focus { background: #fff; color: var(--velvet); box-shadow: var(--lamp-ring); }
+.btn-ghost:focus, .btn-choice:focus { background: rgba(255, 243, 221, 0.14); border-color: var(--lamp); box-shadow: 0 0 0 0.1rem var(--lamp), 0 0 2rem rgba(255, 243, 221, 0.18); }
+.btn-danger { color: #ffb3bc; }
+.btn-danger:focus { color: #fff; background: rgba(255, 77, 94, 0.22); border-color: var(--live); box-shadow: 0 0 0 0.1rem var(--live), 0 0 1.8rem rgba(255, 77, 94, 0.35); }
+
+/* ----- Top bar: lamp pill ----- */
+.tb-item:focus { background: var(--lamp); color: var(--velvet); text-shadow: none; box-shadow: 0 0 2rem rgba(255, 243, 221, 0.25); }
+.tb-item:focus::after { opacity: 0 !important; }
+.tb-profile.has-avatar { padding: 0; background: none; border-radius: 0.9rem; overflow: visible; }
+.tb-profile .tb-av { width: 2.9rem; height: 2.9rem; display: block; border-radius: 0.8rem; transition: transform var(--focus-ms) var(--ease), box-shadow var(--focus-ms) var(--ease); }
+.tb-profile.has-avatar:focus { background: none; box-shadow: none; }
+.tb-profile.has-avatar:focus .tb-av { transform: scale(1.12); box-shadow: 0 0 0 0.14rem var(--lamp), 0 0 1.8rem rgba(255, 243, 221, 0.35); border-radius: 0.8rem; }
+
+/* ----- Cards: lamp focus ring ----- */
+.card:focus, .poster:focus, .show-card:focus, .channel-card:focus { box-shadow: var(--lamp-ring) !important; border-color: var(--lamp) !important; }
+
+/* ----- Wordmark: projector beam ----- */
+.wordmark .wm-mark { color: var(--lamp); filter: drop-shadow(0 0 0.5rem rgba(255, 243, 221, 0.45)); }
+.wordmark .wm-ind, .wordmark .wm-tv { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.04em; }
+.wordmark .wm-tv { color: var(--lamp); }
+.wordmark .wm-ind { color: var(--haze); }
+
+/* =====================================================================
+   Profile gate — "Who's watching?"
+   ===================================================================== */
+html.pf-open #app, html.pf-open .topbar, html.pf-open .siderail { visibility: hidden; }
+html.pf-open #splash { display: none; }
+.pf-gate {
+  position: fixed; inset: 0; z-index: 900; background: var(--velvet); color: var(--lamp);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  transition: opacity 420ms var(--ease), transform 420ms var(--ease);
+}
+.pf-gate.is-leaving { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.pf-room { position: absolute; inset: 0; pointer-events: none; }
+.pf-room::before { /* the projector beam */
+  content: ''; position: absolute; left: 50%; top: -20%; width: 120rem; height: 80rem; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(255, 243, 221, 0.13), rgba(255, 243, 221, 0.04) 55%, transparent 75%);
+  animation: pf-breathe 7s ease-in-out infinite;
+}
+.pf-room::after { /* coloured ambience */
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(42rem 36rem at 8% 92%, rgba(255, 107, 138, 0.16), transparent 70%),
+    radial-gradient(46rem 38rem at 94% 88%, rgba(139, 108, 255, 0.16), transparent 70%);
+}
+@keyframes pf-breathe { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+
+.pf-body { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; }
+.pf-body.is-in > *, .pf-body.is-in .pf-copy > *, .pf-body.is-in .pf-stage { animation: pf-rise 560ms var(--ease) both; }
+.pf-body.is-in > *:nth-child(2), .pf-body.is-in .pf-copy > *:nth-child(2) { animation-delay: 50ms; }
+.pf-body.is-in > *:nth-child(3), .pf-body.is-in .pf-copy > *:nth-child(3) { animation-delay: 100ms; }
+.pf-body.is-in > *:nth-child(4), .pf-body.is-in .pf-copy > *:nth-child(4) { animation-delay: 150ms; }
+.pf-body.is-in .pf-copy > *:nth-child(n+5) { animation-delay: 200ms; }
+.pf-body.is-in .pf-stage { animation-delay: 120ms; }
+@keyframes pf-rise { from { opacity: 0; transform: translateY(1.2rem); } to { opacity: 1; transform: none; } }
+
+.pf-brand .wordmark { font-size: 2.2rem; }
+.pf-title {
+  margin: 1.6rem 0 3.4rem; font-family: var(--font-display); font-weight: 700; font-size: 7.4rem; line-height: 0.95;
+  letter-spacing: 0.01em; text-align: center; text-shadow: 0 0 3rem rgba(255, 243, 221, 0.18);
+}
+
+.pf-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 2.6rem 2.8rem; max-width: 104rem; padding: 1rem 2rem; }
+.pf-row.is-many { gap: 2rem 2.2rem; }
+.pf-tile { display: flex; flex-direction: column; align-items: center; width: 13rem; outline: none; }
+.pf-row.is-many .pf-tile { width: 11rem; }
+.pf-av {
+  position: relative; display: block; width: 12rem; height: 12rem; border-radius: 26%;
+  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease), filter 260ms var(--ease);
+  filter: saturate(0.72) brightness(0.82);
+  box-shadow: 0 1.4rem 3rem rgba(0, 0, 0, 0.45);
+}
+.pf-row.is-many .pf-av { width: 10rem; height: 10rem; border-radius: 26%; }
+.pf-av > svg { width: 100%; height: 100%; display: block; border-radius: inherit; }
+.pf-name {
+  margin-top: 1.2rem; font-size: 1.6rem; font-weight: 500; color: var(--haze); max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 200ms var(--ease);
+}
+.pf-tile:focus .pf-av {
+  transform: translateY(-0.5rem) scale(1.1); filter: none;
+  box-shadow: 0 0 0 0.22rem var(--lamp), 0 0 0 0.62rem rgba(255, 243, 221, 0.14), 0 1.8rem 4rem rgba(255, 243, 221, 0.2);
+}
+.pf-tile:focus .pf-name { color: var(--lamp); font-weight: 600; }
+.pf-tile.is-chosen .pf-av { transform: scale(1.35); filter: none; transition-duration: 480ms; }
+.pf-gate.is-chosen .pf-tile:not(.is-chosen) { opacity: 0; transition: opacity 300ms; }
+.pf-av-add {
+  display: grid; place-items: center; background: rgba(255, 243, 221, 0.04);
+  border: 0.16rem dashed rgba(255, 243, 221, 0.28); box-shadow: none; filter: none; color: var(--haze);
+}
+.pf-av-add svg { width: 4.2rem; height: 4.2rem; }
+.pf-add:focus .pf-av-add { background: rgba(255, 243, 221, 0.1); border-style: solid; border-color: var(--lamp); color: var(--lamp); }
+.pf-pen {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit;
+  background: rgba(14, 11, 20, 0.55); color: var(--lamp);
+}
+.pf-pen svg { width: 3.6rem; height: 3.6rem; }
+.pf-foot { margin-top: 3.6rem; }
+
+/* sign-up / edit */
+.pf-form {
+  display: grid; grid-template-columns: minmax(0, 1fr) 30rem; gap: 6rem; align-items: center;
+  width: 100%; max-width: 104rem; padding: 0 4rem;
+}
+.pf-copy { min-width: 0; }
+.pf-title-left { text-align: start; margin: 1.2rem 0 1rem; font-size: 6rem; }
+.pf-lead { margin: 0 0 1.8rem; max-width: 52rem; font-size: 1.45rem; line-height: 1.55; color: var(--haze); }
+.pf-label { display: block; margin: 1.6rem 0 0.8rem; font-size: 1.15rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--haze); }
+html[lang="he"] .pf-label { letter-spacing: 0; text-transform: none; font-size: 1.3rem; }
+.pf-input {
+  width: 100%; max-width: 40rem; height: 4.6rem; padding: 0 1.6rem; border-radius: 1.2rem;
+  background: rgba(255, 243, 221, 0.06); border: 0.12rem solid rgba(255, 243, 221, 0.16); color: var(--lamp);
+  font-size: 1.8rem; font-weight: 500; outline: none; transition: border-color 200ms, box-shadow 200ms, background 200ms;
+}
+.pf-input::placeholder { color: rgba(165, 157, 176, 0.75); }
+.pf-input:focus { border-color: var(--lamp); background: rgba(255, 243, 221, 0.1); box-shadow: 0 0 0 0.35rem rgba(255, 243, 221, 0.12); }
+
+.pf-grid { display: grid; grid-template-columns: repeat(9, 5.6rem); gap: 1.1rem; }
+.pf-pick {
+  position: relative; width: 5.6rem; height: 5.6rem; border-radius: 26%; outline: none;
+  transition: transform 200ms var(--ease), box-shadow 200ms var(--ease), opacity 200ms; opacity: 0.78;
+}
+.pf-pick svg { width: 100%; height: 100%; display: block; }
+.pf-pick:focus { transform: scale(1.22); opacity: 1; box-shadow: 0 0 0 0.16rem var(--lamp), 0 0.8rem 2rem rgba(255, 243, 221, 0.25); z-index: 1; }
+.pf-pick.is-on { opacity: 1; box-shadow: 0 0 0 0.16rem var(--lamp); }
+.pf-pick.is-on::after {
+  content: ''; position: absolute; right: -0.35rem; top: -0.35rem; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--lamp) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5' fill='none' stroke='%230e0b14' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/70% no-repeat;
+}
+.pf-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.4rem; }
+.pf-actions .btn-primary { min-width: 16rem; height: 4.2rem; font-size: 1.4rem; }
+
+.pf-stage { display: flex; flex-direction: column; align-items: center; }
+.pf-preview { width: 24rem; height: 24rem; position: relative; }
+.pf-preview::before { /* spotlight on the stage */
+  content: ''; position: absolute; left: 50%; bottom: -3.5rem; width: 30rem; height: 6rem; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(255, 243, 221, 0.22), transparent); filter: blur(0.4rem);
+}
+.pf-big { position: relative; width: 100%; height: 100%; display: block; border-radius: 26%;
+  box-shadow: 0 0 0 0.25rem rgba(255, 243, 221, 0.9), 0 2.4rem 6rem rgba(0, 0, 0, 0.5), 0 0 6rem rgba(255, 243, 221, 0.14);
+  animation: pf-pop 380ms var(--ease); }
+@keyframes pf-pop { from { transform: scale(0.92) rotate(-2deg); } to { transform: none; } }
+.pf-preview-name { margin-top: 4.4rem; font-family: var(--font-display); font-weight: 700; font-size: 4.2rem; line-height: 1; max-width: 30rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-preview-name.is-empty { color: rgba(165, 157, 176, 0.5); }
+
+/* confirm */
+.pf-confirm { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: rgba(8, 6, 12, 0.72); backdrop-filter: blur(0.6rem); animation: pf-fade 200ms both; }
+.pf-confirm-panel { width: 44rem; padding: 3rem 3.2rem; border-radius: 2rem; background: #1a1522; border: 0.08rem solid rgba(255, 243, 221, 0.12); box-shadow: 0 3rem 8rem rgba(0, 0, 0, 0.6); animation: pf-rise 300ms var(--ease) both; }
+.pf-confirm-panel h2 { margin: 0 0 0.8rem; font-family: var(--font-display); font-weight: 700; font-size: 3.4rem; line-height: 1; }
+.pf-confirm-panel p { margin: 0; font-size: 1.35rem; line-height: 1.5; color: var(--haze); }
+.pf-confirm .pf-actions { margin-top: 2rem; }
+@keyframes pf-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-aspect-ratio: 1/1) {
+  .pf-form { grid-template-columns: 1fr; gap: 3rem; padding: 0 2rem; }
+  .pf-stage { order: -1; }
+  .pf-preview { width: 14rem; height: 14rem; }
+  .pf-grid { grid-template-columns: repeat(6, 5.6rem); }
+}
