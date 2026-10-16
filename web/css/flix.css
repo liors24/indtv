@@ -191,7 +191,7 @@ html[dir="rtl"] .hero-title { text-align: right; }
 .hero-meta .hero-now { font-weight: 600; unicode-bidi: plaintext; }
 .hero-fav { display: inline-flex; align-items: center; color: var(--rose); }
 .hero-fav .ic { margin-inline-end: 0.45rem; }
-.home-rows { position: absolute; top: 19.5rem; left: 0; right: 0; bottom: 0; padding-bottom: 6rem; }
+.home-rows { position: absolute; top: 19.5rem; left: 0; right: 0; bottom: 0; height: auto; padding-bottom: 6rem; }
 .home-state { padding: 6rem var(--edge) 0; }
 .notice { margin: 0 var(--edge) 1rem; }
 
@@ -226,7 +226,7 @@ html[dir="rtl"] .cat-side { background: linear-gradient(to left, rgba(14, 11, 20
 .menu-btn svg { width: 1.9rem; height: 1.9rem; }
 .menu-btn:focus { background: var(--lamp); color: var(--velvet); transform: scale(1.08); }
 .cat-side-title { margin-inline-start: 1.1rem; font-size: 1.45rem; font-weight: 500; color: var(--haze); white-space: nowrap; }
-.cat-list { flex: 1; min-height: 0; padding-bottom: 4rem; }
+.cat-list { flex: 1; min-height: 0; height: auto; padding-bottom: 4rem; }
 .cat-row { display: flex; align-items: center; width: 100%; padding: 0.8rem 1.5rem; position: relative; transition: background-color 200ms var(--out); }
 .cat-disc {
   width: 3.4rem; height: 3.4rem; border-radius: 50%; flex: none; display: grid; place-items: center;
@@ -259,7 +259,7 @@ html[dir="rtl"] .cat-head { padding: 0.6rem 3.4rem 1.2rem var(--edge); }
 .chip-search:focus::placeholder { color: rgba(14, 11, 20, 0.55); }
 .chip-search-wrap:focus-within .chip-search-ic { color: var(--velvet); }
 .chip-search::-webkit-search-cancel-button { display: none; }
-.cat-scroll { flex: 1; min-height: 0; }
+.cat-scroll { flex: 1; min-height: 0; height: auto; }
 .cat-scroll .tile-grid { padding-inline-start: 3.4rem; }
 
 /* =====================================================================
