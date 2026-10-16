@@ -37,18 +37,14 @@
 <body>
   <div id="app">
     <header id="topbar" class="topbar"></header>
-    <nav id="siderail" class="siderail" aria-label="Sections"></nav>
+    <div id="ambient" aria-hidden="true"><div class="amb-layer"></div><div class="amb-layer"></div><div id="vignette"></div></div>
     <main id="stage" class="stage">
       <section id="screen-home" class="screen" hidden></section>
-      <section id="screen-live" class="screen" hidden></section>
-      <section id="screen-movies" class="screen" hidden></section>
-      <section id="screen-shows" class="screen" hidden></section>
-      <section id="screen-kids" class="screen" hidden></section>
-      <section id="screen-news" class="screen" hidden></section>
+      <section id="screen-categories" class="screen" hidden></section>
+      <section id="screen-catchup" class="screen" hidden></section>
       <section id="screen-favorites" class="screen" hidden></section>
       <section id="screen-recordings" class="screen" hidden></section>
       <section id="screen-settings" class="screen" hidden></section>
-      <section id="screen-search" class="screen" hidden></section>
     </main>
   </div>
   <div id="player" class="player" hidden></div>
@@ -67,7 +63,9 @@
   <script src="js/data/repositories.js"></script>
   <script src="js/data/epg-vod.js"></script>
   <script src="js/data/shows.js"></script>
+  <script src="js/data/categories.js"></script>
   <script src="js/player/dvr.js"></script>
+  <script src="js/player/catchup.js"></script>
   <script src="js/player/player-controller.js"></script>
   <script src="js/player/live-translate.js"></script>
   <script src="js/ui/icons.js"></script>
@@ -79,9 +77,9 @@
   <script src="js/ui/screens/profiles.js"></script>
   <script src="js/ui/screens/splash.js"></script>
   <script src="js/ui/screens/home.js"></script>
-  <script src="js/ui/screens/live.js"></script>
+  <script src="js/ui/screens/categories.js"></script>
+  <script src="js/ui/screens/catchup.js"></script>
   <script src="js/ui/screens/grids.js"></script>
-  <script src="js/ui/screens/search.js"></script>
   <script src="js/ui/screens/recordings.js"></script>
   <script src="js/ui/screens/settings.js"></script>
   <script src="js/ui/screens/player-screen.js"></script>

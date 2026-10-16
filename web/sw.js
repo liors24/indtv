@@ -2,15 +2,15 @@
  * App shell: network first, cached copy when offline (so an update is picked up on the next load).
  * Channel logos (tvg-logo images): cache first, capped — the disk cache for logos.
  * Playlists, guide data and video streams are never touched here. */
-var SHELL = 'indtv-shell-v7';
+var SHELL = 'indtv-shell-v8';
 var LOGOS = 'indtv-logos-v1';
 var LOGO_LIMIT = 500;
 var SHELL_FILES = [
   './', 'index.html', 'app.html', 'css/app.css', 'css/flix.css', 'fonts/Karantina-Bold.ttf', 'fonts/IBMPlexSansHebrew-Regular.ttf', 'manifest.webmanifest', 'assets/icons/favicon.svg', 'assets/icons/icon-192.png',
   'js/core/util.js', 'js/core/updater.js', 'js/core/store.js', 'js/core/profiles.js', 'js/core/i18n.js', 'js/data/m3u-parser.js', 'js/data/repositories.js',
-  'js/data/epg-vod.js', 'js/data/shows.js', 'js/player/dvr.js', 'js/player/player-controller.js', 'js/player/live-translate.js', 'js/ui/icons.js', 'js/ui/focus.js', 'js/ui/edit-dock.js', 'js/ui/components.js',
-  'js/ui/router.js', 'js/ui/avatars.js', 'js/ui/screens/profiles.js', 'js/ui/screens/splash.js', 'js/ui/screens/home.js', 'js/ui/screens/live.js', 'js/ui/screens/grids.js',
-  'js/ui/screens/search.js', 'js/ui/screens/recordings.js', 'js/ui/screens/settings.js', 'js/ui/screens/player-screen.js', 'js/app.js'
+  'js/data/epg-vod.js', 'js/data/shows.js', 'js/data/categories.js', 'js/player/dvr.js', 'js/player/catchup.js', 'js/player/player-controller.js', 'js/player/live-translate.js', 'js/ui/icons.js', 'js/ui/focus.js', 'js/ui/edit-dock.js', 'js/ui/components.js',
+  'js/ui/router.js', 'js/ui/avatars.js', 'js/ui/screens/profiles.js', 'js/ui/screens/splash.js', 'js/ui/screens/home.js', 'js/ui/screens/categories.js', 'js/ui/screens/catchup.js', 'js/ui/screens/grids.js',
+  'js/ui/screens/recordings.js', 'js/ui/screens/settings.js', 'js/ui/screens/player-screen.js', 'js/app.js'
 ];
 
 self.addEventListener('install', function (e) {

@@ -247,17 +247,26 @@
       if (self.stopped) return;
       var rec = self.rec;
       var i = self.n++;
-      var k = rec ? 'r' + rec.id + ':' + rec.count++ : self.sid + ':' + i;
       var last = self.segs.length ? self.segs[self.segs.length - 1] : null;
       var wall = s.pdt || (last && !s.disc ? last.wall + last.dur * 1000 : Date.now() - s.dur * 1000);
-      var meta = { i: i, k: k, dur: s.dur, disc: !!s.disc, wall: wall, sn: s.sn, bytes: buf.byteLength, rec: rec ? rec.id : null };
+      // catch-up: every captured segment also belongs to the current day/hour (or programme) chunk
+      var cw = self.cu, cu = cw ? cw.chunkAt(wall, self) : null;
+      var k = rec ? 'r' + rec.id + ':' + rec.count++ : cu ? 'r' + cu.id + ':' + cu.count++ : self.sid + ':' + i;
+      var meta = { i: i, k: k, dur: s.dur, disc: !!s.disc, wall: wall, sn: s.sn, bytes: buf.byteLength, rec: rec ? rec.id : cu ? cu.id : null };
       self.lastSn = s.sn;
-      return putSeg(k, new Blob([buf])).then(function () {
+      var blob = new Blob([buf]);
+      return putSeg(k, blob).then(function () {
         self.segs.push(meta);
         if (rec) {
           rec.segs.push(meta); rec.bytes += meta.bytes;
           if (rec.segs.length % 10 === 0) DVR._persist(rec);
         }
+        if (cu) {
+          if (!rec) return cw.add(cu, meta);
+          var ck = 'r' + cu.id + ':' + cu.count++;      // a manual recording owns the segment: catch-up keeps its own copy
+          return putSeg(ck, blob).then(function () { cw.add(cu, { i: i, k: ck, dur: meta.dur, disc: meta.disc, wall: wall, sn: meta.sn, bytes: meta.bytes, rec: cu.id }); });
+        }
+      }).then(function () {
         self._trim();
         if (rec) DVR._guard(self);
         Bus.emit('dvr');
@@ -283,6 +292,7 @@
     this.segs.forEach(function (m) { if (!m.rec) drop.push(m.k); });
     if (this.initKey && !this.rec) drop.push(this.initKey);
     delSegs(drop);
+    if (this.cu) { this.cu.close(); this.cu = null; }
     if (!keepRec && this.rec) DVR._finishRec(this, 'stopped');
   };
 
@@ -360,15 +370,29 @@
     load: function () {
       if (!root.indexedDB) return Promise.resolve();
       return allRecs().then(function (rows) {
+        var refs = {};
+        rows.forEach(function (r) { (r.segs || []).forEach(function (m) { refs[m.k] = 1; }); if (r.init) refs[r.init] = 1; });
+        DVR._refs = refs;
         rows.forEach(function (r) { if (r.status === 'recording') r.status = 'done'; });
+        if (INDTV.CatchUp) INDTV.CatchUp._loaded(rows.filter(function (r) { return r.kind === 'catchup'; }));
+        rows = rows.filter(function (r) { return r.kind !== 'catchup'; });
         DVR._rows = rows;
         DVR._publish();
         // Buffer segments of earlier runs are useless now: keep only what recordings own.
         return allSegKeys().then(function (keys) {
-          var drop = keys.filter(function (k) { return String(k).charAt(0) !== 'r'; });
+          // keep only segments a recording or catch-up chunk still lists (drops leftovers of interrupted writes)
+          var refs = DVR._refs || {}, live = {};
+          DVR._active().concat(INDTV.CatchUp ? Object.keys(INDTV.CatchUp._bg).map(function (k) { return INDTV.CatchUp._bg[k]; }) : []).forEach(function (s) {
+            s.segs.forEach(function (m) { live[m.k] = 1; });
+          });
+          var drop = keys.filter(function (k) {
+            k = String(k);
+            if (live[k]) return false;
+            return k.charAt(0) !== 'r' || (!refs[k] && !/:init$/.test(k));
+          });
           return delSegs(drop);
         });
-      }).catch(function () { DVR._rows = []; });
+      }).catch(function () { DVR._rows = []; }).then(function () { if (INDTV.CatchUp) INDTV.CatchUp._start(); });
     },
     _rows: [],
     _publish: function () {
@@ -384,14 +408,19 @@
     /** Tell the Android app a recording is running, so it keeps the process alive when the user leaves. */
     _nativeOn: false,
     _syncNative: function () {
-      var on = DVR.isRecording(), rec = DVR.activeRec();
-      if (on === DVR._nativeOn) return;
-      DVR._nativeOn = on;
-      try { if (root.INDTVNative && root.INDTVNative.setRecording) root.INDTVNative.setRecording(on, on && rec ? (rec.title || rec.chName || '') : ''); } catch (e) { /* ignore */ }
+      var rec = DVR.activeRec(), bg = INDTV.CatchUp ? INDTV.CatchUp.backgroundCount() : 0;
+      var on = DVR.isRecording() || bg > 0;
+      var title = rec ? (rec.title || rec.chName || '') : bg ? INDTV.I18n.t('cuNotif') : '';
+      if (on === DVR._nativeOn && title === DVR._nativeTitle) return;
+      DVR._nativeOn = on; DVR._nativeTitle = title;
+      try { if (root.INDTVNative && root.INDTVNative.setRecording) root.INDTVNative.setRecording(on, on ? title : ''); } catch (e) { /* ignore */ }
     },
     _active: function () { return (DVR._cur ? [DVR._cur] : []).concat(DVR._detached); },
     recordings: function () { return DVR.state.get(); },
-    getRec: function (id) { var r = DVR.state.get().filter(function (x) { return x.id === id; })[0]; return r || null; },
+    getRec: function (id) {
+      var r = DVR.state.get().filter(function (x) { return x.id === id; })[0];
+      return r || (INDTV.CatchUp ? INDTV.CatchUp.get(id) : null);
+    },
     _rowOf: function (rec) {
       var d = 0; rec.segs.forEach(function (m) { d += m.dur; });
       return { id: rec.id, chId: rec.chId, chName: rec.chName, title: rec.title, startWall: rec.startWall, endWall: rec.endWall || Date.now(),
@@ -406,9 +435,15 @@
       var cfg = settings();
       if (DVR._cur && DVR._cur.chId === ch.id && DVR._cur.url === url && !DVR._cur.stopped) return DVR._cur;
       DVR.leave();
-      if (cfg.ringMin <= 0) { DVR._pendingWatch = { ch: ch, url: url, hint: hint }; return null; }
       DVR._pendingWatch = { ch: ch, url: url, hint: hint };
-      var s = new Session(ch, url, hint, Math.max(60, cfg.ringMin * 60));
+      var CU = INDTV.CatchUp;
+      var bg = CU ? CU.takeBackground(ch.id) : null;      // already capturing this channel for catch-up
+      if (bg) { bg.ringSec = Math.max(60, Math.max(cfg.ringMin, 1) * 60); bg.detached = false; DVR._cur = bg; Bus.emit('dvr'); return bg; }
+      var wantCu = CU && CU.recordsWatched();
+      if (cfg.ringMin <= 0 && !wantCu) return null;
+      var s = new Session(ch, url, hint, Math.max(60, Math.max(cfg.ringMin, 1) * 60));
+      if (wantCu) s.cu = CU.writer(ch);
+      if (CU) CU.rememberUrl(ch.id, url);
       DVR._cur = s;
       s.start();
       return s;
@@ -419,6 +454,7 @@
       DVR._pendingWatch = null;
       if (!s) return;
       if (s.rec) { s.detached = true; s.ringSec = 20; DVR._detached.push(s); }   // a recording keeps going
+      else if (INDTV.CatchUp && INDTV.CatchUp.adopt(s)) { /* keeps capturing in the background for catch-up */ }
       else s.stop();
       Bus.emit('dvr');
     },
@@ -503,7 +539,10 @@
       rec.endWall = Date.now();
       rec.error = rec.segs.length ? (why === 'storage' || why === 'network' || why === 'encrypted' ? why : null) : (why || 'empty');
       DVR._persist(rec, true);
-      if (s.detached) { s.stop(); DVR._detached = DVR._detached.filter(function (x) { return x !== s; }); }
+      if (s.detached) {
+        DVR._detached = DVR._detached.filter(function (x) { return x !== s; });
+        if (!(INDTV.CatchUp && INDTV.CatchUp.adopt(s))) s.stop();
+      }
       DVR._rows = DVR._rows.filter(function (r) { return r.id !== rec.id; });
       DVR._rows.push(DVR._rowOf(rec));
       DVR._publish();
@@ -551,7 +590,7 @@
     },
     saveProgress: function (id, pos) {
       var r = DVR._rows.filter(function (x) { return x.id === id; })[0];
-      if (!r) return;
+      if (!r) { if (INDTV.CatchUp) INDTV.CatchUp.saveProgress(id, pos); return; }
       r.lastPos = pos;
       var plain = Object.assign({}, r);
       putRec(plain).catch(function () { /* ignore */ });
@@ -581,6 +620,9 @@
     },
     release: function (h) { if (h) delete plays[h.id]; },
     liveRec: function (id) { var s = DVR._active().filter(function (x) { return x.rec && x.rec.id === id; })[0]; return s ? s.rec : null; },
+
+    _Session: Session, _Tick: Tick,
+    _store: { putSeg: putSeg, getSeg: getSeg, delSegs: delSegs, putRec: putRec, delRec: delRec, allRecs: allRecs },
 
     /** Pure helpers (also used by tests). */
     _parsePlaylist: parsePlaylist, _playlistText: playlistText

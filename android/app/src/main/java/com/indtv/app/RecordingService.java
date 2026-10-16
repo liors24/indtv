@@ -14,8 +14,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 
 /**
- * Keeps the app process alive (foreground service + wake lock) while INDTV records a programme,
- * so the recording continues after the user leaves the app with the Home button.
+ * Keeps the app process alive (foreground service + wake lock) while INDTV records a programme, captures
+ * catch-up channels, or keeps playing after the TV screen was switched off.
  * The recording itself still runs in the web page (js/player/dvr.js); this service only stops Android
  * from freezing or killing it.
  */
@@ -39,9 +39,17 @@ public class RecordingService extends Service {
             return START_NOT_STICKY;
         }
         String title = intent != null ? intent.getStringExtra("title") : null;
-        Notification n = build(title == null || title.isEmpty() ? "INDTV" : title);
+        boolean playing = intent != null && intent.getBooleanExtra("playing", false);
+        boolean rec = title != null && !title.isEmpty();
+        Notification n = build(rec ? "INDTV \u25CF REC" : "INDTV \u25B6", rec ? title : (playing ? "Playing in the background" : "INDTV"));
         if (Build.VERSION.SDK_INT >= 29) {
-            startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+            if (playing) type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK;
+            try {
+                startForeground(NOTIF_ID, n, type);
+            } catch (Exception e) {
+                startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            }
         } else {
             startForeground(NOTIF_ID, n);
         }
@@ -49,7 +57,7 @@ public class RecordingService extends Service {
         return START_NOT_STICKY;
     }
 
-    private Notification build(String title) {
+    private Notification build(String head, String title) {
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification.Builder b;
         if (Build.VERSION.SDK_INT >= 26) {
@@ -63,7 +71,7 @@ public class RecordingService extends Service {
         Intent open = new Intent(this, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         int pf = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
-        return b.setContentTitle("INDTV \u25CF REC")
+        return b.setContentTitle(head)
                 .setContentText(title)
                 .setSmallIcon(getApplicationInfo().icon)
                 .setOngoing(true)
@@ -80,7 +88,7 @@ public class RecordingService extends Service {
                     wake.setReferenceCounted(false);
                 }
             }
-            if (wake != null && !wake.isHeld()) wake.acquire(7L * 60 * 60 * 1000);   // never longer than the 6 h recording cap
+            if (wake != null && !wake.isHeld()) wake.acquire(12L * 60 * 60 * 1000);   // safety cap; released when INDTV stops needing it
             if (wifi == null) {
                 WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 if (wm != null) {

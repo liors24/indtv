@@ -63,14 +63,14 @@
 
     build: function () {
       Settings.el.innerHTML = '';
-      Settings.scroller = U.el('div', { class: 'vscroll settings-scroll', 'data-top-offset': '7' });
+      Settings.scroller = U.el('div', { class: 'vscroll page-scroll settings-scroll', 'data-top-offset': '0' });
       Settings.el.appendChild(Settings.scroller);
       var s = Settings.scroller;
       var CATS = [['general', 'catGeneral', 'settings'], ['translate', 'liveTranslate', 'globe'], ['sources', 'sources', 'link'], ['rec', 'catRec', 'recordings'], ['guide', 'epgTitle', 'refresh'], ['about', 'about', 'check']];
       var parts = {};
       function put(cat, el) { (parts[cat] = parts[cat] || []).push(el); }
       Settings._cat = Settings._cat || 'general';
-      s.appendChild(U.el('div', { class: 'screen-head', 'data-row': '' }, [U.el('h1', { class: 'screen-title', text: t('settings') })]));
+      s.appendChild(U.el('div', { class: 'page-head', 'data-row': '' }, [U.el('h1', { class: 'page-title', text: t('settings') })]));
       var catRow = U.el('div', { class: 'set-row set-cats', 'data-row': '', 'data-fgroup': 'set-cats' });
       CATS.forEach(function (c) {
         var on = Settings._cat === c[0];

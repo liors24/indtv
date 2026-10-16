@@ -75,6 +75,51 @@
     return card;
   }
 
+  /**
+   * Round channel tile: only the channel's own logo in a disc. The name appears under the disc while it has focus.
+   * opts: keyPrefix, size ('md' | 'lg' | 'sm'), onFocus(ch)
+   */
+  function channelTile(ch, ctx, opts) {
+    opts = opts || {};
+    var b = U.el('button', {
+      class: 'fx tile' + (opts.size ? ' tile-' + opts.size : ''), type: 'button',
+      dataset: { key: (opts.keyPrefix || 'c') + ':' + ch.id, channelId: ch.id }, 'aria-label': ch.name
+    });
+    var disc = U.el('span', { class: 'tile-disc' }, [logo(ch, { cls: 'tile-logo', showName: false })]);
+    b.appendChild(disc);
+    if (INDTV.FavoritesRepository.has(ch.id)) b.appendChild(U.el('span', { class: 'tile-fav', html: INDTV.icon('heartFill') }));
+    if (INDTV.DVR && INDTV.DVR.isRecording(ch.id)) b.appendChild(U.el('span', { class: 'tile-rec' }));
+    b.appendChild(U.el('span', { class: 'tile-name', text: ch.name }));
+    b.addEventListener('focus', function () {
+      Ambient.channel(ch);
+      if (opts.onFocus) opts.onFocus(ch, b);
+    });
+    b.addEventListener('click', function () {
+      INDTV.Router.openPlayer({ kind: 'channel', id: ch.id }, { list: ctx || [ch.id] });
+    });
+    return b;
+  }
+
+  /** Projection ambience: the room takes the colour of what is highlighted (category colour), cross-faded. */
+  var Ambient = {
+    _layers: null, _i: 0, _last: '',
+    color: function (css) {
+      if (!css || css === Ambient._last) return;
+      Ambient._last = css;
+      if (!Ambient._layers) Ambient._layers = document.querySelectorAll('#ambient .amb-layer');
+      var L = Ambient._layers;
+      if (!L || L.length < 2) return;
+      var next = L[Ambient._i = 1 - Ambient._i], prev = L[1 - Ambient._i];
+      next.style.background = 'radial-gradient(70% 90% at 22% 18%, ' + css + ', transparent 72%)';
+      next.classList.add('on'); prev.classList.remove('on');
+    },
+    channel: function (ch) {
+      if (!ch || !INDTV.Categories) return;
+      Ambient.color(INDTV.Categories.color(INDTV.Categories.of(ch)[0]));
+    }
+  };
+  INDTV.Ambient = Ambient;
+
   /** Horizontal rail. items rendered lazily in batches so long rails stay light. */
   function rail(opts) {
     var section = U.el('section', { class: 'rail' + (opts.cls ? ' ' + opts.cls : ''), 'data-row': '', 'aria-label': opts.title });
@@ -197,7 +242,7 @@
   }
 
   INDTV.UI = {
-    logo: logo, liveBadge: liveBadge, channelCard: channelCard, rail: rail, emptyState: emptyState,
+    logo: logo, liveBadge: liveBadge, channelCard: channelCard, channelTile: channelTile, rail: rail, emptyState: emptyState,
     button: button, toast: toast, trails: trails, monogram: monogram, showCard: showCard, nowLine: nowLine, applySubStyle: applySubStyle
   };
 })(typeof window !== 'undefined' ? window : globalThis);

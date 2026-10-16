@@ -6,7 +6,7 @@
   var INDTV = root.INDTV = root.INDTV || {};
   var KEY = 'indtv:profiles';
   var LAST = 'indtv:lastProfile';
-  var SCOPED_KEYS = ['favorites', 'recent', 'shows', 'vod:progress'];
+  var SCOPED_KEYS = ['favorites', 'recent', 'shows', 'vod:progress', 'usage'];
 
   function read() {
     try { var v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }

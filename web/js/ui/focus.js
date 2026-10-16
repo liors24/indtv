@@ -105,6 +105,7 @@
 
     /** Move focus in a direction. Returns true when focus moved. */
     move: function (dir) {
+      Focus._lastMove = Date.now();
       var cur = Focus.current();
       var all = Focus.candidates();
       if (!cur) { return Focus.focus(Focus.defaultTarget() || all[0]); }

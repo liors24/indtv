@@ -153,6 +153,8 @@
   };
 
   /** Times are wrapped in Unicode LTR isolates so "20:00–21:00" never flips inside Hebrew text. */
+  /** "1 channel" / "4 channels" in the current language. */
+  Util.count = function (n, one, many) { return n + ' ' + INDTV.I18n.t(n === 1 ? one : many); };
   Util.formatTime = function (date, lang) { return '\u2066' + Util._formatTime(date, lang) + '\u2069'; };
   Util._formatTime = function (date, lang) {
     try {

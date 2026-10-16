@@ -15,7 +15,7 @@
       liveBroadcast: 'Live broadcast', streamSources: 'stream sources', streamSource: 'stream source',
       addFavorite: 'Add to Favorites', removeFavorite: 'Remove from Favorites',
       emptyFavoritesTitle: 'No favorites yet',
-      emptyFavoritesBody: 'Open Live TV, highlight a channel and choose Add to Favorites. It will appear here and on Home.',
+      emptyFavoritesBody: 'While a channel plays, open the controls and press the heart. Your favourite channels appear here and on Home.',
       emptyRecentTitle: 'Nothing watched yet',
       moviesSoonTitle: 'Movies are coming to INDTV',
       moviesSoonBody: 'No movie library is connected yet. Add a VOD playlist you are licensed to use under Settings → Sources and it will appear here.',
@@ -116,7 +116,7 @@
       liveBroadcast: 'שידור חי', streamSources: 'מקורות שידור', streamSource: 'מקור שידור',
       addFavorite: 'הוסף למועדפים', removeFavorite: 'הסר מהמועדפים',
       emptyFavoritesTitle: 'עדיין אין מועדפים',
-      emptyFavoritesBody: 'פתחו את שידור חי, סמנו ערוץ ובחרו "הוסף למועדפים". הוא יופיע כאן ובדף הבית.',
+      emptyFavoritesBody: 'בזמן שערוץ מתנגן, פתחו את הפקדים ולחצו על הלב. הערוצים המועדפים יופיעו כאן ובדף הבית.',
       emptyRecentTitle: 'עוד לא צפית בכלום',
       moviesSoonTitle: 'סרטים מגיעים ל-INDTV',
       moviesSoonBody: 'עדיין לא חוברה ספריית סרטים. הוסיפו רשימת VOD שיש לכם רשות להשתמש בה בהגדרות ← מקורות והיא תופיע כאן.',
@@ -205,8 +205,8 @@
     }
   };
 
-  var lang = 'en';
-  try { lang = INDTV.Store.getSync('lang') === 'he' ? 'he' : 'en'; } catch (e) { lang = 'en'; }
+  var lang = 'he';
+  try { lang = INDTV.Store.getSync('lang') === 'en' ? 'en' : 'he'; } catch (e) { lang = 'he'; }
 
   /* Display size (Settings): scales the whole TV canvas. Default is Large. */
   INDTV.Display = {
@@ -252,3 +252,41 @@
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* Strings for the Flixgram-style INDTV: tabs, categories, catch-up, favourites. */
+INDTV.I18n.extend({
+  en: {
+    categories: 'Categories', catchup: 'Catch-up', recordings: 'Recordings', seeAll: 'See all', yourFavorites: 'Your favourites',
+    inFavorites: 'In favourites', toggleList: 'Show or hide the list', searchHere: 'Search here', allCategories: 'All channels',
+    searchEverywhere: 'Search all channels', programmes: 'programmes', favChannels: 'Favourite channels', today: 'Today', yesterday: 'Yesterday',
+    favAdded: 'Added to favourites', favRemoved: 'Removed from favourites', recordingsN: 'recordings', splashTag: 'INDIAN TV · LIVE · CATCH-UP',
+    cuSettings: 'Catch-up settings', cuWatchedOn: 'Saving what you watch', cuWatchedOff: 'Not saving what you watch',
+    cuBgNow: 'Recording in the background', cuKeep: 'kept {n} days', cuKeep1: 'kept 1 day', cuEmptyTitle: 'Nothing to watch again for this day',
+    cuEmptyBody: 'INDTV saves programmes here by itself while it records. Watch a channel, or pick channels to record in the background.',
+    cuEmptyOff: 'Automatic catch-up is off. Turn it on in the catch-up settings.',
+    cuNoGuide: 'No guide info', cuWatched: 'Save everything I watch',
+    cuWatchedSub: 'Every channel you watch is recorded while you watch it and filed here by day and hour.',
+    cuDays: 'Keep catch-up for', cuDaysN: '{n} days', cuDay1: '1 day', cuBgTitle: 'Record in the background (up to {n} channels)',
+    cuBgSub: 'These channels are recorded all the time while INDTV is running — also when you watch something else or the screen is off. It uses internet and storage.',
+    cuBgEmpty: 'Add channels to your favourites first, then pick them here.', cuBgLimit: 'Up to {n} channels can record in the background',
+    cuStorage: 'Catch-up storage', cuLocalNote: 'saved on this TV only; the oldest is deleted automatically', cuNotif: 'Catch-up recording',
+    language: 'Language'
+  },
+  he: {
+    categories: 'קטגוריות', catchup: 'צפייה חוזרת', recordings: 'הקלטות', seeAll: 'הכול', yourFavorites: 'המועדפים שלך',
+    inFavorites: 'במועדפים', toggleList: 'הצגה או הסתרה של הרשימה', searchHere: 'חיפוש כאן', allCategories: 'כל הערוצים',
+    searchEverywhere: 'חיפוש בכל הערוצים', programmes: 'תוכניות', favChannels: 'ערוצים מועדפים', today: 'היום', yesterday: 'אתמול',
+    favAdded: 'נוסף למועדפים', favRemoved: 'הוסר מהמועדפים', recordingsN: 'הקלטות', splashTag: 'טלוויזיה הודית · שידור חי · צפייה חוזרת',
+    cuSettings: 'הגדרות צפייה חוזרת', cuWatchedOn: 'שומר את מה שאתה צופה בו', cuWatchedOff: 'לא שומר את מה שאתה צופה בו',
+    cuBgNow: 'מקליט ברקע', cuKeep: 'נשמר {n} ימים', cuKeep1: 'נשמר יום אחד', cuEmptyTitle: 'אין מה לראות שוב ביום הזה',
+    cuEmptyBody: 'INDTV שומר כאן תוכניות לבד בזמן שהוא מקליט. צפו בערוץ, או בחרו ערוצים להקלטה ברקע.',
+    cuEmptyOff: 'הצפייה החוזרת האוטומטית כבויה. אפשר להפעיל אותה בהגדרות הצפייה החוזרת.',
+    cuNoGuide: 'אין מידע מהמדריך', cuWatched: 'לשמור כל מה שאני צופה בו',
+    cuWatchedSub: 'כל ערוץ שתצפו בו מוקלט בזמן הצפייה ונשמר כאן לפי יום ושעה.',
+    cuDays: 'לשמור צפייה חוזרת למשך', cuDaysN: '{n} ימים', cuDay1: 'יום אחד', cuBgTitle: 'הקלטה ברקע (עד {n} ערוצים)',
+    cuBgSub: 'הערוצים האלה מוקלטים כל הזמן כש־INDTV פועל — גם כשצופים בערוץ אחר או כשהמסך כבוי. זה משתמש באינטרנט ובאחסון.',
+    cuBgEmpty: 'הוסיפו קודם ערוצים למועדפים, ואז בחרו אותם כאן.', cuBgLimit: 'אפשר להקליט ברקע עד {n} ערוצים',
+    cuStorage: 'אחסון הצפייה החוזרת', cuLocalNote: 'נשמר רק בטלוויזיה הזו; הישן ביותר נמחק אוטומטית', cuNotif: 'הקלטה לצפייה חוזרת',
+    language: 'שפה'
+  }
+});

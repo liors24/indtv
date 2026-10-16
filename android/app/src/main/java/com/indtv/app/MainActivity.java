@@ -2,7 +2,13 @@ package com.indtv.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
 import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
@@ -54,6 +60,14 @@ public class MainActivity extends Activity {
     private WebView web;
     /** True while the page is recording a programme: the app then keeps running in the background. */
     private volatile boolean recording = false;
+    private String recTitle = "";
+    /** True while video keeps playing with the TV screen off (until the user returns, switches app or closes INDTV). */
+    private boolean backgroundPlay = false;
+    private boolean resumed = false;
+    private boolean userLeft = false;
+    private long screenOffAt = 0;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private BroadcastReceiver screenReceiver;
     private WebViewAssetLoader assets;
 
     /** host -> {userAgent, referrer} requested by the playlist (#EXTVLCOPT) for that stream. */
@@ -69,7 +83,7 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         // Keep the page's renderer at high priority so a recording keeps running while the app is in the background.
         if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
-        web.setBackgroundColor(0xFF050609);
+        web.setBackgroundColor(0xFF0E0B14);
         web.setFocusable(true);
         web.setFocusableInTouchMode(true);
         setContentView(web);
@@ -91,6 +105,15 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "INDTVNative");
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new Client());
+
+        // Remember when the TV screen goes off: leaving the app because of that keeps the video playing.
+        screenReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context c, Intent i) {
+                if (Intent.ACTION_SCREEN_OFF.equals(i.getAction())) screenOffAt = System.currentTimeMillis();
+            }
+        };
+        try { registerReceiver(screenReceiver, new IntentFilter(Intent.ACTION_SCREEN_OFF)); } catch (Exception ignored) { }
 
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(HOME);
@@ -381,38 +404,101 @@ public class MainActivity extends Activity {
 
     private void applyRecording(boolean on, String title) {
         recording = on;
+        recTitle = title == null ? "" : title;
+        applyService();
+    }
+
+    /** One foreground service keeps INDTV alive for a recording, catch-up capture or playback with the screen off. */
+    private void applyService() {
+        boolean on = recording || backgroundPlay;
         try {
             Intent i = new Intent(this, RecordingService.class);
             if (on) {
-                i.putExtra("title", title == null ? "" : title);
+                i.putExtra("title", recording ? recTitle : "");
+                i.putExtra("playing", backgroundPlay);
                 if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
             } else {
                 stopService(i);
             }
         } catch (Exception ignored) {
-            // the system may refuse a background start; recording still works while the app is open
+            // the system may refuse a background start; everything still works while the app is open
         }
+    }
+
+    private boolean screenIsOff() {
+        if (System.currentTimeMillis() - screenOffAt < 4000) return true;
+        try {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            return pm != null && !pm.isInteractive();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Home button / another app: the user really left. */
+    @Override
+    protected void onUserLeaveHint() {
+        userLeft = true;
+        super.onUserLeaveHint();
+    }
+
+    private final Runnable decideBackground = new Runnable() {
+        @Override
+        public void run() {
+            if (resumed || web == null) return;
+            if (!userLeft && screenIsOff()) {
+                // The TV was switched off (standby): keep playing until the user closes INDTV,
+                // opens another app or picks something else to watch.
+                backgroundPlay = true;
+                applyService();
+                return;
+            }
+            pauseForLeaving();
+        }
+    };
+
+    private void pauseForLeaving() {
+        backgroundPlay = false;
+        applyService();
+        if (web == null) return;
+        // Leaving for another app pauses the stream so it does not keep playing behind it...
+        web.evaluateJavascript("window.INDTV && INDTV.Player && INDTV.Player.video && INDTV.Player.video.pause()", null);
+        // ...but a recording or catch-up capture must keep running, so timers and downloads are not frozen.
+        if (!recording) web.onPause();
     }
 
     @Override
     protected void onPause() {
-        // Leaving the app (Home button) pauses the stream so it does not keep playing in the background.
-        web.evaluateJavascript("window.INDTV && INDTV.Player && INDTV.Player.video && INDTV.Player.video.pause()", null);
-        // ...but while recording the page must keep running, so its timers and downloads are not frozen.
-        if (!recording) web.onPause();
+        resumed = false;
+        if (userLeft) pauseForLeaving();
+        else ui.postDelayed(decideBackground, 700);   // the screen-off broadcast and power state settle first
         super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        // Another app took over while the screen is on: that always pauses.
+        if (!resumed && !backgroundPlay && !screenIsOff()) { ui.removeCallbacks(decideBackground); pauseForLeaving(); }
+        super.onStop();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        resumed = true;
+        userLeft = false;
+        ui.removeCallbacks(decideBackground);
         web.onResume();
+        if (backgroundPlay) { backgroundPlay = false; applyService(); }
     }
 
     @Override
     protected void onDestroy() {
-        if (recording) {
+        ui.removeCallbacks(decideBackground);
+        try { if (screenReceiver != null) unregisterReceiver(screenReceiver); } catch (Exception ignored) { }
+        if (recording || backgroundPlay) {
             recording = false;
+            backgroundPlay = false;
             try { stopService(new Intent(this, RecordingService.class)); } catch (Exception ignored) { }
         }
         if (web != null) {

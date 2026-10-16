@@ -10,15 +10,11 @@
   function registerScreens() {
     var R = INDTV.Router;
     R.register('home', INDTV.HomeScreen);
-    R.register('live', INDTV.LiveScreen);
-    R.register('movies', INDTV.MoviesScreen);
-    R.register('shows', INDTV.ShowsScreen);
-    R.register('kids', INDTV.KidsScreen);
-    R.register('news', INDTV.NewsScreen);
+    R.register('categories', INDTV.CategoriesScreen);
+    R.register('catchup', INDTV.CatchUpScreen);
     R.register('favorites', INDTV.FavoritesScreen);
     R.register('recordings', INDTV.RecordingsScreen);
     R.register('settings', INDTV.SettingsScreen);
-    R.register('search', INDTV.SearchScreen);
     Object.keys(R.screens).forEach(function (k) {
       R.screens[k].el = document.getElementById('screen-' + k);
     });
@@ -62,7 +58,8 @@
       INDTV.FavoritesRepository.load(),
       INDTV.RecentRepository.load(),
       INDTV.EpgRepository.load(),
-      INDTV.ShowFavorites.load()
+      INDTV.ShowFavorites.load(),
+      INDTV.Categories.load()
     ]).then(function () { return INDTV.VodRepository.load(); });
 
     withTimeout(local, 900).then(function () {

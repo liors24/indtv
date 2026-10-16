@@ -102,7 +102,7 @@
   }
 
   /* Per-profile data: these keys are stored separately for every profile (see js/core/profiles.js). */
-  var SCOPED = { favorites: 1, recent: 1, shows: 1, 'vod:progress': 1 };
+  var SCOPED = { favorites: 1, recent: 1, shows: 1, 'vod:progress': 1, usage: 1 };
   var scope = null;
   function sk(key) { return scope && SCOPED[key] ? 'u:' + scope + ':' + key : key; }
 

@@ -47,6 +47,7 @@
         return b;
       }
       var dvr = U.el('div', { class: 'osd-dvr', 'data-fgroup': 'osd-dvr' });
+      dvr.appendChild(ctl('fav', 'heart', t('addFavorite'), function () { PS.doFavorite(); }, 'ctl-sm'));
       dvr.appendChild(ctl('rec', 'record', t('recordBtn'), function () { PS.doRecord(); }, 'ctl-sm'));
       dvr.appendChild(ctl('start', 'startOver', t('startOver'), function () { PS.doStartOver(); }, 'ctl-sm'));
       dvr.appendChild(ctl('live', 'goLive', t('goLive'), function () { P.goLive(); }, 'ctl-sm ctl-live'));
@@ -182,6 +183,13 @@
       else if (r === 'busy') UI.toast(t('recBusy'), 'error');
       else UI.toast(t('recUnavailable'), 'error');
     },
+    doFavorite: function () {
+      var st = P.state.get();
+      if (st.kind !== 'channel' || !st.item) return;
+      var on = INDTV.FavoritesRepository.toggle(st.item.id);
+      UI.toast(on ? t('favAdded') : t('favRemoved'));
+      PS.render(P.state.get());
+    },
     doStartOver: function () {
       var r = P.jumpToProgramme();
       if (r.ok) { if (!r.exact) UI.toast(t('progPartial')); return; }
@@ -215,7 +223,7 @@
           PS.chInfo.appendChild(U.el('span', { class: 'osd-logo' }, [UI.logo(isCh ? item : { name: item.title, poster: item.poster }, { showName: false, eager: true })]));
           PS.chInfo.appendChild(U.el('span', { class: 'osd-ch-text' }, [
             U.el('span', { class: 'osd-ch-name', text: isCh ? item.name : item.title }),
-            U.el('span', { class: 'osd-ch-cat', text: isCh ? (item.groups.join(' · ') || t('liveBroadcast')) : st.kind === 'rec' ? (item.chName || t('recordings')) : (item.kind === 'episode' ? 'S' + item.season + ' · E' + item.episode : t('movies')) })
+            U.el('span', { class: 'osd-ch-cat', text: isCh ? (INDTV.Categories.of(item).map(INDTV.Categories.name).join(' · ') || t('liveBroadcast')) : st.kind === 'rec' ? (item.chName || t('recordings')) : (item.kind === 'episode' ? 'S' + item.season + ' · E' + item.episode : t('movies')) })
           ]));
         }
         PS.renderProgramme();
@@ -245,7 +253,11 @@
       var canBack = isCh ? (st.shift || (st.dvrOn && st.buf >= 6) || st.canSeek) : st.canSeek;
       PS.btn.rw.classList.toggle('is-disabled', !canBack);
       PS.btn.fw.classList.toggle('is-disabled', isCh ? !(st.shift || st.canSeek) : !st.canSeek);
-      PS.btn.rec.hidden = PS.btn.start.hidden = !isCh;
+      PS.btn.rec.hidden = PS.btn.start.hidden = PS.btn.fav.hidden = !isCh;
+      var isFav = isCh && item && INDTV.FavoritesRepository.has(item.id);
+      PS.btn.fav.innerHTML = INDTV.icon(isFav ? 'heartFill' : 'heart');
+      PS.btn.fav.classList.toggle('is-on', !!isFav);
+      PS.btn.fav.setAttribute('aria-label', isFav ? t('removeFavorite') : t('addFavorite'));
       PS.btn.live.hidden = !(isCh && st.shift);
       PS.btn.rec.classList.toggle('is-rec', !!st.recording);
       PS.btn.rec.setAttribute('aria-label', st.recording ? t('recordStop') : t('recordBtn'));

@@ -6,13 +6,8 @@
   var INDTV = root.INDTV = root.INDTV || {};
   var U = INDTV.Util, t = function (k) { return INDTV.I18n.t(k); };
 
-  var TOP_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news', 'recordings'];
-  var SIDE_TABS = [
-    { tab: 'home', icon: 'home' }, { tab: 'live', icon: 'live' }, { tab: 'movies', icon: 'movies' },
-    { tab: 'shows', icon: 'shows' }, { tab: 'favorites', icon: 'heart' }, { tab: 'recordings', icon: 'recordings' }, { tab: 'news', icon: 'news' },
-    { tab: 'settings', icon: 'settings' }
-  ];
-  var ALL_TABS = ['home', 'live', 'movies', 'shows', 'kids', 'news', 'recordings', 'favorites', 'settings', 'search'];
+  var TOP_TABS = ['home', 'categories', 'catchup', 'favorites', 'recordings', 'settings'];
+  var ALL_TABS = TOP_TABS.slice();
 
   var Router = {
     screens: {},
@@ -26,48 +21,38 @@
       var top = document.getElementById('topbar');
       top.innerHTML = '';
       top.appendChild(U.el('div', { class: 'tb-brand', html: INDTV.wordmark() }));
-      var nav = U.el('nav', { class: 'tb-nav', 'data-fgroup': 'topnav', 'aria-label': 'Primary' });
+      var nav = U.el('nav', { class: 'tb-nav', 'data-fgroup': 'topnav', 'data-faxis': 'h', 'aria-label': 'Primary' });
       TOP_TABS.forEach(function (tab) {
-        var b = U.el('button', { class: 'fx nav-item tb-item', type: 'button', dataset: { tab: tab, key: 'top:' + tab }, text: t(tab) });
-        nav.appendChild(b);
+        nav.appendChild(U.el('button', { class: 'fx nav-item tb-item', type: 'button', dataset: { tab: tab, key: 'top:' + tab }, text: t(tab) }));
       });
       top.appendChild(nav);
 
       var tools = U.el('div', { class: 'tb-tools', 'data-fgroup': 'tools' });
-      var search = U.el('button', { class: 'fx tb-tool', type: 'button', 'aria-label': t('search'), dataset: { key: 'tool:search' }, html: INDTV.icon('search') });
-      search.addEventListener('click', function () { Router.go('search', { focusContent: true }); });
+      Router._clock = U.el('span', { class: 'tb-clock', 'aria-hidden': 'true' });
+      Router._tickClock();
       var lang = U.el('button', { class: 'fx tb-lang', type: 'button', dataset: { key: 'tool:lang' }, 'aria-label': t('language') });
-      lang.innerHTML = '<span class="lang-opt' + (INDTV.I18n.lang() === 'en' ? ' is-on' : '') + '">EN</span><span class="lang-sep">|</span><span class="lang-opt' + (INDTV.I18n.lang() === 'he' ? ' is-on' : '') + '" lang="he">עברית</span>';
+      lang.innerHTML = '<span class="lang-opt' + (INDTV.I18n.lang() === 'he' ? ' is-on' : '') + '" lang="he">עב</span><span class="lang-sep"></span><span class="lang-opt' + (INDTV.I18n.lang() === 'en' ? ' is-on' : '') + '">EN</span>';
       lang.addEventListener('click', function () { INDTV.I18n.setLang(INDTV.I18n.lang() === 'en' ? 'he' : 'en'); });
       var me = INDTV.Profiles && INDTV.Profiles.current();
       var profile = U.el('button', { class: 'fx tb-tool tb-profile' + (me ? ' has-avatar' : ''), type: 'button',
         'aria-label': me ? me.name + ' \u2014 ' + t('pfSwitch') : t('profile'), dataset: { key: 'tool:profile' },
         html: me ? INDTV.Avatars.render(me.avatar, 'tb-av') : INDTV.icon('user') });
-      profile.addEventListener('click', function () { if (me) INDTV.Profiles.switchProfile(); else Router.go('settings', { focusContent: true }); });
-      tools.appendChild(search); tools.appendChild(lang); tools.appendChild(profile);
+      profile.addEventListener('click', function () { if (me) INDTV.Profiles.switchProfile(); });
+      tools.appendChild(Router._clock); tools.appendChild(lang); tools.appendChild(profile);
       top.appendChild(tools);
 
-      var side = document.getElementById('siderail');
-      side.innerHTML = '';
-      var list = U.el('div', { class: 'sr-list', 'data-fgroup': 'sidenav', 'data-faxis': 'v', 'data-flock': '' });
-      SIDE_TABS.forEach(function (it) {
-        var b = U.el('button', { class: 'fx nav-item sr-item', type: 'button', dataset: { tab: it.tab, key: 'side:' + it.tab } });
-        b.innerHTML = '<span class="sr-icon">' + INDTV.icon(it.icon) + '</span><span class="sr-label">' + U.escapeHtml(t(it.tab)) + '</span>';
-        list.appendChild(b);
-      });
-      side.appendChild(list);
-
-      // Focus = Navigate (primary navigation only). Containers persist across rebuilds: bind once.
       if (Router._chromeBound) { Router.markActive(); return; }
       Router._chromeBound = true;
-      // Moving over a tab only highlights it; OK (or a click) opens it with an animated transition.
-      [top, side].forEach(function (container) {
-        container.addEventListener('click', function (e) {
-          var item = e.target.closest ? e.target.closest('.nav-item') : null;
-          if (item && item.dataset.tab) Router.go(item.dataset.tab, { focusContent: true, animate: true });
-        });
+      setInterval(Router._tickClock, 15000);
+      // Moving over a tab only highlights it; OK (or a click) opens it.
+      top.addEventListener('click', function (e) {
+        var item = e.target.closest ? e.target.closest('.nav-item') : null;
+        if (item && item.dataset.tab) Router.go(item.dataset.tab, { focusContent: true, animate: true });
       });
       Router.markActive();
+    },
+    _tickClock: function () {
+      if (Router._clock) Router._clock.textContent = U.formatTime(Date.now(), INDTV.I18n.lang());
     },
 
     markActive: function () {
@@ -116,7 +101,7 @@
     },
 
     focusNav: function (tab) {
-      var el = document.querySelector('.tb-item[data-tab="' + tab + '"]') || document.querySelector('.sr-item[data-tab="' + tab + '"]');
+      var el = document.querySelector('.tb-item[data-tab="' + tab + '"]');
       if (el) INDTV.Focus.focus(el);
     },
 
@@ -144,7 +129,7 @@
       var scr = Router.screens[Router.current];
       if (scr && scr.onBack && scr.onBack() === true) return;
       var cur = INDTV.Focus.current();
-      var inNav = cur && cur.closest && cur.closest('#topbar, #siderail');
+      var inNav = cur && cur.closest && cur.closest('#topbar');
       if (Router.current !== 'home') {
         Router.go('home', { animate: true });
         Router.focusNav('home');
