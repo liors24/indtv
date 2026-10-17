@@ -17,8 +17,11 @@ import android.widget.FrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Native MediaPlayer rendering into a SurfaceView that sits behind the transparent WebView. */
-final class Player implements SurfaceHolder.Callback {
+/**
+ * Video behind the transparent WebView. The fast ExoPlayer engine plays everything it can; files it cannot
+ * open (rare containers) fall back to the system MediaPlayer. Both report the same state and events.
+ */
+final class Player implements SurfaceHolder.Callback, ExoEngine.Host {
     private static final String TAG = "NovaPlayer";
 
     interface Events {
@@ -43,13 +46,41 @@ final class Player implements SurfaceHolder.Callback {
     private int session;
 
     private volatile String cachedState = "{\"active\":false}";
+    private ExoEngine exo;
+    private boolean useExo;
 
     Player(FrameLayout root, SurfaceView surface, Events events) {
         this.root = root;
         this.surface = surface;
         this.events = events;
         surface.getHolder().addCallback(this);
+        try {
+            exo = new ExoEngine(root.getContext(), surface, this);
+        } catch (Throwable t) {
+            Log.w(TAG, "fast engine unavailable", t);
+            exo = null;
+        }
         main.post(ticker);
+    }
+
+    // ---- ExoEngine.Host
+    @Override
+    public void onExoEvent(String type, JSONObject data) {
+        if (useExo) emit(type, data);
+    }
+
+    @Override
+    public void onExoVideoSize(int w, int h) {
+        videoW = w;
+        videoH = h;
+        layoutSurface();
+    }
+
+    @Override
+    public void onExoUnsupported(String url, int startMs) {
+        Log.i(TAG, "fast engine cannot open this file; using the system player");
+        useExo = false;
+        playMp(url, startMs);
     }
 
     private final Runnable ticker = new Runnable() {
@@ -74,6 +105,7 @@ final class Player implements SurfaceHolder.Callback {
     }
 
     private void updateState() {
+        if (useExo && exo != null) { cachedState = exo.state(); return; }
         try {
             JSONObject o = new JSONObject();
             o.put("active", mp != null);
@@ -97,6 +129,25 @@ final class Player implements SurfaceHolder.Callback {
 
     void play(final String url, final int startMs) {
         release();
+        if (exo != null) {
+            useExo = true;
+            videoW = videoH = 0;
+            try {
+                exo.play(url, startMs);
+                exo.setMuted(muted);
+                exo.setSpeed(speed);
+                updateState();
+                return;
+            } catch (Throwable t) {
+                Log.w(TAG, "fast engine failed to start", t);
+                try { exo.release(); } catch (Throwable ignored) { }
+                useExo = false;
+            }
+        }
+        playMp(url, startMs);
+    }
+
+    private void playMp(final String url, final int startMs) {
         final int my = ++session;
         prepared = false;
         buffering = true;
@@ -219,6 +270,7 @@ final class Player implements SurfaceHolder.Callback {
     }
 
     void selectTrack(int index, boolean select) {
+        if (useExo) { exo.selectTrack(index, select); return; }
         if (mp == null || !prepared) return;
         try {
             if (select) mp.selectTrack(index);
@@ -230,6 +282,7 @@ final class Player implements SurfaceHolder.Callback {
 
     void setMuted(boolean m) {
         muted = m;
+        if (useExo) { exo.setMuted(m); return; }
         applyVolume();
     }
 
@@ -244,6 +297,7 @@ final class Player implements SurfaceHolder.Callback {
 
     void pause() {
         userPaused = true;
+        if (useExo) { exo.pause(); updateState(); return; }
         if (mp != null && prepared && mp.isPlaying()) mp.pause();
         updateState();
     }
@@ -251,11 +305,13 @@ final class Player implements SurfaceHolder.Callback {
     void resume() {
         userPaused = false;
         completed = false;
+        if (useExo) { exo.resume(); updateState(); return; }
         if (mp != null && prepared && !mp.isPlaying()) mp.start();
         updateState();
     }
 
     void seek(int ms) {
+        if (useExo) { exo.seek(ms); updateState(); return; }
         if (mp == null || !prepared) {
             startAt = ms;
             return;
@@ -268,6 +324,7 @@ final class Player implements SurfaceHolder.Callback {
 
     void setSpeed(float s) {
         speed = s;
+        if (useExo) { exo.setSpeed(s); return; }
         applySpeed();
     }
 
@@ -286,6 +343,8 @@ final class Player implements SurfaceHolder.Callback {
 
     void release() {
         session++;
+        if (exo != null) { try { exo.release(); } catch (Throwable ignored) { } }
+        useExo = false;
         if (mp != null) {
             try {
                 mp.reset();

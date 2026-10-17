@@ -5,7 +5,7 @@ import * as td from './td.js';
 let timer = 0;
 let warm = 0;        // file id currently warmed
 let protectId = 0;   // file id now playing (never delete under the player)
-const BYTES = 3 * 1024 * 1024;
+const BYTES = 6 * 1024 * 1024;
 
 function drop(id) {
   if (!id || id === protectId) return;
@@ -21,7 +21,7 @@ export function hover(item) {
     drop(warm);
     warm = item.fileId;
     td.player.prefetch(item.fileId, BYTES);
-  }, 900);
+  }, 350);
 }
 
 export function playing(fileId) {

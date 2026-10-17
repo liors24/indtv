@@ -34,6 +34,13 @@ jobs:
           echo "e77adc397fa4e62de6de60e2b7916986a3850cb768b776a1ed1ba9a500125fb2  arm64-v8a/libtdjson.so" | sha256sum -c
           echo "9b445b3fab3f843bf210a92ff30a76960ce5d862f0826af32b03e20252d1ab06  armeabi-v7a/libtdjson.so" | sha256sum -c
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Video engine (Media3 ExoPlayer) and its runtime libraries
+        run: gradle -p flixgram/deps copyDeps --no-daemon -q
+
       - name: Build and sign Flixgram.apk
         working-directory: flixgram
         env:

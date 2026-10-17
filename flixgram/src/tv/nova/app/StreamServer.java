@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -57,6 +58,9 @@ final class StreamServer implements Td.FileListener {
         volatile boolean complete;
         volatile long dlOffset;
         volatile long prefix;
+        /** The newest reader steers TDLib's download window; older ones only wait (no tug-of-war). */
+        volatile int owner;
+        int seq;
         final Object lock = new Object();
     }
 
@@ -179,7 +183,7 @@ final class StreamServer implements Td.FileListener {
             if (target.startsWith("/f/") && loopback) {
                 int id = Integer.parseInt(target.substring(3));
                 String mime = param(query, "m");
-                serveStream(out, id, mime == null ? "video/mp4" : mime, headers.get("range"), method.equals("HEAD"));
+                serveStream(s, in, out, id, mime == null ? "video/mp4" : mime, headers.get("range"), method.equals("HEAD"));
             } else if (target.startsWith("/t/") && loopback) {
                 int id = Integer.parseInt(target.substring(3));
                 serveSmall(out, id);
@@ -307,7 +311,21 @@ final class StreamServer implements Td.FileListener {
         }
     }
 
-    private void serveStream(OutputStream out, int id, String mime, String range, boolean head) throws IOException {
+    /** The player hung up (it seeks by opening a new connection): stop waiting for data on its behalf. */
+    private static boolean clientGone(Socket s, InputStream in) {
+        try {
+            s.setSoTimeout(1);
+            return in.read() == -1;
+        } catch (SocketTimeoutException e) {
+            return false;
+        } catch (IOException e) {
+            return true;
+        } finally {
+            try { s.setSoTimeout(60000); } catch (IOException ignored) { }
+        }
+    }
+
+    private void serveStream(Socket sock, InputStream in, OutputStream out, int id, String mime, String range, boolean head) throws IOException {
         FState st = state(id);
         long total = st.size > 0 ? st.size : st.expected;
         long start = 0, end = total - 1;
@@ -349,9 +367,12 @@ final class StreamServer implements Td.FileListener {
         if (head) return;
 
         final int myEpoch = epoch;
+        final int me;
+        synchronized (st.lock) { me = ++st.seq; st.owner = me; }
         startDownload(id, start, 32);
         long lastAim = System.currentTimeMillis();
         long lastProgress = System.currentTimeMillis();
+        long lastAliveCheck = 0;
         byte[] buf = new byte[CHUNK];
         RandomAccessFile raf = null;
         String openPath = null;
@@ -360,24 +381,32 @@ final class StreamServer implements Td.FileListener {
             while (pos <= end) {
                 if (myEpoch != epoch) return;
                 if (System.currentTimeMillis() - lastProgress > 120000) return; // nobody is reading any more
-                long avail = st.complete ? (total - pos) : prefixAt(id, pos);
+                long avail;
+                if (st.complete) avail = total - pos;
+                else if (st.dlOffset <= pos && pos < st.dlOffset + st.prefix) avail = st.dlOffset + st.prefix - pos;   // known from file updates: no round trip
+                else avail = prefixAt(id, pos);
                 if (avail <= 0) {
                     long now = System.currentTimeMillis();
+                    if (now - lastAliveCheck > 700) {
+                        lastAliveCheck = now;
+                        if (clientGone(sock, in)) return;
+                    }
+                    boolean mine = st.owner == me || st.owner == 0;
                     boolean covered = st.dlOffset <= pos && pos <= st.dlOffset + st.prefix + 2L * CHUNK;
-                    // Another reader (or a seek) may have moved TDLib's download window: re-aim it at us.
-                    if ((!covered && now - lastAim > 300) || (now - lastProgress > 4000 && now - lastAim > 4000)) {
+                    if (mine && ((!covered && now - lastAim > 250) || (now - lastProgress > 4000 && now - lastAim > 4000))) {
+                        if (st.owner == 0) st.owner = me;
                         startDownload(id, pos, 32);
                         lastAim = now;
                     }
                     synchronized (st.lock) {
-                        try { st.lock.wait(250); } catch (InterruptedException e) { return; }
+                        try { st.lock.wait(120); } catch (InterruptedException e) { return; }
                     }
                     continue;
                 }
                 String p = st.path;
                 if (p == null || p.length() == 0) {
                     synchronized (st.lock) {
-                        try { st.lock.wait(100); } catch (InterruptedException e) { return; }
+                        try { st.lock.wait(60); } catch (InterruptedException e) { return; }
                     }
                     continue;
                 }
@@ -391,7 +420,7 @@ final class StreamServer implements Td.FileListener {
                 int read = raf.read(buf, 0, n);
                 if (read <= 0) {
                     synchronized (st.lock) {
-                        try { st.lock.wait(100); } catch (InterruptedException e) { return; }
+                        try { st.lock.wait(60); } catch (InterruptedException e) { return; }
                     }
                     continue;
                 }
@@ -401,6 +430,8 @@ final class StreamServer implements Td.FileListener {
             }
         } finally {
             if (raf != null) try { raf.close(); } catch (IOException ignored) { }
+            // let a reader that is still waiting take over the download window
+            if (st.owner == me) st.owner = 0;
         }
     }
 

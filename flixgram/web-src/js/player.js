@@ -169,7 +169,7 @@ function scrubBy(sign) {
   P.el.classList.add('scrubbing');
   draw(P.target);
   clearTimeout(P.seekTimer);
-  P.seekTimer = setTimeout(commitSeek, 900);
+  P.seekTimer = setTimeout(commitSeek, 600);
 }
 
 function commitSeek() {

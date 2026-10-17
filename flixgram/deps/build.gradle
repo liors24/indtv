@@ -1,0 +1,30 @@
+// Resolves the video engine (Media3 ExoPlayer) and its runtime dependencies for Flixgram's hand-made build:
+//   gradle -p deps copyDeps   ->   deps/build/jars/*.jar   (classes of every runtime library, aars unpacked)
+plugins { id 'com.android.library' version '8.5.2' }
+
+android {
+    namespace 'tv.flixgram.deps'
+    compileSdk 34
+    defaultConfig { minSdk 21 }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+}
+
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+}
+
+tasks.register('copyDeps') {
+    doLast {
+        def out = layout.buildDirectory.dir('jars').get().asFile
+        out.deleteDir(); out.mkdirs()
+        def arts = configurations.getByName('releaseRuntimeClasspath').incoming.artifactView {
+            attributes { attribute(Attribute.of('artifactType', String), 'android-classes-jar') }
+        }.artifacts
+        arts.each { a ->
+            def name = a.id.componentIdentifier.displayName.replaceAll('[^A-Za-z0-9._-]', '_')
+            def target = new File(out, name + '-' + a.file.name)
+            target.bytes = a.file.bytes
+        }
+        println 'deps: ' + out.list().sort().join(', ')
+    }
+}

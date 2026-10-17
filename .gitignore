@@ -12,3 +12,5 @@ tgtv/www/app.js
 flixgram/build/
 flixgram/node_modules/
 flixgram/mock/t/
+flixgram/deps/build/
+flixgram/deps/.gradle/
