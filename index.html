@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>INDTV</title>
+  <style>html,body{margin:0;background:#0e0b14}</style>
+  <script>
+    /* INDTV start page. If a newer INDTV bundle was downloaded earlier (see js/core/updater.js) it is shown
+     * here; otherwise the installed app.html runs. A downloaded bundle that fails to start twice is dropped. */
+    var INDTV_SHELL_BUILD = 25;
+    (function () {
+      var start = function () { location.replace('app.html' + location.hash); };
+      try {
+        var raw = localStorage.getItem('indtv:ota');
+        var o = raw ? JSON.parse(raw) : null;
+        if (!o || !o.html || !(o.build > INDTV_SHELL_BUILD)) return start();
+        var tried = parseInt(localStorage.getItem('indtv:ota-boot'), 10) || 0;
+        if (tried >= 2) {
+          localStorage.setItem('indtv:ota-bad', String(o.build));
+          localStorage.removeItem('indtv:ota'); localStorage.removeItem('indtv:ota-boot');
+          return start();
+        }
+        localStorage.setItem('indtv:ota-boot', String(tried + 1));
+        document.open(); document.write(o.html); document.close();
+      } catch (e) { start(); }
+    })();
+  </script>
+</head>
+<body></body>
+</html>
