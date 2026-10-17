@@ -11,6 +11,7 @@ import { setAmbient } from './ambient.js';
 import * as warm from './prefetch.js';
 import * as reco from './reco.js';
 import * as quality from './quality.js';
+import * as episodes from './episodes.js';
 
 let P = null; // active player session
 
@@ -33,7 +34,19 @@ export async function openItem(item, list) {
   }
   if (item.kind === 'photo') return openViewer(item, (list || [item]).filter((i) => i.kind === 'photo'));
   if (item.kind === 'file') return toast('אי אפשר לפתוח את סוג הקובץ הזה בטלוויזיה');
-  start(item, (list || [item]).filter((i) => i.kind === item.kind));
+  const same = (list || [item]).filter((i) => i.kind === item.kind);
+  const ordered = item.kind === 'video' ? episodes.order(item, same) : same;
+  start(item, ordered.some((x) => x.key === item.key) ? ordered : same);
+  // episodes of the same series that are not in this list: fetch them from the chat, keep episode order
+  if (item.kind === 'video' && episodes.isEpisode(item)) {
+    episodes.complete(item, ordered).then((full) => {
+      if (!full || !P || P.anchor.key !== item.key) return;
+      const anchor = full.find((x) => x.key === item.key);
+      if (anchor) P.anchor = anchor;
+      P.list = full;
+      P.nextBtn.classList.toggle('dim', !nextInList(full, P.anchor));
+    });
+  }
 }
 
 // Plays `item`, but if this chat has a pinned quality, swaps in the matching upload first.
