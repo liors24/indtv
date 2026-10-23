@@ -8,8 +8,6 @@
     <content src="index.html"/>
     <icon src="icon.png"/>
     <access origin="*" subdomains="true"/>
-    <tizen:allow-navigation>*</tizen:allow-navigation>
-    <tizen:content-security-policy>default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; style-src * data: 'unsafe-inline'; img-src * data: blob:; media-src * data: blob:; connect-src * data: blob:; font-src * data:; worker-src * data: blob:</tizen:content-security-policy>
     <feature name="http://tizen.org/feature/screen.size.all"/>
     <tizen:privilege name="http://tizen.org/privilege/internet"/>
     <tizen:privilege name="http://developer.samsung.com/privilege/network.public"/>

@@ -10,7 +10,7 @@ import { startRelay } from './relay.js';
 const VERSION = typeof __VERSION__ === 'string' ? __VERSION__ : '1.0';
 // served straight from the repository (works without GitHub Pages being switched on)
 const SETUP_PAGE = 'https://raw.githack.com/liors24/indtv/main/web/flixgram-setup.html';
-const OTA_URL = 'https://raw.githubusercontent.com/liors24/indtv/flixgram-ota/bundle.json';
+const OTA_URL = 'https://raw.githubusercontent.com/liors24/indtv/flixgram-ota/bundle2.json';
 document.documentElement.classList.add('tizen');
 
 // ------------------------------------------------------------------ TDLib
@@ -327,10 +327,10 @@ const updater = (() => {
   const num = (k) => parseInt(localStorage.getItem(k), 10) || 0;
   function current() {
     let o = 0;
-    try { o = (JSON.parse(localStorage.getItem('flix:ota') || 'null') || {}).build || 0; } catch (e) { o = 0; }
+    try { o = (JSON.parse(localStorage.getItem('flix:ota2') || 'null') || {}).build || 0; } catch (e) { o = 0; }
     return Math.max(window.FLIX_BUILD || 0, o);
   }
-  function restart() { location.replace(new URL('index.html', location.href).href); }
+  function restart() { location.reload(); }
   function apply() {
     if (!player.state().active && Date.now() - launched < 90000) restart();
     else pending = true;
@@ -340,9 +340,10 @@ const updater = (() => {
     fetch(OTA_URL + '?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' })
       .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then((b) => {
-        if (!b || !b.html || !(b.build > current()) || b.build === num('flix:ota-bad')) return;
+        if (!b || !b.host || !b.app || !b.css || !(b.build > current()) || b.build === num('flix:ota-bad')) return;
         if (b.tdweb !== window.FLIX_TDWEB) return;   // needs a newer installed package (new TDLib)
-        localStorage.setItem('flix:ota', JSON.stringify({ build: b.build, tdweb: b.tdweb, html: b.html }));
+        localStorage.removeItem('flix:ota');   // the old page-based format
+        localStorage.setItem('flix:ota2', JSON.stringify({ build: b.build, tdweb: b.tdweb, css: b.css, host: b.host, app: b.app }));
         localStorage.removeItem('flix:ota-boot');
         apply();
       })
