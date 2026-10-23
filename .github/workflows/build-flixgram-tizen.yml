@@ -96,6 +96,21 @@ jobs:
           sed -i "s/version=\"1.0.0\"/version=\"1.0.${{ github.run_number }}\"/" $APP/config.xml
           ls -la $APP
 
+      - name: Files for the compatibility runs
+        working-directory: flixgram
+        run: |
+          mkdir -p build/tizen/compat
+          npx esbuild tizen/compat/player-entry.js --bundle --format=iife --target=chrome56 --outfile=build/tizen/compat/compat-player.js
+          printf '<!doctype html><html><body style="background:transparent"><script src="mp4box.min.js"></script><script src="compat-player.js"></script></body></html>' > build/tizen/compat/compat-player.html
+          cp tizen/compat/run.js build/tizen/compat/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tizen-app
+          path: |
+            flixgram/build/tizen/app
+            flixgram/build/tizen/compat
+
       - name: Smoke test (TDLib runs in a browser and reaches Telegram)
         working-directory: flixgram
         run: |
@@ -178,3 +193,50 @@ jobs:
           body: "Flixgram for Samsung Smart TV. Install once; later versions arrive by themselves."
           make_latest: false
           files: FlixgramTV-1.0.${{ github.run_number }}.wgt
+
+  # The app in old Chromium engines like those inside Samsung TVs (Tizen 5 ≈ Chromium 63, Tizen 5.5 ≈ 69).
+  # Results go to the flixgram-compat-<engine> branches (screenshots + a JSON log).
+  compat:
+    needs: wgt
+    runs-on: ubuntu-latest
+    container: node:10-buster
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: chrome63
+            pptr: '0.12.0'
+          - label: chrome69
+            pptr: '1.6.2'
+    steps:
+      - name: System libraries and test video
+        run: |
+          sed -i -e 's|deb.debian.org|archive.debian.org|g' -e '/security/d' -e '/buster-updates/d' /etc/apt/sources.list
+          apt-get update -qq
+          apt-get install -y -qq ffmpeg git libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgconf-2-4 fonts-dejavu-core >/dev/null
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tizen-app
+          path: t
+
+      - name: Run
+        run: |
+          ls t
+          APP=t/app
+          cp t/compat/compat-player.* $APP/
+          ffmpeg -v error -y -f lavfi -i testsrc2=size=640x360:rate=25 -f lavfi -i sine=frequency=440:sample_rate=48000 -t 90 -c:v libvpx-vp9 -b:v 500k -deadline realtime -cpu-used 8 -g 50 -c:a flac -strict -2 -movflags +faststart $APP/test.mp4 || echo "no test video"
+          mkdir -p runner out
+          cp t/compat/run.js runner/
+          cd runner && npm init -y >/dev/null && npm install --no-audit --no-fund puppeteer@${{ matrix.pptr }} >/dev/null 2>&1 && cd ..
+          timeout 600 node runner/run.js $APP out ${{ matrix.label }} || true
+
+      - name: Keep the results
+        run: |
+          cd out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "compat ${{ matrix.label }} run ${{ github.run_number }}" || true
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/flixgram-compat-${{ matrix.label }}

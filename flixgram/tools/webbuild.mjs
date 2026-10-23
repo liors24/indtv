@@ -38,17 +38,20 @@ else if (tizen) {
   // app.html is the interface; index.html is a small start page that can run a newer downloaded interface
   const build = parseInt(process.env.BUILD || '0', 10) || 0;
   const key = process.env.TDWEB_KEY || 'dev';
-  html = html.replace('<!--MOCK-->', `<script>var FLIX_BUILD = ${build}, FLIX_TDWEB = '${key}';</script><script>${fs.readFileSync(`${root}/tizen/bootdiag.js`, 'utf8')}</script><script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>`);
-  fs.writeFileSync(`${out}/index.html`, fs.readFileSync(`${root}/tizen/shell.html`, 'utf8').replace('__BUILD__', String(build)).replace('__TDWEB__', key));
+  // no inline scripts in the installed pages: a TV's default content policy may block them
+  fs.writeFileSync(`${out}/boot.js`, `var FLIX_BUILD = ${build}, FLIX_TDWEB = '${key}';\n` + fs.readFileSync(`${root}/tizen/bootdiag.js`, 'utf8'));
+  html = html.replace('<!--MOCK-->', '<script src="boot.js"></script><script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>');
+  fs.writeFileSync(`${out}/shell.js`, fs.readFileSync(`${root}/tizen/shell.js`, 'utf8').replace('__BUILD__', String(build)).replace('__TDWEB__', key));
+  fs.copyFileSync(`${root}/tizen/shell.html`, `${out}/index.html`);
 }
-else html = html.replace('<!--MOCK-->', '');
 fs.writeFileSync(`${out}/${tizen ? 'app.html' : 'index.html'}`, html);
 if (tizen) {
   // the over-the-air bundle: app.html with the interface's own scripts and styles inlined
   const safe = (t) => t.replace(/<\/script/gi, '<\\/script');
   const inline = html.replace('<link rel="stylesheet" href="app.css">', () => '<style>' + fs.readFileSync(`${out}/app.css`, 'utf8').replace(/<\/style/gi, '<\\/style') + '</style>')
     .replace('<script src="host.js"></script>', () => '<script>' + safe(fs.readFileSync(`${out}/host.js`, 'utf8')) + '</script>')
-    .replace('<script src="app.js"></script>', () => '<script>' + safe(fs.readFileSync(`${out}/app.js`, 'utf8')) + '</script>');
+    .replace('<script src="app.js"></script>', () => '<script>' + safe(fs.readFileSync(`${out}/app.js`, 'utf8')) + '</script>')
+    .replace('<script src="boot.js"></script>', () => '<script>' + safe(fs.readFileSync(`${out}/boot.js`, 'utf8')) + '</script>');
   fs.mkdirSync(`${root}/build/tizen/ota`, { recursive: true });
   fs.writeFileSync(`${root}/build/tizen/ota/bundle.json`, JSON.stringify({ build: parseInt(process.env.BUILD || '0', 10) || 0, tdweb: process.env.TDWEB_KEY || 'dev', html: inline }));
 }
