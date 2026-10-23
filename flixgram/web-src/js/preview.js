@@ -10,7 +10,8 @@ let timer = 0, poll = 0;
 let cur = null;        // item previewing
 let shown = false;     // the picture is on screen
 let handed = false;    // given over to the player
-let quiet = '';        // just watched: no preview until the focus moves elsewhere
+let quiet = '';
+let frameEl = null;  // where the picture plays (a frame on the page), or null for the whole screen        // just watched: no preview until the focus moves elsewhere
 
 const root = () => document.documentElement;
 
@@ -18,7 +19,8 @@ export function enabled() { return store.get('preview', true) !== false; }
 export function setEnabled(on) { store.set('preview', !!on); if (!on) stop(); }
 
 /** Called when a video gets the focus (hero). */
-export function rest(item) {
+export function rest(item, frame) {
+  frameEl = frame || null;
   clearTimeout(timer);
   if (cur && (!item || cur.key !== item.key)) stop();
   if (item && quiet && item.key !== quiet) quiet = '';
@@ -33,7 +35,15 @@ function begin(item) {
   const startMs = p && p.pos && p.dur && p.pos < p.dur - 30 ? Math.max(0, p.pos - 3) * 1000 : 0;
   td.player.mute(true);
   td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
-  td.player.aspect('zoom');
+  const r = frameEl && frameEl.getBoundingClientRect();
+  const W = window.innerWidth, H = window.innerHeight;
+  if (r && r.width > 0 && r.height > 0) {
+    td.player.aspect('box:' + [r.left / W, r.top / H, r.width / W, r.height / H].map((n) => n.toFixed(4)).join(','));
+    root().classList.add('pv-box');
+  } else {
+    td.player.aspect('zoom');
+    root().classList.remove('pv-box');
+  }
   root().classList.add('pv-load');
   clearInterval(poll);
   poll = setInterval(() => {
@@ -53,7 +63,7 @@ export function take(item) {
   const ok = shown;
   handed = ok;
   clearInterval(poll);
-  root().classList.remove('pv-load', 'pv-on');
+  root().classList.remove('pv-load', 'pv-on', 'pv-box');
   if (!ok) { stop(); return false; }
   cur = null;
   return true;
@@ -62,7 +72,7 @@ export function take(item) {
 export function stop() {
   clearTimeout(timer);
   clearInterval(poll);
-  root().classList.remove('pv-load', 'pv-on');
+  root().classList.remove('pv-load', 'pv-on', 'pv-box');
   if (!cur) return;
   const it = cur;
   cur = null; shown = false;

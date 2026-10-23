@@ -187,7 +187,7 @@
     seek: (ms) => { playState.pos = ms; },
     speed: () => {},
     mute: (m) => { playState.muted = m; },
-    aspect: (m) => { const v = document.getElementById('mockvideo'); if (!v) return; const fit = { fit: 'contain', zoom: 'cover', fill: 'fill' }[m]; v.style.objectFit = fit || 'contain'; v.style.background = '#000'; },
+    aspect: (m) => { const v = document.getElementById('mockvideo'); if (!v) return; if (m.indexOf('box:') === 0) { const b = m.slice(4).split(',').map(Number); v.style.left = b[0] * 100 + 'vw'; v.style.top = b[1] * 100 + 'vh'; v.style.width = b[2] * 100 + 'vw'; v.style.height = b[3] * 100 + 'vh'; v.style.objectFit = 'cover'; return; } v.style.left = v.style.top = '0'; v.style.width = '100vw'; v.style.height = '100vh'; const fit = { fit: 'contain', zoom: 'cover', fill: 'fill' }[m]; v.style.objectFit = fit || 'contain'; v.style.background = '#000'; },
     prefetch: () => {},
     track: () => {},
     stop: () => { playState = { active: false }; clearInterval(playT); const v = document.getElementById('mockvideo'); if (v) v.style.display = 'none'; },

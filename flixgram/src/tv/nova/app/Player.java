@@ -375,6 +375,24 @@ final class Player implements SurfaceHolder.Callback, ExoEngine.Host {
             surface.setLayoutParams(new FrameLayout.LayoutParams(pw, ph, Gravity.CENTER));
             return;
         }
+        if (aspectMode.startsWith("box:")) {
+            // the live preview plays inside a frame on the page: "box:x,y,w,h" as fractions of the screen;
+            // the picture keeps its proportions and is centred in the frame
+            try {
+                String[] p = aspectMode.substring(4).split(",");
+                int bx = Math.round(Float.parseFloat(p[0]) * pw), by = Math.round(Float.parseFloat(p[1]) * ph);
+                int bw = Math.round(Float.parseFloat(p[2]) * pw), bh = Math.round(Float.parseFloat(p[3]) * ph);
+                if (bw > 0 && bh > 0) {
+                    if (va > (float) bw / bh) { w = bw; h = Math.round(bw / va); }
+                    else { h = bh; w = Math.round(bh * va); }
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h, Gravity.TOP | Gravity.LEFT);
+                    lp.leftMargin = bx + (bw - w) / 2;
+                    lp.topMargin = by + (bh - h) / 2;
+                    surface.setLayoutParams(lp);
+                    return;
+                }
+            } catch (Exception ignored) { }
+        }
         if ("16:9".equals(aspectMode)) va = 16f / 9f;
         else if ("4:3".equals(aspectMode)) va = 4f / 3f;
         else if ("21:9".equals(aspectMode)) va = 21f / 9f;

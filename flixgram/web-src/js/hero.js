@@ -68,7 +68,7 @@ export function createHero() {
     setAmbient(item.thumb ? thumbUrl(item.thumb) : item.mini);
     setArt(item.thumb ? thumbUrl(item.thumb) : item.mini || '');
     hover(item);
-    preview.rest(item);
+    preview.rest(item, art);
   }
 
   function showText(kicker, main, line) {
