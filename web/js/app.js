@@ -7,8 +7,16 @@
     return Promise.race([p, new Promise(function (r) { setTimeout(r, ms); })]);
   }
 
+  // Live only: one screen of live channels. No catch-up, recordings, translation, profiles or settings.
+  INDTV.LIVE_ONLY = true;
+
   function registerScreens() {
     var R = INDTV.Router;
+    if (INDTV.LIVE_ONLY) {
+      R.register('home', INDTV.LiveHome);
+      R.screens.home.el = document.getElementById('screen-home');
+      return;
+    }
     R.register('home', INDTV.HomeScreen);
     R.register('categories', INDTV.CategoriesScreen);
     R.register('catchup', INDTV.CatchUpScreen);
@@ -43,6 +51,15 @@
       return 'ok';
     };
 
+    if (INDTV.LIVE_ONLY) {
+      document.documentElement.classList.add('live');
+      // one viewer: reuse the last profile (keeps existing favourites), or make one quietly
+      var P = INDTV.Profiles, list = P.list();
+      var id = P.lastId() && P.get(P.lastId()) ? P.lastId() : (list[0] ? list[0].id : P.create('ראשי', (INDTV.Avatars && INDTV.Avatars.ids[0]) || null).id);
+      P.use(id).then(function (p) { start(p); }, function () { start(null); });
+      try { localStorage.removeItem('indtv:ota-boot'); } catch (e) { /* ignore */ }
+      return;
+    }
     // 0. "Who's watching?" — every person gets their own favourites, history and recordings.
     INDTV.ProfileGate.open().then(function (p) {
       try { localStorage.removeItem('indtv:ota-boot'); } catch (e) { /* ignore */ }
@@ -68,9 +85,9 @@
       if (INDTV.PlaylistRepository.shouldAutoRefresh()) INDTV.PlaylistRepository.refresh();
       // Programme guide: downloaded and parsed in the background once Home is up (never blocks the UI).
       setTimeout(function () { INDTV.EpgRepository.ensureFresh(); }, 3500);
-      INDTV.ShowFavorites.startWatcher();
+      if (!INDTV.LIVE_ONLY) INDTV.ShowFavorites.startWatcher();
       INDTV.StreamScan.start();
-      if (INDTV.DVR) INDTV.DVR.load();
+      if (INDTV.DVR && !INDTV.LIVE_ONLY) INDTV.DVR.load();
       INDTV.PlaylistRepository.startBackgroundPolicy();
 
       // 3. Build the shell under the splash so Home is ready the moment it lifts.

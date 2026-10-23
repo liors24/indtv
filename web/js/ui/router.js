@@ -21,6 +21,14 @@
       var top = document.getElementById('topbar');
       top.innerHTML = '';
       top.appendChild(U.el('div', { class: 'tb-brand', html: INDTV.wordmark() }));
+      if (INDTV.LIVE_ONLY) {
+        ALL_TABS = ['home'];
+        Router._clock = U.el('span', { class: 'tb-clock', 'aria-hidden': 'true' });
+        Router._tickClock();
+        top.appendChild(U.el('div', { class: 'tb-tools' }, [Router._clock]));
+        if (!Router._chromeBound) { Router._chromeBound = true; setInterval(Router._tickClock, 15000); }
+        return;
+      }
       var nav = U.el('nav', { class: 'tb-nav', 'data-fgroup': 'topnav', 'data-faxis': 'h', 'aria-label': 'Primary' });
       TOP_TABS.forEach(function (tab) {
         nav.appendChild(U.el('button', { class: 'fx nav-item tb-item', type: 'button', dataset: { tab: tab, key: 'top:' + tab }, text: t(tab) }));
@@ -101,6 +109,7 @@
     },
 
     focusNav: function (tab) {
+      if (INDTV.LIVE_ONLY) { var sc = Router.screens.home; var f = sc && sc.firstFocus && sc.firstFocus(); if (f) INDTV.Focus.focus(f); return; }
       var el = document.querySelector('.tb-item[data-tab="' + tab + '"]');
       if (el) INDTV.Focus.focus(el);
     },
@@ -135,7 +144,7 @@
         Router.focusNav('home');
         return;
       }
-      if (!inNav) { Router.focusNav('home'); return; }
+      if (!inNav && !INDTV.LIVE_ONLY) { Router.focusNav('home'); return; }
       var now = Date.now();
       if (now - Router._lastBackAt < 2200) {
         if (root.INDTVNative && root.INDTVNative.exitApp) { root.INDTVNative.exitApp(); return; }

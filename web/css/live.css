@@ -1,0 +1,146 @@
+/* INDTV Live — the same calm streaming look as Flixgram: soft slate room, paper-white letters,
+   one pale sea-glass accent, IBM Plex Hebrew throughout. Loaded last; everything is scoped to html.live.
+   1rem = 1/120 of the screen width (16px on a 1920 screen). */
+
+html.live {
+  --velvet: #1b2127; --velvet-2: #232a31; --velvet-3: #2c343c;
+  --lamp: #ece8e1; --lamp-rgb: 236, 232, 225;
+  --haze: #a3acb4; --dust: rgba(213, 230, 222, 0.12);
+  --sea: #a8cbbd; --live-red: #ff5a5f;
+  --bg: #1b2127; --bg-2: #1f262d; --surface: #232a31; --surface-2: #2c343c;
+  --text: #ece8e1; --text-2: #c3c9ce; --muted: #a3acb4; --orange: #ece8e1;
+  --line: rgba(255, 255, 255, 0.06); --line-2: rgba(255, 255, 255, 0.1);
+  --font-display: 'IBM Plex Sans Hebrew', 'Segoe UI', Arial, sans-serif;
+  --edge: 6rem;
+}
+html.live body { background: var(--velvet); color: var(--lamp); }
+html.live #ambient { background: var(--velvet); }
+html.live .amb-layer.on { opacity: 0.22; }
+html.live #vignette { background: linear-gradient(to top, var(--velvet) 30%, rgba(27, 33, 39, 0.6) 70%, rgba(27, 33, 39, 0.85)); }
+
+/* top bar: brand at the start, clock at the end, nothing else */
+html.live .topbar { background: linear-gradient(rgba(27, 33, 39, 0.9), rgba(27, 33, 39, 0)); justify-content: space-between; }
+html.live .tb-brand { font-size: 2.6rem; }
+html.live .tb-tools { margin-inline-start: auto; }
+html.live .tb-clock { font-size: 1.75rem; font-weight: 300; color: var(--haze); }
+
+/* one scrolling screen */
+html.live #screen-home { position: absolute; inset: 0; }
+html.live .lh-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: var(--tb-h) 0 30rem; scrollbar-width: none; }
+html.live .lh-scroll::-webkit-scrollbar { display: none; }
+html.live .lh-scroll[data-top-offset] { scroll-padding-top: var(--tb-h); }
+
+/* ---------------- billboard */
+.lh-bb-row { padding: 0.4rem var(--edge) 2rem; }
+.lh-bb { position: relative; height: 41rem; border-radius: 1.6rem; overflow: hidden; background: var(--velvet-3);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.lh-bb-art {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-inline-end: 9rem;
+  background: linear-gradient(120deg, #2e3740, #1d2329);
+}
+.lh-bb-art::before { content: ''; position: absolute; inset: 0; background: radial-gradient(55% 85% at 22% 50%, var(--cat), transparent 70%); opacity: 0.45; }
+.lh-bb-logo.logo { position: relative; width: 24rem; height: 24rem; border-radius: 2.4rem; display: block; overflow: hidden;
+  background: radial-gradient(circle at 35% 28%, #3b4550 0%, #2a323a 70%); box-shadow: 0 2.4rem 5rem -2rem rgba(0, 0, 0, 0.7); }
+.lh-bb-logo.logo[data-tone="light"] { background: radial-gradient(circle at 35% 28%, #fffaf2 0%, #ece6dc 70%); }
+.lh-bb-logo.logo[data-tone="own"] { background: var(--tone); }
+.lh-bb-logo .logo-img { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; }
+.lh-bb-logo .logo-fb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.lh-bb-logo .logo-fb-mono { font-size: 7rem; font-weight: 700; color: var(--lamp); }
+.lh-bb-logo.is-loaded .logo-fb { display: none; }
+.lh-bb-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to left, rgba(16, 20, 24, 0.88) 0%, rgba(16, 20, 24, 0.55) 34%, rgba(16, 20, 24, 0) 60%); }
+html[dir="ltr"] .lh-bb-shade { transform: scaleX(-1); }
+.lh-bb-info { position: absolute; inset-inline-start: 4rem; bottom: 3.6rem; max-width: 58rem; }
+.lh-kicker { font-size: 1.5rem; font-weight: 500; color: var(--sea); margin-bottom: 0.4rem; }
+.lh-bb-title { margin: 0 0 1rem; font-size: 5.6rem; font-weight: 700; line-height: 1.04; letter-spacing: -0.02em; color: #fff;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lh-bb-title.long { font-size: 4.2rem; }
+.lh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.2rem; font-size: 1.55rem; font-weight: 600; color: #f2efe9; }
+.lh-meta > span + span::before { content: '•'; margin-inline-end: 1.2rem; color: rgba(255, 255, 255, 0.5); }
+.lh-live { display: inline-flex; align-items: center; gap: 0.6rem; color: #fff; }
+.lh-live i { width: 0.8rem; height: 0.8rem; border-radius: 50%; background: var(--live-red); box-shadow: 0 0 0.8rem var(--live-red); animation: lhPulse 2s ease-in-out infinite; }
+@keyframes lhPulse { 50% { opacity: 0.45; } }
+.lh-now { margin-top: 0.8rem; font-size: 1.5rem; color: #d5dade; display: flex; gap: 0.8rem; flex-wrap: wrap; }
+.lh-now-k { color: var(--haze); }
+.lh-now-t { color: var(--haze); font-variant-numeric: tabular-nums; }
+.lh-actions { display: flex; gap: 1.1rem; margin-top: 1.8rem; }
+.lh-btn {
+  display: inline-flex; align-items: center; gap: 0.9rem; height: 4.7rem; padding: 0 2.2rem; border-radius: 999px; border: 0;
+  background: rgba(255, 255, 255, 0.22); color: #fff; font: 600 1.7rem/1 var(--font-ui); cursor: pointer;
+  transition: transform 180ms var(--out), background-color 180ms var(--out), color 180ms;
+}
+.lh-btn .ic, .lh-btn svg { width: 1.8rem; height: 1.8rem; }
+.lh-btn.is-on .ic, .lh-btn.is-on svg { color: var(--live-red); }
+.lh-btn:focus { background: #fff; color: #15191d; transform: scale(1.06); outline: none; }
+
+/* ---------------- category tiles */
+html.live .lh-cats-row { padding: 0.2rem 0 1.4rem; }
+.lh-tiles { display: flex; gap: 1.25rem; padding: 0.8rem var(--edge) 1rem; overflow-x: auto; scrollbar-width: none; }
+.lh-tiles::-webkit-scrollbar { display: none; }
+.lh-cat {
+  flex: 0 0 auto; width: 15rem; height: 7rem; border-radius: 1.1rem; border: 0; padding: 0 1.4rem; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; text-align: center;
+  background: linear-gradient(165deg, #38414a, #262d34); color: var(--lamp); position: relative; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 180ms var(--out), box-shadow 180ms var(--out);
+}
+.lh-cat::before { content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 0.35rem; background: var(--cat); opacity: 0.85; }
+.lh-cat-name { font: 700 1.65rem/1.15 var(--font-ui); letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lh-cat-n { font-size: 1.25rem; color: var(--haze); }
+.lh-cat:focus { transform: scale(1.06); box-shadow: 0 0 0 0.25rem var(--lamp); outline: none; }
+
+/* ---------------- channel rows */
+html.live .lh-row { padding: 0 0 0.2rem; margin: 0; }
+html.live .lh-row .rail-head { padding: 0 var(--edge); margin: 0 0 0.2rem; display: flex; align-items: baseline; gap: 1.2rem; }
+html.live .lh-row .rail-title { font: 600 1.9rem/1.3 var(--font-ui); letter-spacing: -0.005em; color: var(--lamp); margin: 0; text-transform: none; }
+html.live .lh-row .rail-meta { font-size: 1.35rem; color: var(--haze); }
+html.live .lh-row .rail-track { display: flex; gap: 1.25rem; padding: 1rem var(--edge) 0.8rem; overflow-x: auto; scrollbar-width: none; scroll-padding: 0 var(--edge); }
+html.live .lh-row .rail-track::-webkit-scrollbar { display: none; }
+.lh-card { flex: 0 0 auto; width: 18.5rem; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; text-align: start; }
+.lh-card-art {
+  position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 10.4rem; border-radius: 0.9rem; overflow: hidden;
+  background: linear-gradient(165deg, #343c45, #252b31);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: transform 180ms var(--out), box-shadow 180ms var(--out);
+}
+.lh-card-art::before { content: ''; position: absolute; inset: 0; background: radial-gradient(80% 110% at 50% 115%, var(--cat), transparent 70%); opacity: 0.3; }
+.lh-card-logo.logo { position: relative; width: 7.2rem; height: 7.2rem; border-radius: 1.2rem; overflow: hidden; display: block;
+  background: radial-gradient(circle at 35% 28%, #3e4852 0%, #2b333b 75%); }
+.lh-card-logo.logo[data-tone="light"] { background: radial-gradient(circle at 35% 28%, #fffaf2 0%, #ece6dc 75%); }
+.lh-card-logo.logo[data-tone="own"] { background: var(--tone); }
+.lh-card-logo .logo-img { position: absolute; inset: 12%; width: 76%; height: 76%; object-fit: contain; }
+.lh-card-logo .logo-fb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.lh-card-logo .logo-fb-mono { font-size: 2.3rem; font-weight: 700; color: var(--lamp); }
+.lh-card-logo.is-loaded .logo-fb { display: none; }
+.lh-heart { position: absolute; top: 0.6rem; inset-inline-end: 0.6rem; width: 2.1rem; height: 2.1rem; color: var(--live-red);
+  display: flex; align-items: center; justify-content: center; background: rgba(12, 15, 18, 0.6); border-radius: 50%; }
+.lh-heart svg { width: 1.2rem; height: 1.2rem; }
+.lh-card-name { display: block; margin-top: 0.7rem; font: 500 1.4rem/1.3 var(--font-ui); color: var(--haze);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-card:focus { outline: none; }
+.lh-card:focus .lh-card-art { transform: scale(1.06); box-shadow: 0 0 0 0.25rem var(--lamp), 0 1.6rem 3rem -1.2rem rgba(0, 0, 0, 0.75); }
+.lh-card:focus .lh-card-name { color: #fff; }
+.lh-card.is-off .lh-card-art { opacity: 0.45; filter: grayscale(0.7); }
+
+/* what the highlighted channel is showing */
+.lh-desc { height: 6.2rem; padding: 0.3rem var(--edge) 0; opacity: 0; transition: opacity 200ms var(--out); }
+.lh-desc.on { opacity: 1; }
+.lh-desc .lh-meta { font-size: 1.45rem; }
+.lh-hint { margin-top: 0.5rem; font-size: 1.3rem; color: var(--haze); }
+
+/* states (loading / empty) keep working under the new top bar */
+html.live .home-state { padding: calc(var(--tb-h) + 4rem) var(--edge); }
+
+/* ---------------- player: live only — no rewind, recording, start-over, translation, stop or back buttons */
+html.live .ctl[data-key="ctl:rec"], html.live .ctl[data-key="ctl:start"], html.live .ctl[data-key="ctl:live"],
+html.live .ctl[data-key="ctl:rw"], html.live .ctl[data-key="ctl:fw"], html.live .ctl[data-key="ctl:tr"],
+html.live .ctl[data-key="ctl:stop"], html.live .ctl[data-key="ctl:fs"], html.live .ctl[data-key="ctl:back"] { display: none !important; }
+html.live .ctl:focus { background: #fff !important; color: #15191d !important; }
+html.live .ctl[data-key="ctl:fav"].is-on { color: var(--live-red); }
+html.live .progress-fill { background: var(--sea); }
+html.live .osd-bottom { background: none; }
+html.live .player .osd { font-family: var(--font-ui); }
+html.live .osd-title, html.live .osd-name { font-family: var(--font-ui) !important; text-transform: none !important; letter-spacing: -0.01em !important; }
+html.live[dir="rtl"] .lh-card-name, html.live[dir="rtl"] .lh-bb-title, html.live[dir="rtl"] .lh-now, html.live[dir="rtl"] .lh-desc { text-align: right; }
+html.live .player { background: #0f1317; }
+html.live .logo-fb-mono { text-decoration: none; border: 0; }

@@ -431,7 +431,7 @@
     current: function () { return DVR._cur; },
     /** Called when a channel's HLS stream is playing: start (or keep) the time-shift buffer. */
     watch: function (ch, url, hint) {
-      if (!DVR.supported()) return null;
+      if (INDTV.LIVE_ONLY || !DVR.supported()) return null;   // live only: no time-shift buffer, nothing written to the TV
       var cfg = settings();
       if (DVR._cur && DVR._cur.chId === ch.id && DVR._cur.url === url && !DVR._cur.stopped) return DVR._cur;
       DVR.leave();
