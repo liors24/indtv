@@ -718,9 +718,9 @@ html.t-calm {
 /* Home: the picture in a 16:9 frame on the left, the words beside it */
 .t-calm .screen.home .hero { height: 560px; padding: 0 var(--edge); }
 .t-calm .screen.home .hero::before, .t-calm .screen.home .hero::after { display: none; }
-.t-calm .screen.home .hero-art {
-  display: block; position: absolute; top: 22px; left: var(--edge); width: 880px; height: 495px;
-  border-radius: 20px; overflow: hidden; background: var(--velvet-3);
+.t-calm .screen.home .hero-art { /* a portrait poster at the start (right) side; the words sit beside it */
+  display: block; position: absolute; top: 22px; right: var(--edge); width: 346px; height: 519px;
+  border-radius: 18px; overflow: hidden; background: var(--velvet-3);
   box-shadow: 0 34px 80px -24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .t-calm .hero-art-img {
@@ -728,17 +728,18 @@ html.t-calm {
   opacity: 0; transition: opacity 500ms var(--inout);
 }
 .t-calm .hero-art-img.on { opacity: 1; }
-.t-calm .screen.home .hero-text { position: relative; z-index: 1; padding: 70px 0 0; margin-right: 0; max-width: 760px; }
+.t-calm .screen.home .hero-text { position: relative; z-index: 1; padding: 96px 0 0; margin-right: 404px; max-width: 1080px; }
 .t-calm .screen.home .hero-sub { font-size: 26px; font-weight: 500; color: var(--sea); min-height: 36px; letter-spacing: 0; }
 .t-calm .hero-title { font-weight: 600; font-size: 96px; line-height: 1.04; margin: 8px 0 22px; max-height: 210px; letter-spacing: -0.02em; }
 .t-calm .hero-title.long { font-size: 68px; line-height: 1.08; }
-.t-calm .screen.home .hero-title { white-space: normal; font-size: 78px; line-height: 1.06; max-height: 170px; letter-spacing: -0.02em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.t-calm .screen.home .hero-title { white-space: normal; font-size: 88px; line-height: 1.06; max-height: 170px; letter-spacing: -0.02em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .t-calm .screen.home .hero-title.long { font-size: 58px; max-height: 130px; }
 .t-calm .screen.home .hero-meta, .t-calm .hero-meta { color: var(--lamp); }
 .t-calm .hero-meta span { border-left-color: rgba(var(--lamp-rgb), 0.18); }
-.t-calm .screen.home .hero-cap { display: -webkit-box; -webkit-line-clamp: 3; color: #c3c9ce; max-width: 760px; }
+.t-calm .screen.home .hero-cap { display: -webkit-box; -webkit-line-clamp: 3; color: #c3c9ce; max-width: 860px; }
 .t-calm .hero-meta .resume { background: rgba(var(--lamp-rgb), 0.14); color: var(--lamp); font-weight: 500; padding: 4px 18px; margin-top: 14px; }
-.t-calm .screen.home .home-body { top: 560px; }
+.t-calm .screen.home .hero { height: 580px; }
+.t-calm .screen.home .home-body { top: 580px; }
 .t-calm .hero.compact .hero-title { font-size: 60px; line-height: 1.1; max-height: 70px; font-weight: 600; }
 .t-calm .hero.compact .hero-title.long { font-size: 46px; }
 
