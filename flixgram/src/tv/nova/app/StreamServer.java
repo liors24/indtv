@@ -199,8 +199,8 @@ final class StreamServer implements Td.FileListener {
                         r += n;
                     }
                     String form = new String(body, 0, r, Td.UTF8);
-                    String apiId = param(form, "api_id");
-                    String apiHash = param(form, "api_hash");
+                    String apiId = cleanId(param(form, "api_id"));
+                    String apiHash = cleanHash(param(form, "api_hash"));
                     boolean ok = apiId != null && apiId.trim().matches("\\d{3,12}") && apiHash != null && apiHash.trim().matches("[0-9a-fA-F]{32}");
                     if (ok && setupListener != null) setupListener.onSetup(apiId.trim(), apiHash.trim().toLowerCase(Locale.US));
                     sendHtml(out, SetupPage.html(ok ? "done" : "error"));
@@ -225,6 +225,35 @@ final class StreamServer implements Td.FileListener {
         out.write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nContent-Length: "
                 + b.length + "\r\nConnection: close\r\n\r\n").getBytes(Td.UTF8));
         out.write(b);
+    }
+
+    private static final String HE_KEYS = "שנבגקכעיןחלךצמםפ/רדאוהסטז";
+    private static final String EN_KEYS = "abcdefghijklmnopqrstuvxyz";
+
+    /** api_id: the number, without direction marks or words that came along with a paste. */
+    static String cleanId(String s) {
+        if (s == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d{3,12}").matcher(s);
+        String only = null;
+        int count = 0;
+        while (m.find()) { only = m.group(); count++; }
+        if (count == 1) return only;
+        return s.replaceAll("\\D", "");
+    }
+
+    /** api_hash: letters typed on a Hebrew keyboard become the English letters on the same keys. */
+    static String cleanHash(String s) {
+        if (s == null) return null;
+        StringBuilder b = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            int k = HE_KEYS.indexOf(c);
+            b.append(k >= 0 ? EN_KEYS.charAt(k) : Character.toLowerCase(c));
+        }
+        String t = b.toString();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[0-9a-f]{32}").matcher(t);
+        if (m.find()) return m.group();
+        return t.replaceAll("[^0-9a-f]", "");
     }
 
     private static String param(String query, String name) {

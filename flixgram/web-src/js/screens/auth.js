@@ -12,8 +12,22 @@ import { toast } from '../ui.js';
 export const authFlags = { pendingPhone: null };
 
 function field(label, attrs) {
-  const input = h('input.field-input.fx', Object.assign({ type: 'text', autocomplete: 'off', dir: 'ltr' }, attrs || {}));
+  const input = h('input.field-input.fx', Object.assign({ type: 'text', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false', lang: 'en', dir: 'ltr' }, attrs || {}));
   return { wrap: h('label.field', null, h('span.field-label', { text: label }), input), input };
+}
+
+// What was typed or pasted, cleaned: no direction marks or words around the number, and letters typed
+// on a Hebrew keyboard become the English letters on the same keys (ש→a, נ→b, ב→c, ג→d, ק→e, כ→f).
+const HE_KEYS = 'שנבגקכעיןחלךצמםפ/רדאוהסטז', EN_KEYS = 'abcdefghijklmnopqrstuvxyz';
+export function cleanId(s) {
+  s = String(s || '');
+  const runs = s.match(/\d{3,12}/g);
+  return runs && runs.length === 1 ? runs[0] : s.replace(/\D/g, '');
+}
+export function cleanHash(s) {
+  const t = Array.from(String(s || '')).map((c) => { const k = HE_KEYS.indexOf(c); return k >= 0 ? EN_KEYS[k] : c.toLowerCase(); }).join('');
+  const m = t.match(/[0-9a-f]{32}/);
+  return m ? m[0] : t.replace(/[^0-9a-f]/g, '');
 }
 
 function stage(cls, left, right) {
@@ -53,8 +67,8 @@ export function renderSetup(root, onDone) {
   if (!url) { manual.hidden = false; toggle.hidden = true; setRootScope(el, id.input); }
 
   function submit(a, b) {
-    a = (a || '').trim();
-    b = (b || '').trim().toLowerCase();
+    a = cleanId(a);
+    b = cleanHash(b);
     if (!/^\d{3,12}$/.test(a) || !/^[0-9a-f]{32}$/.test(b)) {
       toast('api_id הוא מספר, ו־api_hash הוא 32 תווים באנגלית ומספרים');
       return;

@@ -5,7 +5,7 @@ import * as td from './td.js';
 import { displayTitle, itemFromMessage, nextInList } from './media.js';
 import { chatTitle } from './state.js';
 import { pushScope, popScope, focus, focused } from './focus.js';
-import { progress, spinner, button } from './components.js';
+import { progress, seen, spinner, button } from './components.js';
 import { sheet, toast, modalOpen } from './ui.js';
 import { setAmbient } from './ambient.js';
 import * as warm from './prefetch.js';
@@ -160,8 +160,9 @@ function tick() {
     P.lastSave = Date.now();
     progress.set(P.item, st.pos / 1000, st.dur / 1000);
   }
-  // offer the next episode near the end
+  // offer the next episode near the end, and fetch its first megabytes so it starts at once
   const nx = nextInList(P.list || [], P.anchor);
+  if (nx && st.dur && st.dur - st.pos < 120000 && P.warmedNext !== nx.key) { P.warmedNext = nx.key; warm.ahead(nx); }
   if (nx && st.dur && st.dur - st.pos < 25000 && st.pos > 5000 && !P.upnext.classList.contains('on')) showUpNext(nx, false);
 }
 
@@ -220,7 +221,7 @@ function nudge(sec) {
 
 function toggle() {
   if (!P) return;
-  if (P.state.playing) { td.player.pause(); P.state.playing = false; } else { td.player.resume(); P.state.playing = true; }
+  if (P.state.playing) { td.player.pause(); P.state.playing = false; P.userPaused = true; } else { td.player.resume(); P.state.playing = true; P.userPaused = false; }
   P.el.classList.toggle('paused', !P.state.playing);
   showControls();
 }
@@ -359,9 +360,16 @@ function showControls() {
   P.el.classList.add('ui');
   clearTimeout(P.hideTimer);
   if (P.item.kind === 'audio') return;
-  P.hideTimer = setTimeout(() => {
-    if (P && P.state.playing && P.target < 0 && !modalOpen()) P.el.classList.remove('ui');
-  }, 4200);
+  const due = Date.now() + 3500;
+  const check = () => {
+    if (!P) return;
+    const busy = P.target >= 0 || modalOpen() || P.err.classList.contains('on') || P.upnext.classList.contains('on');
+    if (busy) return;                       // seeking, a menu, an error or "next episode": keep them up
+    if (P.state.playing && Date.now() >= due) { P.el.classList.remove('ui'); return; }
+    if (P.userPaused) return;               // paused on purpose: controls stay until something is pressed
+    P.hideTimer = setTimeout(check, 500);   // still starting / buffering: look again shortly
+  };
+  P.hideTimer = setTimeout(check, 3500);
 }
 
 function showUpNext(nx, autoplay) {
@@ -373,7 +381,7 @@ function showUpNext(nx, autoplay) {
   P.upnext.appendChild(go);
   P.upnext.classList.add('on');
   if (autoplay) {
-    let n = 6;
+    let n = 3;
     const label = go.lastChild;
     label.textContent = `מנגנים בעוד ${n}`;
     P.upnextTimer = setInterval(() => {
@@ -401,6 +409,8 @@ window.__player = function (ev) {
       break;
     case 'ended': {
       progress.set(P.item, P.state.dur / 1000, P.state.dur / 1000);
+      seen.mark(P.item, 1);
+      if (P.anchor && P.anchor !== P.item) seen.mark(P.anchor, 1);
       reco.record(P.item, P.watched || 0, true);
       P.watched = 0;
       P.recorded = true;
@@ -446,7 +456,7 @@ function teardown(switching) {
     if (s.anchor && s.anchor !== s.item) progress.set(s.anchor, s.state.pos / 1000, s.state.dur / 1000);
   }
   if (s.watched > 3) reco.record(s.item, s.watched, !s.recorded && s.state.dur > 0 && s.state.pos / s.state.dur > 0.94);
-  td.player.stop();
+  if (!switching) td.player.stop();   // switching episodes: the engine stays up and only the file changes
   // free the space: nothing stays on the device after watching
   td.fire({ '@type': 'cancelDownloadFile', file_id: s.item.fileId, only_if_pending: false });
   setTimeout(() => td.fire({ '@type': 'deleteFile', file_id: s.item.fileId }), 400);

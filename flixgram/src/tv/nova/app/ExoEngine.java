@@ -167,6 +167,33 @@ final class ExoEngine {
         player.prepare();
     }
 
+    /**
+     * Next episode on the same engine: the decoders, audio output and surface stay up, only the file changes.
+     * Saves the whole engine start-up between episodes. Returns false if there is no engine to reuse.
+     */
+    boolean swap(String url, int startMs) {
+        if (player == null) return false;
+        try {
+            this.url = url;
+            this.startMs = startMs;
+            ready = everReady = ended = false;
+            w = h = 0;
+            trackMap.clear();
+            player.stop();
+            player.clearMediaItems();
+            player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                    .clearOverrides().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build());
+            player.setVolume(muted ? 0f : 1f);
+            player.setPlaybackParameters(new PlaybackParameters(speed));
+            player.setMediaItem(MediaItem.fromUri(url), startMs > 0 ? startMs : 0);
+            player.setPlayWhenReady(true);
+            player.prepare();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private JSONObject tracksJson() {
         JSONObject o = new JSONObject();
         trackMap.clear();

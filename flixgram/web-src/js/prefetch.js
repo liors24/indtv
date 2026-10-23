@@ -34,3 +34,11 @@ export function playing(fileId) {
 export function stopped() {
   protectId = 0;
 }
+
+/** While an episode plays, fetch the start of the next one (low priority) so it opens instantly. */
+export function ahead(item) {
+  if (!item || item.kind !== 'video' || !item.fileId || item.fileId === protectId || warm === item.fileId) return;
+  if (warm && warm !== protectId) drop(warm);
+  warm = item.fileId;
+  td.player.prefetch(item.fileId, BYTES);
+}

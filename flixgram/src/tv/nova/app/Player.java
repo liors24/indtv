@@ -128,6 +128,17 @@ final class Player implements SurfaceHolder.Callback, ExoEngine.Host {
     }
 
     void play(final String url, final int startMs) {
+        // already running on the fast engine: just change the file (no engine start-up between episodes)
+        if (useExo && exo != null && exo.active()) {
+            session++;
+            videoW = videoH = 0;
+            if (exo.swap(url, startMs)) {
+                exo.setMuted(muted);
+                exo.setSpeed(speed);
+                updateState();
+                return;
+            }
+        }
         release();
         if (exo != null) {
             useExo = true;

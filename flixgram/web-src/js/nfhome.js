@@ -5,7 +5,7 @@ import { h, svg, ICON, fmtTime, fmtDurationWords } from './util.js';
 import { thumbUrl } from './td.js';
 import { displayTitle } from './media.js';
 import { chatTitle } from './state.js';
-import { lazyImg, progress } from './components.js';
+import { lazyImg, progress, seenMark } from './components.js';
 import { setAmbient } from './ambient.js';
 import { hover } from './prefetch.js';
 import * as preview from './preview.js';
@@ -117,8 +117,7 @@ export function posterRail(id, title, meta, items, opts) {
     const t = displayTitle(item);
     const pic = art(item, 'nf-art');
     pic.appendChild(h('div.nf-shade'));
-    const p = progress.get(item.key);
-    if (p && p.dur) pic.appendChild(h('span.prog', null, h('i', { style: { width: Math.min(100, (p.pos / p.dur) * 100) + '%' } })));
+    seenMark(item).forEach((m) => pic.appendChild(m));
     if (item.duration) pic.appendChild(h('span.badge', { text: fmtTime(item.duration) }));
     const name = opts.episodes && t.sub ? t.sub : t.main;
     pic.appendChild(h('div.nf-title', { text: name, dir: 'auto' }));

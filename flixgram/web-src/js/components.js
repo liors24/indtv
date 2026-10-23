@@ -44,6 +44,7 @@ export const progress = {
     return all[key] || null;
   },
   set(item, pos, dur) {
+    if (dur > 0 && pos > 0) seen.mark(item, pos / dur);
     const all = store.get('progress', {});
     if (dur > 0 && pos / dur > 0.94) delete all[item.key];
     else if (pos > 15) {
@@ -63,6 +64,50 @@ export const progress = {
   },
 };
 
+// ------------------------------------------------------------------ watched marks
+// Every video you watched, even a little: how far you got (0..1). Kept apart from the resume list,
+// which forgets a video once it is finished.
+export const seen = {
+  get(key) {
+    const all = store.get('seen', {});
+    return all[key] || 0;
+  },
+  mark(item, frac) {
+    if (!item || !item.key || !(frac > 0)) return;
+    const all = store.get('seen', {});
+    const prev = all[item.key] || 0;
+    const v = frac >= 0.9 ? 1 : Math.max(0.01, Math.round(frac * 100) / 100);
+    if (v <= prev && prev) return;
+    if (prev && v - prev < 0.02 && v < 1) return;   // only write when it moved
+    all[item.key] = v;
+    const keys = Object.keys(all);
+    if (keys.length > 4000) keys.slice(0, keys.length - 4000).forEach((k) => delete all[k]);
+    store.set('seen', all);
+  },
+};
+
+/** The mark on a card: a bar for how far you got, and "נצפה" when you finished it. */
+export function seenMark(item) {
+  const p = progress.get(item.key);
+  const f = Math.max(seen.get(item.key), p && p.dur ? p.pos / p.dur : 0);
+  if (!(f > 0)) return [];
+  const out = [h('span.prog' + (f >= 1 ? '.done' : ''), null, h('i', { style: { width: Math.min(100, f * 100) + '%' } }))];
+  if (f >= 1) out.push(h('span.seen-badge', null, svg(ICON.check, 20), h('span', { text: 'נצפה' })));
+  return out;
+}
+
+/** After watching: update the marks on every card already on screen. */
+export function refreshSeenMarks(root) {
+  (root || document).querySelectorAll('[data-key]').forEach((card) => {
+    const item = card._item;
+    const art = card.querySelector('.card-art, .nf-art');
+    if (!item || !art) return;
+    art.querySelectorAll('.prog, .seen-badge').forEach((x) => x.remove());
+    seenMark(item).forEach((m) => art.insertBefore(m, art.querySelector('.nf-title')));
+  });
+}
+if (typeof window !== 'undefined') window.addEventListener('nova:playerclosed', () => setTimeout(() => refreshSeenMarks(), 50));
+
 // ------------------------------------------------------------------ cards
 
 export function mediaCard(item, opts) {
@@ -73,8 +118,7 @@ export function mediaCard(item, opts) {
   if (item.thumb) art.appendChild(lazyImg(thumbUrl(item.thumb), 'thumb'));
   else if (!item.mini) art.appendChild(h('div.card-glyph', null, svg(item.kind === 'audio' ? ICON.note : item.kind === 'file' ? ICON.file : ICON.film, 44)));
   if (item.duration) art.appendChild(h('span.badge', { text: fmtTime(item.duration) }));
-  const prog = progress.get(item.key);
-  if (prog && prog.dur) art.appendChild(h('span.prog', null, h('i', { style: { width: Math.min(100, (prog.pos / prog.dur) * 100) + '%' } })));
+  seenMark(item).forEach((m) => art.appendChild(m));
   if (item._t && item._t.episode && opts.episodeBadge) art.appendChild(h('span.ep', { text: String(item._t.episode) }));
   const card = h('div.card.fx' + (opts.wide ? '.wide' : '') + (item.kind === 'photo' ? '.photo' : ''), { data: { key: item.key } },
     art,
