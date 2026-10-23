@@ -56,9 +56,9 @@ const boot = (() => {
     resetTelegramData(() => location.reload());
   }, true);
   return {
-    stage(t) { stage = t; paint(); },
+    stage(t) { stage = t; window.FLIX_STAGE = t === 'מתחבר לטלגרם' ? 'fs-ready' : 'wasm-ready'; paint(); },
     fail(t) { error = t; paint(); },
-    done() { finished = true; },
+    done() { finished = true; window.FLIX_STAGE = 'telegram'; },
   };
 })();
 
@@ -353,10 +353,15 @@ const updater = (() => {
     started() {
       // the interface came up: this bundle is good
       setTimeout(() => { localStorage.removeItem('flix:ota-boot'); }, 6000);
-      setTimeout(check, 2500);
+    },
+    // looked for right away, even if something below gets stuck: a fix can always arrive
+    begin() {
+      setTimeout(check, 1500);
       setInterval(check, 6 * 3600 * 1000);
     },
   };
 })();
 
-dropOldMessageDb(() => { client = makeClient(); });
+updater.begin();
+window.FLIX_STAGE = 'db-clean';
+dropOldMessageDb(() => { window.FLIX_STAGE = 'wasm'; client = makeClient(); });

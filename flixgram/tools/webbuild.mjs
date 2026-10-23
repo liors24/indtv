@@ -38,7 +38,7 @@ else if (tizen) {
   // app.html is the interface; index.html is a small start page that can run a newer downloaded interface
   const build = parseInt(process.env.BUILD || '0', 10) || 0;
   const key = process.env.TDWEB_KEY || 'dev';
-  html = html.replace('<!--MOCK-->', `<script>var FLIX_BUILD = ${build}, FLIX_TDWEB = '${key}';</script><script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>`);
+  html = html.replace('<!--MOCK-->', `<script>var FLIX_BUILD = ${build}, FLIX_TDWEB = '${key}';</script><script>${fs.readFileSync(`${root}/tizen/bootdiag.js`, 'utf8')}</script><script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>`);
   fs.writeFileSync(`${out}/index.html`, fs.readFileSync(`${root}/tizen/shell.html`, 'utf8').replace('__BUILD__', String(build)).replace('__TDWEB__', key));
 }
 else html = html.replace('<!--MOCK-->', '');
