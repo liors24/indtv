@@ -154,18 +154,6 @@ jobs:
           echo "content type: $ctype"
           test "$code" = 200 && echo "$ctype" | grep -q text/html"
 
-      # Installed TVs download this on launch and update their interface by themselves
-      - name: Publish the automatic update (flixgram-ota branch)
-        run: |
-          mkdir -p ota-out && cp flixgram/build/tizen/ota/bundle2.json ota-out/
-          cd ota-out
-          git init -q
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bundle2.json
-          git commit -q -m "Flixgram TV interface ${{ github.run_number }}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/flixgram-ota
-
       - uses: actions/upload-artifact@v4
         with:
           name: Flixgram-wgt
