@@ -35,6 +35,15 @@ await new Promise((ok) => server.on('listening', ok));
 const browser = await chromium.launch();
 const page = await browser.newPage();
 page.on('pageerror', (e) => console.log('page error:', e.message));
+const net = [];
+page.on('websocket', (ws) => {
+  net.push('open ' + ws.url());
+  let got = 0;
+  ws.on('framereceived', () => { if (!got++) net.push('data from ' + ws.url()); });
+  ws.on('socketerror', (e) => net.push('error ' + ws.url() + ' ' + e));
+  ws.on('close', () => net.push('closed ' + ws.url()));
+});
+page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') net.push('console ' + m.text().slice(0, 200)); });
 await page.goto(`http://127.0.0.1:${server.address().port}/smoke.html`);
 let steps = [];
 for (let i = 0; i < 90; i++) {
@@ -49,6 +58,7 @@ fs.unlinkSync(path.join(dir, 'smoke.html'));
 const server_ = steps.find((s) => s.startsWith('server:')) || '';
 // annotations show up in the run summary
 for (const st of steps) console.log('::notice title=TDLib::' + st.slice(0, 300));
+for (const n of net.slice(0, 12)) console.log('::notice title=network::' + n.slice(0, 300));
 if (!steps.includes('authorizationStateWaitPhoneNumber')) {
   console.log('::error title=TDLib::did not reach the login step');
   process.exit(1);
