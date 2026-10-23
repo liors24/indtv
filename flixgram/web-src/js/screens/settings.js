@@ -6,6 +6,7 @@ import { confirmDialog, toast, sheet } from '../ui.js';
 import { focus } from '../focus.js';
 import * as quality from '../quality.js';
 import * as preview from '../preview.js';
+import { THEMES, theme, setTheme } from '../theme.js';
 
 export function settingsScreen(app) {
   const list = h('div.set-list', { 'data-flist': '', data: { fgroup: 'set' } });
@@ -57,6 +58,14 @@ export function settingsScreen(app) {
       pvRow.querySelector('.toggle').classList.toggle('on', v);
     }, { toggle: preview.enabled(), explain: 'כשעוצרים על סרטון לשנייה וחצי, הוא מתחיל להתנגן בשקט מאחורי המסך. לחיצה על OK ממשיכה אותו מאותה שנייה, עם קול. התצוגה מורידה מעט נתונים מטלגרם בזמן הדפדוף.' });
     list.appendChild(pvRow);
+    const themeName = () => (THEMES.find((x) => x.id === theme()) || THEMES[0]).label;
+    const themeRow = row('ערכת עיצוב', themeName(), () => {
+      sheet('ערכת עיצוב', THEMES.map((x) => ({ label: x.label, sub: x.sub, value: x.id, selected: x.id === theme() })), (t) => {
+        setTheme(t);
+        themeRow._value.textContent = themeName();
+      });
+    }, { explain: 'המראה של כל האפליקציה. ״ערב רגוע״ נעים לעיניים בצפייה ארוכה; ״מרקיזה״ הוא שלט הקולנוע המואר.' });
+    list.appendChild(themeRow);
     const sp = store.get('speed', 1);
     const speedRow = row('מהירות ברירת מחדל', sp === 1 ? 'רגילה' : sp + 'x', () => {
       sheet('מהירות ברירת מחדל', [0.75, 1, 1.25, 1.5, 2].map((s) => ({ label: s === 1 ? 'רגילה' : s + 'x', value: s, selected: s === store.get('speed', 1) })), (s) => {

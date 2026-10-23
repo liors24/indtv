@@ -1,5 +1,6 @@
 import { h, store, pad2, $ } from './util.js';
 import * as preview from './preview.js';
+import { applyTheme } from './theme.js';
 import * as td from './td.js';
 import { state, loadChats, chats } from './state.js';
 import { move, select, focus, focused, setRootScope, focusFirst, scope } from './focus.js';
@@ -26,6 +27,7 @@ const shell = $('#shell');
 const stage = $('#stage');
 const nav = $('#nav');
 const clock = $('#clock');
+applyTheme();
 mountAmbient($('#ambient'));
 
 const stale = {};

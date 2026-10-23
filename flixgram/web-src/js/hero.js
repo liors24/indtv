@@ -14,7 +14,26 @@ export function createHero() {
   const meta = h('div.hero-meta');
   const cap = h('p.hero-cap');
   const text = h('div.hero-text', null, sub, title, meta, cap);
-  const el = h('div.hero', null, text);
+  // the backdrop: the focused video's own picture, large, fading into the room (shown by the calm theme)
+  const arts = [h('div.hero-art-img'), h('div.hero-art-img')];
+  const art = h('div.hero-art', null, arts[0], arts[1]);
+  let artFront = 0, artSrc = '';
+  function setArt(src) {
+    if (src === artSrc) return;
+    artSrc = src;
+    const next = arts[1 - artFront];
+    if (!src) { arts.forEach((a) => a.classList.remove('on')); return; }
+    const img = new Image();
+    img.onload = () => {
+      if (artSrc !== src) return;
+      next.style.backgroundImage = 'url("' + src + '")';
+      next.classList.add('on');
+      arts[artFront].classList.remove('on');
+      artFront = 1 - artFront;
+    };
+    img.src = src;
+  }
+  const el = h('div.hero', null, art, text);
   let token = 0;
 
   function show(item, extra) {
@@ -47,6 +66,7 @@ export function createHero() {
       text.classList.add('in');
     });
     setAmbient(item.thumb ? thumbUrl(item.thumb) : item.mini);
+    setArt(item.thumb ? thumbUrl(item.thumb) : item.mini || '');
     hover(item);
     preview.rest(item);
   }
@@ -54,6 +74,7 @@ export function createHero() {
   function showText(kicker, main, line) {
     ++token;
     preview.stop();
+    setArt('');
     sub.textContent = kicker || '';
     title.textContent = main || '';
     title.classList.toggle('long', (main || '').length > 26);
