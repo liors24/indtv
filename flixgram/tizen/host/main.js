@@ -24,19 +24,113 @@ function deliver(o) {
   window.__td([o]);
 }
 
+// ------------------------------------------------------------------ start-up status
+// Shows on the intro screen what is happening while TDLib starts, any error, and after a long wait
+// offers to reset Telegram's data on the TV (OK on the remote).
+
+const boot = (() => {
+  const t0 = Date.now();
+  let stage = 'טוען את מנוע טלגרם';
+  let error = '';
+  let finished = false;
+  let offered = false;
+  function line(text) {
+    const el = document.querySelector('#intro .intro-line');
+    if (el) el.textContent = text;
+  }
+  function paint() {
+    if (finished) return;
+    const s = Math.round((Date.now() - t0) / 1000);
+    if (error) { line('שגיאה בהפעלה: ' + error + ' — לחצו OK לאיפוס'); offered = true; return; }
+    if (s < 4) return;
+    offered = s >= 35;
+    line(stage + '… ' + s + ' שנ׳' + (offered ? ' · נתקע? לחצו OK כדי לאפס את נתוני טלגרם בטלוויזיה' : ''));
+  }
+  const iv = setInterval(() => { if (finished) clearInterval(iv); else paint(); }, 1000);
+  window.addEventListener('error', (e) => { if (!finished) { error = String(e.message || e.error || 'error').slice(0, 120); paint(); } });
+  document.addEventListener('keydown', (e) => {
+    if (finished || !offered || (e.keyCode !== 13 && e.keyCode !== 23)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    line('מאפסים…');
+    resetTelegramData(() => location.reload());
+  }, true);
+  return {
+    stage(t) { stage = t; paint(); },
+    fail(t) { error = t; paint(); },
+    done() { finished = true; },
+  };
+})();
+
+function deleteDb(name) {
+  return new Promise((resolve) => {
+    try {
+      const r = indexedDB.deleteDatabase(name);
+      r.onsuccess = r.onerror = r.onblocked = () => resolve();
+    } catch (e) { resolve(); }
+    setTimeout(resolve, 4000);
+  });
+}
+
+function resetTelegramData(then) {
+  try { client && client.worker && client.worker.terminate(); } catch (e) { /* gone */ }
+  Promise.all(['/flixgram/dbfs', 'flixgram', '/flixgram/inboundfs', 'wasm-cache'].map(deleteDb)).then(then);
+}
+
+// The first Samsung builds kept every message in TDLib's database; tdweb copies that file to IndexedDB
+// every few seconds and reads all of it at start. Drop that one file once (a cache: TDLib rebuilds it);
+// the login (td.binlog) stays.
+function dropOldMessageDb(done) {
+  let called = false;
+  const finish = () => { if (called) return; called = true; try { localStorage.setItem('flix:db', '2'); } catch (e) { /* ignore */ } done(); };
+  try {
+    if (localStorage.getItem('flix:db') === '2') { called = true; done(); return; }
+  } catch (e) { called = true; done(); return; }
+  setTimeout(finish, 5000);
+  try {
+    const req = indexedDB.open('/flixgram/dbfs');
+    req.onupgradeneeded = () => { try { req.transaction.abort(); } catch (e) { /* nothing */ } };
+    req.onerror = finish;
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('FILE_DATA')) { db.close(); finish(); return; }
+      const tx = db.transaction('FILE_DATA', 'readwrite');
+      const cur = tx.objectStore('FILE_DATA').openCursor();
+      cur.onsuccess = () => {
+        const c = cur.result;
+        if (!c) return;
+        if (/\/db\.sqlite/.test(String(c.key))) c.delete();
+        c.continue();
+      };
+      tx.oncomplete = tx.onerror = tx.onabort = () => { db.close(); finish(); };
+    };
+  } catch (e) { finish(); }
+}
+
 function makeClient() {
   const TdClient = tdweb.default || tdweb;
-  return new TdClient({
+  const c = new TdClient({
     instanceName: 'flixgram',
     jsLogVerbosityLevel: 'error',
     logVerbosityLevel: 1,
     useDatabase: true,
     mode: 'wasm',
     onUpdate: (u) => {
+      if (u['@type'] === 'updateAuthorizationState') boot.done();
+      if (u['@type'] === 'updateFatalError') boot.fail('TDLib: ' + String(u.error).slice(0, 100));
       if (u['@type'] === 'updateFile') files.onUpdate(u.file);
       deliver(u);
     },
   });
+  try {
+    c.worker.addEventListener('message', (e) => {
+      const t = e.data && e.data['@type'];
+      if (t === 'inited') boot.stage('פותח את הנתונים של טלגרם');
+      else if (t === 'fsInited') boot.stage('מתחבר לטלגרם');
+    });
+    c.worker.addEventListener('error', (e) => boot.fail('worker: ' + String(e.message || 'error').slice(0, 100)));
+  } catch (e) { /* older tdweb */ }
+  return c;
 }
 
 function td(query) {
@@ -265,4 +359,4 @@ const updater = (() => {
   };
 })();
 
-client = makeClient();
+dropOldMessageDb(() => { client = makeClient(); });
