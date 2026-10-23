@@ -5,6 +5,7 @@ import { avatar } from '../components.js';
 import { confirmDialog, toast, sheet } from '../ui.js';
 import { focus } from '../focus.js';
 import * as quality from '../quality.js';
+import * as preview from '../preview.js';
 
 export function settingsScreen(app) {
   const list = h('div.set-list', { 'data-flist': '', data: { fgroup: 'set' } });
@@ -50,6 +51,12 @@ export function settingsScreen(app) {
       autoRow.querySelector('.toggle').classList.toggle('on', v);
     }, { toggle: auto, explain: 'בסוף פרק, הפרק הבא בסדרה מתחיל לבד אחרי ספירה של 6 שניות. אפשר לבטל בכל רגע עם כפתור חזרה.' });
     list.appendChild(autoRow);
+    const pvRow = row('תצוגה מקדימה חיה', '', () => {
+      const v = !preview.enabled();
+      preview.setEnabled(v);
+      pvRow.querySelector('.toggle').classList.toggle('on', v);
+    }, { toggle: preview.enabled(), explain: 'כשעוצרים על סרטון לשנייה וחצי, הוא מתחיל להתנגן בשקט מאחורי המסך. לחיצה על OK ממשיכה אותו מאותה שנייה, עם קול. התצוגה מורידה מעט נתונים מטלגרם בזמן הדפדוף.' });
+    list.appendChild(pvRow);
     const sp = store.get('speed', 1);
     const speedRow = row('מהירות ברירת מחדל', sp === 1 ? 'רגילה' : sp + 'x', () => {
       sheet('מהירות ברירת מחדל', [0.75, 1, 1.25, 1.5, 2].map((s) => ({ label: s === 1 ? 'רגילה' : s + 'x', value: s, selected: s === store.get('speed', 1) })), (s) => {

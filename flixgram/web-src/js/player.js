@@ -12,6 +12,7 @@ import * as warm from './prefetch.js';
 import * as reco from './reco.js';
 import * as quality from './quality.js';
 import * as episodes from './episodes.js';
+import * as preview from './preview.js';
 
 let P = null; // active player session
 
@@ -36,7 +37,9 @@ export async function openItem(item, list) {
   if (item.kind === 'file') return toast('אי אפשר לפתוח את סוג הקובץ הזה בטלוויזיה');
   const same = (list || [item]).filter((i) => i.kind === item.kind);
   const ordered = item.kind === 'video' ? episodes.order(item, same) : same;
-  start(item, ordered.some((x) => x.key === item.key) ? ordered : same);
+  // the live preview of this very video is already playing: grow it into the player
+  const continued = item.kind === 'video' && preview.take(item);
+  start(item, ordered.some((x) => x.key === item.key) ? ordered : same, continued ? { continued: true } : null);
   // episodes of the same series that are not in this list: fetch them from the chat, keep episode order
   if (item.kind === 'video' && episodes.isEpisode(item)) {
     episodes.complete(item, ordered).then((full) => {
@@ -52,7 +55,8 @@ export async function openItem(item, list) {
 // Plays `item`, but if this chat has a pinned quality, swaps in the matching upload first.
 async function start(item, list, opts) {
   let chosen = item;
-  const want = item.kind === 'video' ? quality.pinned(item.chatId) : 0;
+  if (!(opts && opts.continued)) preview.stop();
+  const want = item.kind === 'video' && !(opts && opts.continued) ? quality.pinned(item.chatId) : 0;
   if (want && quality.heightOf(item) !== want) {
     toast('מחפשים ' + quality.qualityLabel(want) + '…', 1200);
     const versions = await quality.findVersions(item, 2500);
@@ -122,7 +126,7 @@ function play(item, list, opts) {
   const resume = progress.get(item.key) || (anchor !== item ? progress.get(anchor.key) : null);
   const startMs = opts.startMs != null ? opts.startMs : (resume && resume.pos ? Math.max(0, resume.pos - 3) * 1000 : 0);
   warm.playing(item.fileId);
-  td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
+  if (!opts.continued) td.player.play(td.streamUrl(item.fileId, item.mime), startMs);
   if (P.speed !== 1) td.player.speed(P.speed);
   applyMute();
   applyAspect();
@@ -431,6 +435,7 @@ function showError(ev) {
 function teardown(switching) {
   if (!P) return;
   const s = P;
+  if (!switching) preview.hush(s.item.key);
   clearInterval(s.poll);
   clearInterval(s.upnextTimer);
   clearTimeout(s.hideTimer);

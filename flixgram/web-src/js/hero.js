@@ -6,6 +6,7 @@ import { chatTitle } from './state.js';
 import { setAmbient } from './ambient.js';
 import { progress } from './components.js';
 import { hover } from './prefetch.js';
+import * as preview from './preview.js';
 
 export function createHero() {
   const title = h('h1.hero-title');
@@ -35,7 +36,10 @@ export function createHero() {
       const p = progress.get(item.key);
       meta.innerHTML = '';
       bits.forEach((b) => meta.appendChild(h('span', { text: b, dir: 'auto' })));
-      if (p && p.dur) meta.appendChild(h('span.resume', { text: 'ממשיכים מ־' + Math.round((p.pos / p.dur) * 100) + '%' }));
+      if (p && p.dur && p.pos > 20) {
+        const left = Math.max(1, Math.round((p.dur - p.pos) / 60));
+        meta.appendChild(h('span.resume', { text: 'OK ממשיך מאיפה שעצרת · נשארו ' + left + ' דק׳' }));
+      }
       const lines = (item.caption || '').split('\n').filter((l) => l.trim());
       const genericName = !item.name || /^(video|file|document|audio)[_\-\d]*\.\w+$/i.test(item.name);
       const capText = lines.slice(1, 4).join(' ').trim() || (!genericName && item.name !== t.main ? item.name : '');
@@ -44,10 +48,12 @@ export function createHero() {
     });
     setAmbient(item.thumb ? thumbUrl(item.thumb) : item.mini);
     hover(item);
+    preview.rest(item);
   }
 
   function showText(kicker, main, line) {
     ++token;
+    preview.stop();
     sub.textContent = kicker || '';
     title.textContent = main || '';
     title.classList.toggle('long', (main || '').length > 26);

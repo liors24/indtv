@@ -3,7 +3,7 @@
 // Scores every candidate video, mixes in a seeded daily shuffle (so the picks change every day but
 // stay stable within a day), and keeps the list diverse. Everything stays on the TV.
 import { store } from './util.js';
-import { parseTitle, seriesKey } from './media.js';
+import { parseTitle, seriesKey, episodeKey } from './media.js';
 
 const KEY = 'taste';
 const STOP = new Set(['עם', 'של', 'את', 'על', 'לא', 'זה', 'גם', 'כל', 'אל', 'מה', 'עונה', 'פרק', 'הועלה', 'בלעדית', 'בטלגרם',
@@ -63,8 +63,8 @@ export function record(item, seconds, finished) {
   t.total += s;
   t.chats[item.chatId] = (t.chats[item.chatId] || 0) + s;
   const pt = item._t || (item._t = parseTitle(item));
-  if (pt.series && pt.episode) {
-    const k = seriesKey(pt.series);
+  if (episodeKey(item)) {
+    const k = episodeKey(item);
     const e = t.series[k] || (t.series[k] = { name: pt.series, chatId: item.chatId, secs: 0, season: 0, ep: 0, last: 0 });
     e.secs += s;
     e.last = Date.now();
@@ -136,7 +136,7 @@ export function recommend(items, exclude, limit) {
     if (learned) {
       const ca = (t.chats[it.chatId] || 0) / cMax;
       s += 3 * Math.sqrt(ca);
-      const sk = pt.series ? seriesKey(pt.series) : '';
+      const sk = episodeKey(it);
       const se = sk && t.series[sk];
       if (se) {
         s += 4 * Math.sqrt(se.secs / sMax);
@@ -161,7 +161,7 @@ export function recommend(items, exclude, limit) {
   const perSeries = {}, perChat = {}, out = [];
   for (const x of scored) {
     const pt = x.it._t;
-    const sk = pt.series ? seriesKey(pt.series) + (pt.season || 1) : '';
+    const sk = episodeKey(x.it) ? episodeKey(x.it) + (pt.season || 1) : '';
     if (sk && (perSeries[sk] || 0) >= 2) continue;
     if ((perChat[x.it.chatId] || 0) >= 4) continue;
     if (sk) perSeries[sk] = (perSeries[sk] || 0) + 1;
@@ -184,7 +184,7 @@ export function nextEpisodes(items) {
     let best = null;
     items.forEach((it) => {
       const pt = it._t || (it._t = parseTitle(it));
-      if (!pt.series || seriesKey(pt.series) !== s.key || done.has(it.key)) return;
+      if (episodeKey(it) !== s.key || done.has(it.key)) return;
       const season = pt.season || 1;
       const after = season > s.season || (season === s.season && pt.episode > s.ep);
       if (!after) return;

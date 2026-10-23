@@ -1,4 +1,5 @@
 import { h, store, pad2, $ } from './util.js';
+import * as preview from './preview.js';
 import * as td from './td.js';
 import { state, loadChats, chats } from './state.js';
 import { move, select, focus, focused, setRootScope, focusFirst, scope } from './focus.js';
@@ -32,6 +33,7 @@ const app = {
   current: null,
   screens: {},
   go(id, params) {
+    preview.stop();
     const prev = this.screens[this.current];
     if (prev && this.current !== id) {
       prev.el.classList.remove('on');

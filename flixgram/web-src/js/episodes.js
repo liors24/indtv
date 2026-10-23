@@ -2,12 +2,12 @@
 // recommendations), "next" is always the following episode — S1E1 → E2 → … → S2E1 — and "previous" the one
 // before. Episodes missing from the list are looked up in the same chat in the background.
 import * as td from './td.js';
-import { itemFromMessage, parseTitle, seriesKey } from './media.js';
+import { itemFromMessage, parseTitle, episodeKey } from './media.js';
 import { heightOf } from './quality.js';
 
 function info(it) { return it._t || (it._t = parseTitle(it)); }
-export function isEpisode(it) { const t = info(it); return !!(t.series && t.episode); }
-function sk(it) { return seriesKey(info(it).series); }
+export function isEpisode(it) { return !!episodeKey(it); }
+function sk(it) { return episodeKey(it); }
 function rank(it) { const t = info(it); return (t.season || 1) * 100000 + t.episode; }
 
 /** One upload per episode (several qualities of the same episode count once; the opened one wins). */
@@ -25,7 +25,12 @@ function dedupe(items, keep) {
 
 /** The list to play through: the series in episode order when the item is an episode, else the list as given. */
 export function order(item, list) {
-  if (!isEpisode(item)) return list && list.length ? list : [item];
+  if (!isEpisode(item)) {
+    const l = list && list.length ? list : [item];
+    // loose videos of one chat play in upload order (oldest → newest), like a playlist
+    if (l.length > 1 && l.every((x) => x.chatId === item.chatId)) return l.slice().sort((a, b) => (a.msgId || 0) - (b.msgId || 0));
+    return l;
+  }
   const key = sk(item);
   const same = (list || []).filter((x) => x.kind === 'video' && isEpisode(x) && sk(x) === key);
   if (!same.some((x) => x.key === item.key)) same.push(item);
@@ -36,7 +41,7 @@ export function order(item, list) {
 export async function complete(item, current) {
   if (!isEpisode(item) || !item.chatId) return null;
   const t = info(item);
-  const q = t.series.split(/\s+/).slice(0, 4).join(' ');
+  const q = t.series ? t.series.split(/\s+/).slice(0, 4).join(' ') : '';   // nameless episodes: every video of the chat
   const key = sk(item);
   const filters = ['searchMessagesFilterVideo', 'searchMessagesFilterDocument'];
   let found = [];

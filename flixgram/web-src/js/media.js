@@ -109,44 +109,87 @@ function nameFromFile(name) {
   return name.replace(/\.[a-z0-9]{2,4}$/i, '').replace(/[._]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
+const ORD = { 'ראשון': 1, 'ראשונה': 1, 'שני': 2, 'שנייה': 2, 'שניה': 2, 'שלישי': 3, 'שלישית': 3, 'רביעי': 4, 'רביעית': 4, 'חמישי': 5, 'חמישית': 5,
+  'שישי': 6, 'שישית': 6, 'שביעי': 7, 'שביעית': 7, 'שמיני': 8, 'שמינית': 8, 'תשיעי': 9, 'תשיעית': 9, 'עשירי': 10, 'עשירית': 10 };
+const ORD_RE = new RegExp('(עונה|פרק)\\s+(' + Object.keys(ORD).join('|') + ')(?![\\u0590-\\u05ff])', 'g');
+
 const PATTERNS = [
-  // S03E08 / s3e8 / S03 E08
-  { re: /\bS(\d{1,2})\s*[.\-_ ]?\s*E(\d{1,3})\b/i, s: 1, e: 2 },
+  // S03E08 / s3e8 / S03 E08 / S03.E08 / S03EP08
+  { re: /\bS(\d{1,2})\s*[.\-_ ]?\s*EP?(\d{1,4})\b/i, s: 1, e: 2 },
   // 3x08
   { re: /\b(\d{1,2})x(\d{2,3})\b/i, s: 1, e: 2 },
-  // עונה 3 פרק 8 (with optional words between)
-  { re: /עונה\s*(\d{1,2})[^\d\n]{0,12}?פרק\s*(\d{1,3})/, s: 1, e: 2 },
+  // עונה 3 פרק 8 / ע3 פ8 / ע׳3 פ׳8 (optional words between)
+  { re: /(?:עונה|(?:^|[^\u0590-\u05ff])ע['׳"״]?)\s*(\d{1,2})[^\d\n]{0,14}?(?:פרק|(?:^|[^\u0590-\u05ff])פ['׳"״]?)\s*(?:מס['׳.]?\s*)?(\d{1,4})/, s: 1, e: 2 },
   // פרק 8 עונה 3
-  { re: /פרק\s*(\d{1,3})[^\d\n]{0,12}?עונה\s*(\d{1,2})/, s: 2, e: 1 },
+  { re: /פרק\s*(?:מס['׳.]?\s*)?(\d{1,4})[^\d\n]{0,14}?עונה\s*(\d{1,2})/, s: 2, e: 1 },
   // Season 3 Episode 8
-  { re: /season\s*(\d{1,2})[^\d\n]{0,12}?ep(?:isode)?\s*(\d{1,3})/i, s: 1, e: 2 },
-  // episode only
-  { re: /(?:פרק|episode|ep\.?)\s*(\d{1,3})\b/i, s: 0, e: 1 },
+  { re: /season\s*(\d{1,2})[^\d\n]{0,14}?ep(?:isode)?\.?\s*(\d{1,4})/i, s: 1, e: 2 },
+  // episode only: פרק 8 / פרק מס' 8 / Episode 8 / Ep 8 / Chapter 8
+  { re: /(?:פרק\s*מס['׳.]?|פרק|episode|ep\.?|chapter)\s*(\d{1,4})(?!\d)/i, s: 0, e: 1 },
+  // E08 standing alone
+  { re: /(?:^|[\s\-–—(\[])E(\d{2,4})\b/, s: 0, e: 1 },
+  // חלק 3 / Part 3
+  { re: /(?:חלק|part)\s*(\d{1,3})(?!\d)/i, s: 0, e: 1 },
 ];
 
+// words that are not part of a series name (quality, release tags, "dubbed", "new"…)
+const NOISE = /\b(?:\d{3,4}p|4k|uhd|fhd|hd|sd|web[-. ]?dl|web[-. ]?rip|webrip|hdtv|bluray|brrip|x26[45]|h\.?26[45]|hevc|aac|ac3|dts|hdr|10bit|proper|repack|complete|full)\b/gi;
+const NOISE_HE = /(?:^|\s)(?:מדובב(?:ת|ים)?|מתורגמ(?:ת|ים)?|תרגום|כתוביות|עברית|לצפייה(?:\s+ישירה)?|צפייה\s+ישירה|חדש(?:ה)?|בלעדי(?:ת)?|בטלגרם|הועלה|עכשיו|סדרה|הסדרה)(?=\s|$)/g;
+
+function normSeries(s) {
+  return s.replace(NOISE, ' ').replace(NOISE_HE, ' ').replace(/[\[\]()]/g, ' ').replace(/\b(19|20)\d{2}\b/g, ' ')
+    .replace(/\s{2,}/g, ' ').replace(/[-–—:|,.\s]+$/, '').replace(/^[-–—:|,.\s]+/, '').trim();
+}
+
+/** Words for numbers ("פרק שלישי", "עונה שנייה") become digits so the patterns can read them. */
+function ordinals(s) { return s.replace(ORD_RE, (m, w, word) => w + ' ' + ORD[word]); }
+
+/** "עונה 2" written apart from the episode ("עונה 2\nפרק 5", "S02 - פרק 5"). */
+function seasonNear(src, lines) {
+  for (const l of [src].concat(lines)) {
+    const m = l.match(/(?:עונה|season)\s*(\d{1,2})(?!\d)|\bS(\d{1,2})\b/i);
+    if (m) return parseInt(m[1] || m[2], 10);
+  }
+  return 0;
+}
+
 export function parseTitle(item) {
-  const lines = (item.caption || '').split('\n').map(cleanLine).filter((l) => l.length > 1);
-  const fileTitle = item.name ? nameFromFile(item.name) : '';
-  const sources = lines.slice(0, 3).concat(fileTitle ? [fileTitle] : []);
+  const lines = (item.caption || '').split('\n').map(cleanLine).map(ordinals).filter((l) => l.length > 1);
+  const fileTitle = item.name ? ordinals(nameFromFile(item.name)) : '';
+  const sources = lines.slice(0, 4).concat(fileTitle ? [fileTitle] : []);
   for (const src of sources) {
     for (const p of PATTERNS) {
       const m = src.match(p.re);
       if (!m) continue;
-      const season = p.s ? parseInt(m[p.s], 10) : 0;
       const episode = parseInt(m[p.e], 10);
-      let series = src.slice(0, m.index).replace(/[-–—:|,(\[]+\s*$/, '').trim();
-      if (series.length < 2) {
+      if (!(episode > 0)) continue;
+      const season = p.s ? parseInt(m[p.s], 10) : seasonNear(src, lines);
+      let series = src.slice(0, m.index).replace(/(?:עונה|season)\s*\d{1,2}\s*$/i, '').replace(/[-–—:|,(\[]+\s*$/, '').trim();
+      if (normSeries(series).length < 2) {
         // title may come after the marker, e.g. "פרק 3 - שם הסדרה"
         const after = src.slice(m.index + m[0].length).replace(/^[\s\-–—:|,)\]]+/, '').trim();
-        series = after.split(/[-–—|]/)[0].trim();
+        series = after.split(/[-–—|]/)[0].replace(/(?:עונה|season)\s*\d{1,2}/i, '').trim();
       }
-      if (series.length < 2 && lines[0] && lines[0] !== src) series = lines[0].replace(p.re, '').trim();
-      series = series.replace(/\s*[-–—:]\s*$/, '').replace(/\b(19|20)\d{2}\b/, '').trim();
+      if (normSeries(series).length < 2 && lines[0] && lines[0] !== src) series = lines[0].replace(p.re, '').trim();
+      if (normSeries(series).length < 2 && fileTitle && fileTitle !== src) {
+        const fm = fileTitle.match(/^(.*?)(?:\bS\d{1,2}|\b\d{1,2}x\d|עונה|פרק|episode|\bE\d{2})/i);
+        if (fm) series = fm[1];
+      }
+      series = normSeries(series);
+      if (/^[\d\s]+$/.test(series)) series = '';
       return { series, season, episode, title: series || src, line: lines[0] || fileTitle };
     }
   }
   const title = lines[0] || fileTitle || '';
   return { series: '', season: 0, episode: 0, title, line: title };
+}
+
+/** The series an episode belongs to. Episodes captioned only "פרק 5" (no name) belong to their chat. */
+export function episodeKey(item) {
+  const t = item._t || (item._t = parseTitle(item));
+  if (!t.episode) return '';
+  const k = seriesKey(t.series || '');
+  return k.length >= 2 ? k : 'chat' + item.chatId;
 }
 
 export function seriesKey(s) {
@@ -170,9 +213,10 @@ export function organise(items) {
   const loose = [];
   for (const it of videos) {
     const t = it._t || (it._t = parseTitle(it));
-    if (t.episode && t.series) {
-      const k = seriesKey(t.series) + '|' + (t.season || 1);
-      if (!groups.has(k)) groups.set(k, { series: t.series, season: t.season || 1, items: [], latest: 0 });
+    const ek = episodeKey(it);
+    if (ek) {
+      const k = ek + '|' + (t.season || 1);
+      if (!groups.has(k)) groups.set(k, { key: ek, series: t.series || 'פרקים', season: t.season || 1, items: [], latest: 0 });
       const g = groups.get(k);
       // de-duplicate repeated uploads of the same episode (keep the newest)
       const dup = g.items.findIndex((x) => x._t.episode === t.episode);
@@ -188,11 +232,17 @@ export function organise(items) {
     if (g.items.length < 2) { loose.push.apply(loose, g.items); continue; }
     g.items.sort((a, b) => a._t.episode - b._t.episode);
     seriesShelves.push({
-      id: 'series:' + seriesKey(g.series) + ':' + g.season,
+      id: 'series:' + g.key + ':' + g.season,
       kind: 'series', title: g.series, season: g.season, items: g.items, latest: g.latest,
     });
   }
-  seriesShelves.sort((a, b) => b.latest - a.latest);
+  // the newest series first; inside a series its seasons in order (1, 2, 3…)
+  const newest = {};
+  seriesShelves.forEach((x) => { const k = x.id.split(':')[1]; newest[k] = Math.max(newest[k] || 0, x.latest); });
+  seriesShelves.sort((a, b) => {
+    const ka = a.id.split(':')[1], kb = b.id.split(':')[1];
+    return ka === kb ? a.season - b.season : (newest[kb] - newest[ka]) || (ka < kb ? -1 : 1);
+  });
   // count seasons per series for labels
   const seasonsPer = {};
   seriesShelves.forEach((s) => { const k = seriesKey(s.title); seasonsPer[k] = (seasonsPer[k] || 0) + 1; });

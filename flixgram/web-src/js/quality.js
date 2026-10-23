@@ -3,7 +3,7 @@
 // the viewer switch between them, and optionally pin a quality per chat so it's picked automatically.
 import * as td from './td.js';
 import { store } from './util.js';
-import { itemFromMessage, parseTitle, seriesKey } from './media.js';
+import { itemFromMessage, parseTitle, seriesKey, episodeKey } from './media.js';
 
 const Q_RE = /\b(4320|2160|1440|1080|720|576|540|480|360|240|144)\s*p\b/i;
 
@@ -33,7 +33,7 @@ function cleanTitle(s) {
 /** Identity of the content regardless of the upload's quality. */
 export function contentKey(item) {
   const t = item._t || (item._t = parseTitle(item));
-  if (t.series && t.episode) return 'ep:' + seriesKey(t.series) + ':' + (t.season || 1) + ':' + t.episode;
+  if (episodeKey(item)) return 'ep:' + episodeKey(item) + ':' + (t.season || 1) + ':' + t.episode;
   const first = ((item.caption || '').split('\n')[0] || item.name || '');
   return 't:' + cleanTitle(first || item.name);
 }
