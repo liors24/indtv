@@ -8,7 +8,10 @@ import { TdSource, blobBuffer } from './source.js';
 import { startRelay } from './relay.js';
 
 const VERSION = typeof __VERSION__ === 'string' ? __VERSION__ : '1.0';
-const SETUP_PAGE = 'https://liors24.github.io/indtv/flixgram-setup.html';
+// served straight from the repository (works without GitHub Pages being switched on)
+const SETUP_PAGE = 'https://raw.githack.com/liors24/indtv/main/web/flixgram-setup.html';
+const OTA_URL = 'https://raw.githubusercontent.com/liors24/indtv/flixgram-ota/bundle.json';
+document.documentElement.classList.add('tizen');
 
 // ------------------------------------------------------------------ TDLib
 
@@ -66,7 +69,11 @@ const files = (() => {
 
   async function load(id) {
     try {
-      await td({ '@type': 'downloadFile', file_id: id, priority: 8, offset: 0, limit: 0, synchronous: true });
+      // pictures seen before are kept by tdweb in IndexedDB: read them from there without the network
+      const f = await td({ '@type': 'getFile', file_id: id });
+      if (!f.local || !f.local.is_downloading_completed) {
+        await td({ '@type': 'downloadFile', file_id: id, priority: 8, offset: 0, limit: 0, synchronous: true });
+      }
       const part = await td({ '@type': 'readFile', file_id: id });
       const data = part.data instanceof Blob ? part.data : new Blob([await blobBuffer(part.data)]);
       const url = URL.createObjectURL(data);
@@ -78,7 +85,7 @@ const files = (() => {
   }
 
   function next() {
-    while (running < 4 && pending.length) {
+    while (running < 6 && pending.length) {
       const id = pending.pop();          // newest first: what the viewer looks at now
       running++;
       load(id).then(() => { running--; next(); });
@@ -132,11 +139,16 @@ window.NovaHost = {
   },
   ready() {
     jsReady = true;
+    updater.started();
     const b = queue.splice(0);
     if (b.length && window.__td) window.__td(b);
   },
   send(json) {
     const q = JSON.parse(json);
+    if (q['@type'] === 'setTdlibParameters') {
+      // keep chats and the file index on the TV, but not every message of every channel (see tdweb/patch.mjs)
+      q.use_message_database = false;
+    }
     const extra = q['@extra'];
     delete q['@extra'];
     const back = (r) => {
@@ -209,5 +221,48 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { player.pause(); window.NOVA.lifecycle('pause'); }
   else window.NOVA.lifecycle('resume');
 });
+
+// ------------------------------------------------------------------ automatic updates
+// The installed app is a shell: on launch it runs the newest interface bundle downloaded earlier
+// (index.html). Here we look for a newer one; it is applied right away when nothing is playing,
+// otherwise the next time the app opens. A bundle that fails to start twice is dropped by the shell.
+
+const updater = (() => {
+  const launched = Date.now();
+  let pending = false;
+  const num = (k) => parseInt(localStorage.getItem(k), 10) || 0;
+  function current() {
+    let o = 0;
+    try { o = (JSON.parse(localStorage.getItem('flix:ota') || 'null') || {}).build || 0; } catch (e) { o = 0; }
+    return Math.max(window.FLIX_BUILD || 0, o);
+  }
+  function restart() { location.replace(new URL('index.html', location.href).href); }
+  function apply() {
+    if (!player.state().active && Date.now() - launched < 90000) restart();
+    else pending = true;
+  }
+  function check() {
+    if (typeof fetch !== 'function') return;
+    fetch(OTA_URL + '?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' })
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then((b) => {
+        if (!b || !b.html || !(b.build > current()) || b.build === num('flix:ota-bad')) return;
+        if (b.tdweb !== window.FLIX_TDWEB) return;   // needs a newer installed package (new TDLib)
+        localStorage.setItem('flix:ota', JSON.stringify({ build: b.build, tdweb: b.tdweb, html: b.html }));
+        localStorage.removeItem('flix:ota-boot');
+        apply();
+      })
+      .catch(() => { /* offline: keep what we have */ });
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && pending && !player.state().active) restart(); });
+  return {
+    started() {
+      // the interface came up: this bundle is good
+      setTimeout(() => { localStorage.removeItem('flix:ota-boot'); }, 6000);
+      setTimeout(check, 2500);
+      setInterval(check, 6 * 3600 * 1000);
+    },
+  };
+})();
 
 client = makeClient();

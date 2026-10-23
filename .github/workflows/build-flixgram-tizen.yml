@@ -85,6 +85,8 @@ jobs:
         working-directory: flixgram
         env:
           VER_NAME: 1.0.${{ github.run_number }}
+          BUILD: ${{ github.run_number }}
+          TDWEB_KEY: ${{ needs.tdweb.outputs.key }}
         run: |
           npm install --no-save --no-audit --no-fund esbuild@0.21.5 playwright@1.47.2
           node tools/webbuild.mjs tizen
@@ -130,8 +132,20 @@ jobs:
 
       - name: Is the phone setup page online?
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" https://liors24.github.io/indtv/flixgram-setup.html || true)
-          echo "phone setup page: HTTP $code"
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://raw.githack.com/liors24/indtv/main/web/flixgram-setup.html || true)
+          echo "::notice title=Phone page::HTTP $code"
+
+      # Installed TVs download this on launch and update their interface by themselves
+      - name: Publish the automatic update (flixgram-ota branch)
+        run: |
+          mkdir -p ota-out && cp flixgram/build/tizen/ota/bundle.json ota-out/
+          cd ota-out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bundle.json
+          git commit -q -m "Flixgram TV interface ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/flixgram-ota
 
       - uses: actions/upload-artifact@v4
         with:
