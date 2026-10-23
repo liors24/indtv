@@ -40,6 +40,8 @@ else if (tizen) {
   const key = process.env.TDWEB_KEY || 'dev';
   // no inline scripts in the installed pages: a TV's default content policy may block them
   fs.writeFileSync(`${out}/boot.js`, `var FLIX_BUILD = ${build}, FLIX_TDWEB = '${key}';\n` + fs.readFileSync(`${root}/tizen/bootdiag.js`, 'utf8'));
+  // a plain-HTML version mark: visible even if no script runs (tells an old install from blocked scripts)
+  html = html.replace('<div id="intro">', `<div id="intro"><div id="bootver" style="position:absolute;left:2vw;bottom:2vh;font:1.3vw sans-serif;color:rgba(255,255,255,.45);direction:ltr">Flixgram ${build} · html</div>`);
   html = html.replace('<!--MOCK-->', '<script src="boot.js"></script><script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>');
   fs.writeFileSync(`${out}/shell.js`, fs.readFileSync(`${root}/tizen/shell.js`, 'utf8').replace('__BUILD__', String(build)).replace('__TDWEB__', key));
   fs.copyFileSync(`${root}/tizen/shell.html`, `${out}/index.html`);

@@ -8,6 +8,8 @@
     var intro = document.getElementById('intro');
     if (!document.body) return;
     if (!intro) { clearInterval(iv); var d0 = document.getElementById('bootdiag'); if (d0) d0.remove(); return; }
+    var mark = document.getElementById('bootver');
+    if (mark) mark.textContent = 'Flixgram ' + (window.FLIX_BUILD || '?') + ' · js';
     var d = document.getElementById('bootdiag');
     if (!d) {
       d = document.createElement('div');
