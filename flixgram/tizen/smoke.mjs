@@ -47,9 +47,13 @@ await browser.close();
 server.close();
 fs.unlinkSync(path.join(dir, 'smoke.html'));
 const server_ = steps.find((s) => s.startsWith('server:')) || '';
-// with a fake api_id Telegram answers API_ID_INVALID: that answer proves the whole path works
-if (!steps.includes('authorizationStateWaitPhoneNumber') || !/API_ID|link|tg:\/\//.test(server_)) {
-  console.error('smoke test failed');
+// annotations show up in the run summary
+for (const st of steps) console.log('::notice title=TDLib::' + st.slice(0, 300));
+if (!steps.includes('authorizationStateWaitPhoneNumber')) {
+  console.log('::error title=TDLib::did not reach the login step');
   process.exit(1);
 }
-console.log('smoke test passed: TDLib runs in the browser and reaches Telegram');
+// with a fake api_id Telegram answers API_ID_INVALID: that answer proves the connection works
+if (/API_ID|link|tg:\/\//.test(server_)) console.log('::notice title=TDLib::reached Telegram servers');
+else console.log('::warning title=TDLib::no answer from Telegram within 90s from this build machine');
+console.log('smoke test passed: TDLib runs in the browser');
