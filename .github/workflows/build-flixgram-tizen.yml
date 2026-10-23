@@ -131,9 +131,13 @@ jobs:
           unzip -l "$GITHUB_WORKSPACE/Flixgram.wgt" | grep -E "signature|config.xml|wasm|icon.png"
 
       - name: Is the phone setup page online?
+        continue-on-error: true
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" https://raw.githack.com/liors24/indtv/main/web/flixgram-setup.html || true)
           echo "::notice title=Phone page::HTTP $code"
+          ctype=$(curl -s -o /dev/null -w "%{content_type}" https://raw.githack.com/liors24/indtv/main/web/flixgram-setup.html || true)
+          echo "content type: $ctype"
+          test "$code" = 200 && echo "$ctype" | grep -q text/html"
 
       # Installed TVs download this on launch and update their interface by themselves
       - name: Publish the automatic update (flixgram-ota branch)
