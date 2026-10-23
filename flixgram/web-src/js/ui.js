@@ -44,6 +44,21 @@ export function confirmDialog(title, body, okLabel, onOk, opts) {
   openModal(panel);
 }
 
+// A side sheet of on/off switches that stays open while you flip them. items: [{label, sub, value, on}]
+export function toggleSheet(title, note, items, onChange) {
+  const list = h('div.sheet-list', { 'data-flist': '' });
+  items.forEach((o) => {
+    const sw = h('span.toggle' + (o.on ? '.on' : ''), null, h('i'));
+    const row = h('div.sheet-row.toggle-row.fx', {
+      onselect: () => { o.on = !o.on; sw.classList.toggle('on', o.on); row.classList.toggle('off', !o.on); onChange(o.value, o.on); },
+    }, h('div.sheet-text', null, h('span.sheet-label', { text: o.label, dir: 'auto' }), o.sub ? h('span.sheet-sub', { text: o.sub }) : null), sw);
+    if (!o.on) row.classList.add('off');
+    list.appendChild(row);
+  });
+  const panel = h('div.sheet', { 'data-vscroll': '0' }, h('div.sheet-inner', null, h('h2', { text: title }), note ? h('p.sheet-note', { text: note }) : null, list));
+  openModal(panel, null, 'side');
+}
+
 // A side sheet with a list of choices. options: [{label, sub, value, selected}]
 export function sheet(title, options, onPick) {
   const list = h('div.sheet-list', { 'data-flist': '' });

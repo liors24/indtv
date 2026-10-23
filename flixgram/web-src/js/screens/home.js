@@ -1,4 +1,4 @@
-import { h, debounce } from '../util.js';
+import { h, debounce, store } from '../util.js';
 import * as td from '../td.js';
 import { itemFromMessage, organise } from '../media.js';
 import { mediaCard, rail, progress, spinner, emptyState, button } from '../components.js';
@@ -44,9 +44,10 @@ export function homeScreen(app) {
         limit: 100, filter: { '@type': 'searchMessagesFilterVideo' }, min_date: 0, max_date: 0,
       });
       nextOffset = res.next_offset || '';
-      globalItems = res.messages.map(itemFromMessage).filter(Boolean);
+      const hid = new Set(store.get('hiddenChats', []).map(String));   // chats hidden in the library stay out of Home too
+      globalItems = res.messages.map(itemFromMessage).filter((i) => i && !hid.has(String(i.chatId)));
       // a deeper pool from the chats you actually watch
-      const fav = reco.topChats(4);
+      const fav = reco.topChats(6).filter((id) => !hid.has(String(id))).slice(0, 4);
       const extra = await Promise.all(fav.map((chatId) => td.send({
         '@type': 'searchChatMessages', chat_id: chatId, query: '', sender_id: null, from_message_id: 0, offset: 0, limit: 80,
         filter: { '@type': 'searchMessagesFilterVideo' }, message_thread_id: 0, saved_messages_topic_id: 0,

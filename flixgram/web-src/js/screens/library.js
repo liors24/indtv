@@ -1,4 +1,4 @@
-import { h, debounce, svg, ICON } from '../util.js';
+import { h, debounce, svg, ICON, store } from '../util.js';
 import * as td from '../td.js';
 import { itemFromMessage, organise } from '../media.js';
 import { mediaCard, rail, spinner, emptyState, avatar, sidePanel } from '../components.js';
@@ -6,6 +6,7 @@ import { createHero } from '../hero.js';
 import { orderedChats, subscribe, chatKind, getChat } from '../state.js';
 import { openItem } from '../player.js';
 import { focusFirst, focus, resetScroll } from '../focus.js';
+import { toggleSheet, toast } from '../ui.js';
 
 const TABS = [
   { id: 'video', label: 'סרטונים', icon: ICON.film },
@@ -73,27 +74,58 @@ export function libraryScreen(app) {
     tabs.appendChild(h('div.chip.fx', { onselect: () => { if (chatId) app.go('search', { chatId }); } }, svg(ICON.search, 24), h('span', { text: 'חיפוש כאן' })));
   }
 
+  // chats you chose to hide from the library (kept on this TV)
+  const hidden = () => new Set(store.get('hiddenChats', []).map(String));
+
+  function manageChats() {
+    const hid = hidden();
+    const items = orderedChats().slice(0, 300).map((c) => ({ label: c.title, sub: KIND_LABEL[chatKind(c)] || '', value: String(c.id), on: !hid.has(String(c.id)) }));
+    toggleSheet('אילו צ׳אטים להציג', 'כבו צ׳אט כדי להסתיר אותו מהספרייה. אפשר להחזיר אותו כאן בכל רגע.', items, (id, on) => {
+      const set = hidden();
+      if (on) set.delete(id); else set.add(id);
+      store.set('hiddenChats', Array.from(set));
+      rebuildSide();
+      app.markStale('home');
+    });
+  }
+
+  function rebuildSide() {
+    Array.prototype.slice.call(side.querySelectorAll('.src[data-chat]')).forEach((r) => r.remove());
+    buildSide();
+    if (chatId && hidden().has(String(chatId))) {
+      chatId = 0;
+      const first = visibleChats()[0];
+      if (first) selectChat(first.id, false); else { titleEl.textContent = ''; contentInner.innerHTML = ''; }
+    }
+  }
+
+  function visibleChats() {
+    const hid = hidden();
+    return orderedChats().filter((c) => !hid.has(String(c.id)));
+  }
+
+  const manageRow = h('div.src.src-manage.fx', { data: { manage: '1' } }, h('span.src-manage-ic', null, svg(ICON.menu, 28)),
+    h('div.src-text', null, h('div.src-title', { text: 'בחירת צ׳אטים להצגה' }), h('div.src-kind', { text: 'להסתיר או להחזיר צ׳אטים' })));
+  manageRow._onselect = manageChats;
+
   function buildSide() {
-    const list = orderedChats().slice(0, 160);
+    const list = visibleChats().slice(0, 160);
+    if (!side.contains(manageRow)) side.insertBefore(manageRow, side.firstChild);
+    const n = hidden().size;
+    manageRow.querySelector('.src-kind').textContent = n ? `${n} מוסתרים · להסתיר או להחזיר` : 'להסתיר או להחזיר צ׳אטים';
     if (!list.length) return;
     sideBuilt = true;
     const sp = side.querySelector('.loading-row');
     if (sp) sp.remove();
-    const keep = new Set();
     list.forEach((c) => {
-      keep.add(String(c.id));
       if (side.querySelector(`[data-chat="${c.id}"]`)) return;
       const row = h('div.src.fx', { data: { chat: c.id } }, avatar(c, 52), h('div.src-text', null,
         h('div.src-title', { text: c.title }), h('div.src-kind', { text: KIND_LABEL[chatKind(c)] || '' })));
-      row._onfocus = () => previewChat(c.id);
-      row._onselect = () => {
-        selectChat(c.id, true);
-      };
+      // highlighting a chat only moves the light; OK opens it
+      row._onselect = () => selectChat(c.id, true);
       side.appendChild(row);
     });
   }
-
-  const previewChat = debounce((id) => { if (id !== chatId) selectChat(id, false); }, 650);
 
   async function selectChat(id, enter) {
     if (id !== chatId) {
@@ -205,13 +237,14 @@ export function libraryScreen(app) {
       buildSide();
       if (params && params.chatId) selectChat(params.chatId, true);
       else if (!chatId) {
-        const first = orderedChats().find((c) => chatKind(c) === 'channel') || orderedChats()[0];
+        const vis = visibleChats();
+        const first = vis.find((c) => chatKind(c) === 'channel') || vis[0];
         if (first) selectChat(first.id, false);
       }
       if (!sideBuilt) side.appendChild(h('div.loading-row', null, spinner()));
     },
     focusContent() {
-      const sel = side.querySelector('.sel') || side.querySelector('.fx');
+      const sel = side.querySelector('.src.sel') || side.querySelector('.src[data-chat]') || side.querySelector('.fx');
       if (sel) focus(sel);
     },
   };
