@@ -5,7 +5,7 @@ import * as td from './td.js';
 import { displayTitle, itemFromMessage, nextInList } from './media.js';
 import { chatTitle } from './state.js';
 import { pushScope, popScope, focus, focused } from './focus.js';
-import { progress, seen, spinner, button } from './components.js';
+import { progress, seen, spinner, button, lazyImg } from './components.js';
 import { sheet, toast, modalOpen } from './ui.js';
 import { setAmbient } from './ambient.js';
 import * as warm from './prefetch.js';
@@ -95,7 +95,7 @@ function play(item, list, opts) {
   const subs = h('div.pl-subs');
   const upnext = h('div.pl-upnext');
   const err = h('div.pl-error');
-  const art = item.kind === 'audio' ? h('div.pl-art', null, item.thumb ? h('img', { src: td.thumbUrl(item.thumb), alt: '' }) : svg(ICON.note, 120)) : null;
+  const art = item.kind === 'audio' ? h('div.pl-art', null, item.thumb ? lazyImg(td.thumbUrl(item.thumb)) : svg(ICON.note, 120)) : null;
   const top = h('div.pl-top', null,
     h('div.pl-kicker', { text: chatTitle(item.chatId) }),
     h('h1.pl-title', { text: t.main }),
@@ -542,12 +542,14 @@ function show() {
   V.img.classList.remove('ok');
   V.mini.src = it.mini || '';
   V.img.onload = () => V && V.img.classList.add('ok');
-  V.img.src = td.thumbUrl(it.fileId);
+  const want = td.thumbUrl(it.fileId);
+  V.want = want;
+  td.resolveSrc(want, (u) => { if (V && V.want === want && u) V.img.src = u; });
   V.cap.textContent = (it.caption || '').split('\n')[0];
   V.count.textContent = `${V.i + 1} / ${V.list.length}${V.slide ? '   מצגת פועלת' : ''}`;
   // prefetch neighbour
   const n = V.list[V.i + 1];
-  if (n) { const p = new Image(); p.src = td.thumbUrl(n.fileId); }
+  if (n) td.resolveSrc(td.thumbUrl(n.fileId), (u) => { if (u) { const p = new Image(); p.src = u; } });
 }
 
 function go(d) {

@@ -36,7 +36,8 @@ function stage(cls, left, right) {
 
 export function renderSetup(root, onDone) {
   const lan = td.info.lan;
-  const url = lan ? `http://${lan}:${td.info.port}/setup/${td.info.token}` : '';
+  // Samsung TVs have no local server: the phone page sends the keys through an encrypted relay instead
+  const url = td.info.setupUrl || (lan ? `http://${lan}:${td.info.port}/setup/${td.info.token}` : '');
   const id = field('api_id', { inputmode: 'numeric', placeholder: '1234567' });
   const hash = field('api_hash', { placeholder: '32 תווים' });
   const save = button('שמירה והמשך', () => submit(id.input.value, hash.input.value), { primary: true });
@@ -51,14 +52,14 @@ export function renderSetup(root, onDone) {
     h('div.brand-mark', null, h('img', { src: 'logo.svg', alt: '' }), h('span', { text: 'FLIXGRAM' })),
     h('h1.gate-title', { text: 'מחברים את הטלוויזיה לטלגרם' }),
     h('ol.steps', null,
-      h('li', null, h('b', { text: 'סרקו את הקוד במצלמת הטלפון. ' }), 'ייפתח דף קטן על אותה רשת Wi‑Fi.'),
+      h('li', null, h('b', { text: 'סרקו את הקוד במצלמת הטלפון. ' }), td.info.setupUrl ? 'ייפתח דף קטן בטלפון.' : 'ייפתח דף קטן על אותה רשת Wi‑Fi.'),
       h('li', null, h('b', { text: 'צרו מפתח ב־my.telegram.org. ' }), 'נכנסים עם המספר, API development tools, ממלאים שם כלשהו.'),
       h('li', null, h('b', { text: 'מדביקים api_id ו־api_hash. ' }), 'הטלוויזיה ממשיכה לבד ברגע שהם מגיעים.')),
     h('p.gate-note', { text: 'המפתח נשמר רק בטלוויזיה הזו. צריך לעשות את זה פעם אחת.' }),
     toggle, manual,
   ];
   const visual = url
-    ? h('div.qr-card', null, h('div.qr', { html: qrSvg(url, 420) }), h('div.qr-cap', { text: 'סריקה מהטלפון' }), h('div.qr-url', { text: url }))
+    ? h('div.qr-card', null, h('div.qr', { html: qrSvg(url, 420) }), h('div.qr-cap', { text: 'סריקה מהטלפון' }), h('div.qr-url', { text: url.split('#')[0] }))
     : h('div.qr-card.none', null, h('p', { text: 'לא נמצא חיבור רשת מקומי. אפשר להקליד את הפרטים בשלט.' }));
   root.innerHTML = '';
   const el = stage('setup', visual, copy);

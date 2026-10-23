@@ -1,5 +1,5 @@
 import { h, svg, ICON, fmtTime, initials, hueOf, store } from './util.js';
-import { thumbUrl } from './td.js';
+import { thumbUrl, resolveSrc } from './td.js';
 import { displayTitle } from './media.js';
 
 // ------------------------------------------------------------------ lazy images
@@ -23,8 +23,8 @@ function load(img) {
   if (!src) return;
   img.onload = () => img.classList.add('ok');
   img.onerror = () => img.classList.add('err');
-  img.src = src;
   delete img.dataset.src;
+  resolveSrc(src, (u) => { if (u) img.src = u; else img.classList.add('err'); });
 }
 
 export function lazyImg(src, cls) {

@@ -1,5 +1,7 @@
 // "Projection" ambience: the focused artwork's colours spill across the room.
 // Uses a tiny upscaled canvas instead of CSS blur, so it's cheap on TV GPUs.
+import { resolveSrc } from './td.js';
+
 
 let layers = null;
 let front = 0;
@@ -88,7 +90,7 @@ export function setAmbient(src) {
       lastSrc = want;
       apply(e);
     };
-    img.src = want;
+    resolveSrc(want, (u) => { if (u && pendingSrc === want) img.src = u; });
   }, 140);
 }
 

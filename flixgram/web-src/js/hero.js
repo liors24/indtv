@@ -1,7 +1,7 @@
 // The large "now focused" stage at the top of Home and Library.
 import { h, fmtDurationWords, fmtSize, fmtDate } from './util.js';
 import { displayTitle } from './media.js';
-import { thumbUrl } from './td.js';
+import { thumbUrl, resolveSrc } from './td.js';
 import { chatTitle } from './state.js';
 import { setAmbient } from './ambient.js';
 import { progress } from './components.js';
@@ -23,15 +23,18 @@ export function createHero() {
     artSrc = src;
     const next = arts[1 - artFront];
     if (!src) { arts.forEach((a) => a.classList.remove('on')); return; }
-    const img = new Image();
-    img.onload = () => {
-      if (artSrc !== src) return;
-      next.style.backgroundImage = 'url("' + src + '")';
-      next.classList.add('on');
-      arts[artFront].classList.remove('on');
-      artFront = 1 - artFront;
-    };
-    img.src = src;
+    resolveSrc(src, (u) => {
+      if (!u || artSrc !== src) return;
+      const img = new Image();
+      img.onload = () => {
+        if (artSrc !== src) return;
+        next.style.backgroundImage = 'url("' + u + '")';
+        next.classList.add('on');
+        arts[artFront].classList.remove('on');
+        artFront = 1 - artFront;
+      };
+      img.src = u;
+    });
   }
   const el = h('div.hero', null, art, text);
   let token = 0;

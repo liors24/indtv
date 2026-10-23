@@ -1,0 +1,149 @@
+name: Build Flixgram for Samsung TV (Tizen)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'flixgram/**', '.github/workflows/build-flixgram-tizen.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flixgram-tizen
+  cancel-in-progress: false
+
+jobs:
+  # TDLib compiled to WebAssembly. Built once per TDLib version / patch and kept as an asset of the
+  # "flixgram-deps" release, so later builds take a minute instead of an hour.
+  tdweb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: key
+        run: |
+          KEY=$(cat flixgram/tizen/tdweb/build.sh flixgram/tizen/tdweb/patch.mjs flixgram/tizen/tdweb/sparse.js | sha256sum | cut -c1-12)
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+          echo "tdweb key $KEY"
+
+      - name: Reuse a previous build
+        id: have
+        run: |
+          if gh release download flixgram-deps -p "tdweb-${{ steps.key.outputs.key }}.tgz" -D . 2>/dev/null; then
+            echo "found=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.have.outputs.found == '0'
+        with:
+          node-version: '16'
+
+      - name: Build TDLib for the browser (WebAssembly)
+        if: steps.have.outputs.found == '0'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq gperf cmake
+          WORK=$RUNNER_TEMP/tdweb flixgram/tizen/tdweb/build.sh "tdweb-${{ steps.key.outputs.key }}.tgz"
+
+      - name: Keep it for later builds
+        if: steps.have.outputs.found == '0'
+        run: |
+          gh release view flixgram-deps >/dev/null 2>&1 || gh release create flixgram-deps --title "Flixgram build dependencies" \
+            --notes "Prebuilt TDLib (WebAssembly) for the Samsung TV build. Not an app download." --prerelease
+          gh release upload flixgram-deps "tdweb-${{ steps.key.outputs.key }}.tgz" --clobber
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tdweb
+          path: tdweb-${{ steps.key.outputs.key }}.tgz
+
+  wgt:
+    needs: tdweb
+    runs-on: ubuntu-latest
+    env:
+      TIZEN_STUDIO: ${{ github.workspace }}/tizen-studio
+      AUTHOR_PW: indtv-tizen-2026
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tdweb
+
+      - name: Build the TV app
+        working-directory: flixgram
+        env:
+          VER_NAME: 1.0.${{ github.run_number }}
+        run: |
+          npm install --no-save --no-audit --no-fund esbuild@0.21.5 playwright@1.47.2
+          node tools/webbuild.mjs tizen
+          APP=build/tizen/app
+          tar xzf "$GITHUB_WORKSPACE/tdweb-${{ needs.tdweb.outputs.key }}.tgz" -C $APP
+          cp tizen/config.xml tizen/icon.png $APP/
+          sed -i "s/version=\"1.0.0\"/version=\"1.0.${{ github.run_number }}\"/" $APP/config.xml
+          ls -la $APP
+
+      - name: Smoke test (TDLib runs in a browser and reaches Telegram)
+        working-directory: flixgram
+        run: |
+          npx playwright install --with-deps chromium >/dev/null
+          node tizen/smoke.mjs build/tizen/app
+
+      - name: Install Tizen CLI
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq expect zip
+          curl -fsSLo tizen-installer "https://download.tizen.org/sdk/Installer/tizen-studio_5.6/web-cli_Tizen_Studio_5.6_ubuntu-64.bin"
+          chmod +x tizen-installer
+          ./tizen-installer --accept-license "$TIZEN_STUDIO"
+          rm tizen-installer
+
+      - name: Signing profile (same author certificate as INDTV)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tizen-data/profile"
+          sed -e "s|\$TIZEN_STUDIO|$TIZEN_STUDIO|g" \
+              -e "s|\$AUTHOR_P12|$GITHUB_WORKSPACE/tizen/indtv-author.p12|g" \
+              -e "s|\$AUTHOR_PW|$AUTHOR_PW|g" tizen/profiles.xml > "$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" cli-config "profiles.path=$GITHUB_WORKSPACE/tizen-data/profile/profiles.xml"
+
+      - name: Package and sign Flixgram.wgt
+        run: |
+          APP="$GITHUB_WORKSPACE/flixgram/build/tizen/app"
+          cd "$APP"
+          "$TIZEN_STUDIO/tools/ide/bin/tizen" build-web -e ".*"
+          export BUILD_DIR="$APP/.buildResult" OUT_DIR="$GITHUB_WORKSPACE/tizen-out"
+          mkdir -p "$OUT_DIR"
+          expect "$GITHUB_WORKSPACE/tizen/package.exp"
+          ls -la "$OUT_DIR"
+          cp "$OUT_DIR"/*.wgt "$GITHUB_WORKSPACE/Flixgram.wgt"
+          unzip -l "$GITHUB_WORKSPACE/Flixgram.wgt" | grep -E "signature|config.xml|wasm|icon.png"
+
+      - name: Is the phone setup page online?
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://liors24.github.io/indtv/flixgram-setup.html || true)
+          echo "phone setup page: HTTP $code"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Flixgram-wgt
+          path: Flixgram.wgt
+
+      # Same fixed release as the Android APK, so the links never change:
+      # https://github.com/<owner>/<repo>/releases/download/flixgram/Flixgram.wgt
+      - name: Publish (direct download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: flixgram
+          name: Flixgram (latest build)
+          make_latest: false
+          files: Flixgram.wgt

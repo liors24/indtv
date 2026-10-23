@@ -13,6 +13,12 @@ The link never changes; every push to `flixgram/` rebuilds the APK and replaces 
 **First launch:** scan the QR with your phone and paste `api_id` / `api_hash` from https://my.telegram.org/apps,
 then log in by scanning the second QR from Telegram → Settings → Devices → Link Desktop Device.
 
+**Samsung Smart TV (Tizen 4.0+, 2018 and newer):** `https://github.com/liors24/indtv/releases/download/flixgram/Flixgram.wgt`
+(install like INDTV.wgt, e.g. with TizenBrew / Tizen Studio). Built by `.github/workflows/build-flixgram-tizen.yml`.
+On the TV, TDLib runs as WebAssembly (`tizen/tdweb`), videos stream through Media Source Extensions with
+mp4box.js (`tizen/host`), and the phone page (`web/flixgram-setup.html`) sends the API keys through an encrypted relay.
+MP4 videos play; MKV files are not supported on Samsung yet.
+
 ## How it works
 * `src/` — tiny native host: fullscreen WebView UI, TDLib (JSON API) through a JNI shim (`jni/shim.c`),
   a local HTTP server that streams a Telegram file with byte ranges while TDLib downloads only the needed parts,

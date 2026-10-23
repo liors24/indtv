@@ -63,9 +63,19 @@ export function ready() {
   host.ready();
 }
 
-// URLs served by the local stream server
+// Samsung TVs (Tizen) have no local server: pictures are read from TDLib and handed over as blob: URLs.
+export const tizen = info.kind === 'tizen';
+
+// URLs served by the local stream server ("tgf:<id>" on Tizen, resolved with resolveSrc)
 export function thumbUrl(fileId) {
-  return fileId ? `${base()}/t/${fileId}` : '';
+  if (!fileId) return '';
+  return tizen ? 'tgf:' + fileId : `${base()}/t/${fileId}`;
+}
+
+/** Calls fn with a URL an <img> can load (right away on Android, once the file is read on Tizen). */
+export function resolveSrc(url, fn) {
+  if (url && url.indexOf('tgf:') === 0 && host.fileSrc) { host.fileSrc(parseInt(url.slice(4), 10), fn); return; }
+  fn(url);
 }
 
 export function streamUrl(fileId, mime) {
