@@ -152,9 +152,10 @@ function reveal(el, instant) {
     const cur = track._tx || 0;
     const pad = parseFloat(rail.dataset.pad || 96) * k();
     let next = cur;
-    if (left + cur < pad) next = pad - left;
-    else if (right + cur > w - pad) next = w - pad - right;
     const rtl = getComputedStyle(rail).direction === 'rtl';
+    if (rail.dataset.align === 'start') next = rtl ? w - pad - right : pad - left;  // the focused item leads the row
+    else if (left + cur < pad) next = pad - left;
+    else if (right + cur > w - pad) next = w - pad - right;
     next = rtl ? Math.max(0, next) : Math.min(0, next);
     if (next !== cur) {
       track._tx = next;

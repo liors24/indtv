@@ -10,8 +10,15 @@ let timer = 0, poll = 0;
 let cur = null;        // item previewing
 let shown = false;     // the picture is on screen
 let handed = false;    // given over to the player
-let quiet = '';
-let frameEl = null;  // where the picture plays (a frame on the page), or null for the whole screen        // just watched: no preview until the focus moves elsewhere
+let quiet = '';       // just watched: no preview until the focus moves elsewhere
+let frameEl = null;  // where the picture plays (a frame on the page), or null for the whole screen
+let framed = null;     // the frame currently showing the film
+let holeEl = null;
+function hole() {
+  if (!holeEl) { holeEl = document.createElement('div'); holeEl.id = 'pvhole'; (document.getElementById('ambient') || document.body).appendChild(holeEl); }
+  return holeEl;
+}
+function unframe() { if (framed) { framed.classList.remove('pv-frame'); framed = null; } }
 
 const root = () => document.documentElement;
 
@@ -39,6 +46,12 @@ function begin(item) {
   const W = window.innerWidth, H = window.innerHeight;
   if (r && r.width > 0 && r.height > 0) {
     td.player.aspect('box:' + [r.left / W, r.top / H, r.width / W, r.height / H].map((n) => n.toFixed(4)).join(','));
+    // the room is painted around the frame from underneath the page, so only the frame shows the film
+    const hl = hole();
+    hl.style.left = r.left + 'px'; hl.style.top = r.top + 'px'; hl.style.width = r.width + 'px'; hl.style.height = r.height + 'px';
+    hl.style.borderRadius = getComputedStyle(frameEl).borderTopLeftRadius;
+    frameEl.classList.add('pv-frame');
+    framed = frameEl;
     root().classList.add('pv-box');
   } else {
     td.player.aspect('zoom');
@@ -63,7 +76,7 @@ export function take(item) {
   const ok = shown;
   handed = ok;
   clearInterval(poll);
-  root().classList.remove('pv-load', 'pv-on', 'pv-box');
+  root().classList.remove('pv-load', 'pv-on', 'pv-box'); unframe();
   if (!ok) { stop(); return false; }
   cur = null;
   return true;
@@ -72,7 +85,7 @@ export function take(item) {
 export function stop() {
   clearTimeout(timer);
   clearInterval(poll);
-  root().classList.remove('pv-load', 'pv-on', 'pv-box');
+  root().classList.remove('pv-load', 'pv-on', 'pv-box'); unframe();
   if (!cur) return;
   const it = cur;
   cur = null; shown = false;
