@@ -19,6 +19,7 @@ export class TdSource {
 
   static async open(td, fileId) {
     const f = await td.send({ '@type': 'getFile', file_id: fileId });
+    if (window.flog) window.flog('file ' + fileId + ' size=' + f.size + ' expected=' + f.expected_size + ' path=' + (f.local && f.local.path ? 'yes' : 'no'));
     const size = f.size || f.expected_size || 0;
     return new TdSource(td, fileId, size);
   }
@@ -63,8 +64,17 @@ export class TdSource {
       if (waited > 3000 && waited % 3000 < 200) await this.ask(offset);   // nudge a stalled download
       if (waited > 90000) throw new Error('timeout');
     }
-    const part = await this.td.send({ '@type': 'readFilePart', file_id: this.id, offset, count: length });
-    return blobBuffer(part.data);
+    let part;
+    try {
+      part = await this.td.send({ '@type': 'readFilePart', file_id: this.id, offset, count: length });
+    } catch (e) {
+      if (window.flog) window.flog('readFilePart failed at ' + offset + ': ' + JSON.stringify(e).slice(0, 200));
+      throw e;
+    }
+    const buf = await blobBuffer(part.data);
+    this.reads = (this.reads || 0) + 1;
+    if (window.flog && this.reads <= 3) window.flog('read #' + this.reads + ' at ' + offset + ' len=' + buf.byteLength + ' waited=' + waited + 'ms size=' + this.size);
+    return buf;
   }
 
   async close() {

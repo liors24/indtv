@@ -80,7 +80,11 @@ const files = (() => {
 
   async function load(id) {
     try {
-      await td({ '@type': 'downloadFile', file_id: id, priority: 8, offset: 0, limit: 0, synchronous: true });
+      // pictures seen before are kept by tdweb in IndexedDB: read them from there without the network
+      const f = await td({ '@type': 'getFile', file_id: id });
+      if (!f.local || !f.local.is_downloading_completed) {
+        await td({ '@type': 'downloadFile', file_id: id, priority: 8, offset: 0, limit: 0, synchronous: true });
+      }
       const part = await td({ '@type': 'readFile', file_id: id });
       const data = part.data instanceof Blob ? part.data : new Blob([await blobBuffer(part.data)]);
       const url = URL.createObjectURL(data);
@@ -92,7 +96,7 @@ const files = (() => {
   }
 
   function next() {
-    while (running < 4 && pending.length) {
+    while (running < 6 && pending.length) {
       const id = pending.pop();          // newest first: what the viewer looks at now
       running++;
       load(id).then(() => { running--; next(); });
@@ -152,6 +156,11 @@ window.NovaHost = {
   },
   send(json) {
     const q = JSON.parse(json);
+    if (q['@type'] === 'setTdlibParameters') {
+      // keep chats and the file index on the TV, but not every message of every channel: that database
+      // grows with each channel scanned and tdweb copies it whole to storage every few seconds
+      q.use_message_database = false;
+    }
     const extra = q['@extra'];
     delete q['@extra'];
     const back = (r) => {
@@ -225,4 +234,31 @@ document.addEventListener('visibilitychange', () => {
   else window.NOVA.lifecycle('resume');
 });
 
-client = makeClient();
+// Installs from before this change kept every message in TDLib's database; drop that file once
+// (it is a cache that TDLib rebuilds). The login (td.binlog) stays.
+function dropOldMessageDb(done) {
+  let called = false;
+  const finish = () => { if (called) return; called = true; try { localStorage.setItem('flix:db', '2'); } catch (e) { /* ignore */ } done(); };
+  try { if (localStorage.getItem('flix:db') === '2') { called = true; done(); return; } } catch (e) { called = true; done(); return; }
+  setTimeout(finish, 5000);
+  try {
+    const req = indexedDB.open('/flixgram/dbfs');
+    req.onupgradeneeded = () => { try { req.transaction.abort(); } catch (e) { /* nothing */ } };
+    req.onerror = finish;
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('FILE_DATA')) { db.close(); finish(); return; }
+      const tx = db.transaction('FILE_DATA', 'readwrite');
+      const cur = tx.objectStore('FILE_DATA').openCursor();
+      cur.onsuccess = () => {
+        const c = cur.result;
+        if (!c) return;
+        if (/\/db\.sqlite/.test(String(c.key))) c.delete();
+        c.continue();
+      };
+      tx.oncomplete = tx.onerror = tx.onabort = () => { db.close(); finish(); };
+    };
+  } catch (e) { finish(); }
+}
+
+dropOldMessageDb(() => { client = makeClient(); });

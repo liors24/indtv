@@ -28,6 +28,9 @@ edit('worker.js', [
   ["(await import('./prebuilt/release/td_asmjs.js'))", "(await Promise.reject(new Error('asm.js build is not included')))"],
   ['this.FS = this.TdModule.FS;', 'this.FS = this.TdModule.FS;\n    flixSparse(this.FS);'],
   ['if (file.local.is_downloading_completed) {', 'if (file.local.is_downloading_completed && !(file.size > 8388608)) {'],
+  // the caller may turn the message database off: it grows with every channel scanned and tdweb copies
+  // the whole database file to IndexedDB every few seconds, which stalls a TV
+  ['query.use_message_database = useDb;', 'query.use_message_database = useDb && query.use_message_database !== false;'],
 ]);
 const worker = path.join(src, 'worker.js');
 fs.writeFileSync(worker, fs.readFileSync(worker, 'utf8') + '\n' + fs.readFileSync(path.join(here, 'sparse.js'), 'utf8'));

@@ -37,6 +37,7 @@ export function createPlayer(openSource) {
   }
 
   function emit(type, data) {
+    if (window.flog && type !== 'buffering' && type !== 'ready') window.flog('player ' + type + ' ' + JSON.stringify(data || {}).slice(0, 300));
     const ev = Object.assign({ type }, data || {});
     if (window.__player) { try { window.__player(ev); } catch (e) { console.error(e); } }
   }
@@ -47,6 +48,7 @@ export function createPlayer(openSource) {
   }
 
   async function play(url, startMs, audio) {
+    if (window.flog) window.flog('play ' + url + ' at ' + startMs);
     const my = ++token;
     const v = el();
     if (session) { session.close(); session = null; }

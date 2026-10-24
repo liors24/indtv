@@ -128,6 +128,10 @@ export class MseSession {
   // ---------------------------------------------------------------- set-up
 
   onReady(info) {
+    if (window.flog) {
+      window.flog('mp4 ready dur=' + Math.round(info.duration / (info.timescale || 1)) + 's tracks=' + info.tracks.map((t) => t.type + ':' + t.codec).join(',')
+        + ' support=' + info.tracks.map((t) => t.codec + '=' + MediaSource.isTypeSupported((t.type === 'audio' ? 'audio' : 'video') + '/mp4; codecs="' + t.codec + '"')).join(',') + ' read=' + this.parsedBytes);
+    }
     this.info = info;
     this.dur = info.duration && info.timescale ? info.duration / info.timescale : 0;
     const video = info.videoTracks.filter((t) => MediaSource.isTypeSupported('video/mp4; codecs="' + t.codec + '"'))[0];
