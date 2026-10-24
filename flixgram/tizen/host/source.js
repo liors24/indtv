@@ -42,7 +42,8 @@ export class TdSource {
   async prefix(offset) {
     try {
       const r = await this.td.send({ '@type': 'getFileDownloadedPrefixSize', file_id: this.id, offset });
-      return r.count || 0;
+      // TDLib 1.8.36 answers fileDownloadedPrefixSize { size }; older versions answered count { count }
+      return (r.size != null ? r.size : r.count) || 0;
     } catch (e) {
       return 0;
     }
