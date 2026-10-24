@@ -226,4 +226,4 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // diagnostic build: the interface runs alone for 12 s before TDLib starts, to see which one stops the TV
-setTimeout(() => { flog('starting TDLib now'); client = makeClient(); }, 12000);
+setTimeout(() => { flog('STAGE TDLib on'); client = makeClient(); }, 40000);

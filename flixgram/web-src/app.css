@@ -907,3 +907,9 @@ html.fast .nf-card.is-focus .nf-art { animation: none; }
 .t-calm .bb { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
 .t-calm .tile { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 .nf-cap, .bb-meta, .nf-meta { text-align: right; } .nf-cap { unicode-bidi: plaintext; }
+
+/* Samsung diagnostic build: features switched on one at a time to find what stops the TV (tizen/log.js) */
+html.tz-nofont, html.tz-nofont * { font-family: sans-serif !important; }
+html.tz-nofx *, html.tz-nofx *::before, html.tz-nofx *::after { filter: none !important; box-shadow: none !important; text-shadow: none !important; }
+html.tz-nomotion *, html.tz-nomotion *::before, html.tz-nomotion *::after { animation: none !important; transition: none !important; }
+html.tz-noamb #ambient, html.tz-noamb #vignette { display: none !important; }

@@ -3,7 +3,7 @@
 (function () {
   var sid = Math.random().toString(36).slice(2, 7), t0 = Date.now(), sent = 0, last = Date.now();
   function flog(msg) {
-    if (sent++ > 120) return;
+    if (sent++ > 160) return;
     try {
       var x = new XMLHttpRequest();
       x.open('POST', 'https://ntfy.sh/flixgram-diag-l24tv', true);
@@ -17,13 +17,18 @@
   // heartbeat: shows whether the page keeps running and how much the main thread is held up
   var n = 0;
   var hb = setInterval(function () {
-    var now = Date.now(), lag = now - last - 2000;
+    var now = Date.now(), lag = now - last - 1000;
     last = now;
     n++;
     var intro = document.getElementById('intro');
     flog('beat ' + n + ' lag=' + lag + 'ms intro=' + (intro ? 1 : 0) + ' tdweb=' + (window.tdweb ? 1 : 0) + ' host=' + (window.NovaHost ? 1 : 0) + ' ui=' + (window.NOVA ? 1 : 0) + ' mode=' + ((document.getElementById('app') || {}).dataset || {}).mode);
-    if (n >= 45) clearInterval(hb);
-  }, 2000);
+    if (n >= 70) clearInterval(hb);
+  }, 1000);
+  // switch the interface's features on one by one; the last stage logged before the beats stop is the culprit
+  var stages = [['tz-nofont', 'fonts'], ['tz-nofx', 'shadows+filters'], ['tz-nomotion', 'animations'], ['tz-noamb', 'ambient']];
+  stages.forEach(function (st, i) {
+    setTimeout(function () { flog('STAGE ' + st[1] + ' on'); document.documentElement.classList.remove(st[0]); }, 8000 * (i + 1));
+  });
   document.addEventListener('DOMContentLoaded', function () { flog('dom ready'); });
   window.addEventListener('load', function () { flog('window load'); });
 })();
