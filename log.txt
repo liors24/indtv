@@ -1,0 +1,641 @@
+2026-10-24T09:12:11Z [vaj21 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function ls=0
+2026-10-24T09:12:11Z [vaj21 0.1s] host.js running
+2026-10-24T09:12:11Z [vaj21 0.1s] creating TDLib client
+2026-10-24T09:12:11Z [vaj21 0.1s] window load
+2026-10-24T09:12:11Z [vaj21 0.1s] TDLib client created
+2026-10-24T09:12:11Z [vaj21 0.1s] app.js ready
+2026-10-24T09:12:11Z [vaj21 0.1s] dom ready
+2026-10-24T09:12:12Z [vaj21 0.9s] worker inited
+2026-10-24T09:12:12Z [vaj21 0.9s] worker fsInited
+2026-10-24T09:12:12Z [vaj21 0.9s] update updateOption
+2026-10-24T09:12:12Z [vaj21 0.9s] update updateOption
+2026-10-24T09:12:12Z [vaj21 0.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:12:16Z [vaj21 5.0s] beat 1 lag=7ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:21Z [vaj21 10.0s] beat 2 lag=-1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:26Z [vaj21 15.0s] beat 3 lag=1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:29Z [4g44s 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function ls=2
+2026-10-24T09:12:29Z [4g44s 0.1s] host.js running
+2026-10-24T09:12:29Z [4g44s 0.1s] creating TDLib client
+2026-10-24T09:12:29Z [4g44s 0.1s] TDLib client created
+2026-10-24T09:12:29Z [4g44s 0.1s] app.js ready
+2026-10-24T09:12:29Z [4g44s 0.1s] dom ready
+2026-10-24T09:12:29Z [4g44s 0.1s] window load
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateOption
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateOption
+2026-10-24T09:12:30Z [4g44s 0.9s] worker inited
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:12:30Z [4g44s 0.9s] worker fsInited
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateOption
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateOption
+2026-10-24T09:12:30Z [4g44s 0.9s] update updateOption
+2026-10-24T09:12:30Z [4g44s 1.0s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:12:34Z [4g44s 4.2s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:12:34Z [4g44s 4.3s] update updateAuthorizationState authorizationStateClosed
+2026-10-24T09:12:34Z [4g44s 4.3s] creating TDLib client
+2026-10-24T09:12:34Z [4g44s 4.3s] TDLib client created
+2026-10-24T09:12:34Z [4g44s 5.0s] beat 1 lag=2ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:34Z [4g44s 5.1s] worker inited
+2026-10-24T09:12:34Z [4g44s 5.1s] worker fsInited
+2026-10-24T09:12:34Z [4g44s 5.1s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:12:37Z [w7qpn 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function ls=0
+2026-10-24T09:12:37Z [w7qpn 0.1s] host.js running
+2026-10-24T09:12:37Z [w7qpn 0.1s] creating TDLib client
+2026-10-24T09:12:37Z [w7qpn 0.1s] dom ready
+2026-10-24T09:12:37Z [w7qpn 0.1s] app.js ready
+2026-10-24T09:12:37Z [w7qpn 0.2s] window load
+2026-10-24T09:12:37Z [w7qpn 0.1s] TDLib client created
+2026-10-24T09:12:39Z [4g44s 10.0s] beat 2 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:42Z [w7qpn 5.0s] beat 1 lag=7ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:12:43Z [w7qpn 6.0s] worker inited
+2026-10-24T09:12:43Z [w7qpn 6.0s] worker fsInited
+2026-10-24T09:12:43Z [w7qpn 6.0s] update updateOption
+2026-10-24T09:12:43Z [w7qpn 6.0s] update updateOption
+2026-10-24T09:12:43Z [w7qpn 6.0s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:12:44Z [4g44s 15.0s] beat 3 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:47Z [w7qpn 10.0s] beat 2 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:52Z [w7qpn 15.0s] beat 3 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:12:55Z [38fdp 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function ls=2
+2026-10-24T09:12:55Z [38fdp 0.0s] host.js running
+2026-10-24T09:12:55Z [38fdp 0.0s] creating TDLib client
+2026-10-24T09:12:55Z [38fdp 0.0s] TDLib client created
+2026-10-24T09:12:56Z [38fdp 0.0s] app.js ready
+2026-10-24T09:12:56Z [38fdp 0.0s] dom ready
+2026-10-24T09:12:56Z [38fdp 0.1s] window load
+2026-10-24T09:13:00Z [38fdp 5.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:13:01Z [38fdp 5.8s] worker inited
+2026-10-24T09:13:01Z [38fdp 5.8s] worker fsInited
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateOption
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateOption
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateOption
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateOption
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateOption
+2026-10-24T09:13:01Z [38fdp 5.9s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:13:03Z [38fdp 8.0s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:13:04Z [38fdp 8.1s] update updateAuthorizationState authorizationStateClosed
+2026-10-24T09:13:04Z [38fdp 8.1s] creating TDLib client
+2026-10-24T09:13:04Z [38fdp 8.1s] TDLib client created
+2026-10-24T09:13:05Z [38fdp 10.0s] beat 2 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:13:10Z [38fdp 14.5s] worker inited
+2026-10-24T09:13:10Z [38fdp 14.5s] worker fsInited
+2026-10-24T09:13:10Z [38fdp 14.5s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:13:10Z [38fdp 15.0s] beat 3 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:17:33Z [vdxky 0.1s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function ls=0
+2026-10-24T09:17:34Z [vdxky 1.6s] host.js running
+2026-10-24T09:17:34Z [vdxky 1.8s] creating TDLib client
+2026-10-24T09:17:34Z [vdxky 1.9s] TDLib client created
+2026-10-24T09:17:35Z [vdxky 2.4s] app.js ready
+2026-10-24T09:17:35Z [vdxky 2.4s] dom ready
+2026-10-24T09:23:12Z [gv9x5 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=0
+2026-10-24T09:23:12Z [gv9x5 0.1s] host.js running
+2026-10-24T09:23:12Z [gv9x5 0.1s] app.js ready
+2026-10-24T09:23:12Z [gv9x5 0.1s] dom ready
+2026-10-24T09:23:12Z [gv9x5 0.1s] window load
+2026-10-24T09:23:14Z [gv9x5 2.0s] beat 1 lag=6ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:16Z [gv9x5 4.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:18Z [gv9x5 6.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:20Z [gv9x5 8.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:22Z [gv9x5 10.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:22Z [miwwr 0.0s] app.js ready
+2026-10-24T09:23:22Z [miwwr 0.0s] host.js running
+2026-10-24T09:23:22Z [miwwr 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=0
+2026-10-24T09:23:22Z [miwwr 0.0s] dom ready
+2026-10-24T09:23:22Z [miwwr 0.0s] window load
+2026-10-24T09:23:24Z [gv9x5 12.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:24Z [miwwr 2.0s] beat 1 lag=4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:24Z [gv9x5 12.1s] starting TDLib now
+2026-10-24T09:23:24Z [gv9x5 12.1s] creating TDLib client
+2026-10-24T09:23:24Z [gv9x5 12.1s] TDLib client created
+2026-10-24T09:23:25Z [gv9x5 12.9s] worker inited
+2026-10-24T09:23:25Z [gv9x5 12.9s] worker fsInited
+2026-10-24T09:23:25Z [gv9x5 12.9s] update updateOption
+2026-10-24T09:23:25Z [gv9x5 12.9s] update updateOption
+2026-10-24T09:23:25Z [gv9x5 12.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:23:26Z [gv9x5 14.0s] beat 7 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:26Z [miwwr 4.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:28Z [gv9x5 16.0s] beat 8 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:28Z [miwwr 6.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:30Z [gv9x5 18.0s] beat 9 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:30Z [miwwr 8.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:30Z [ookja 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=2
+2026-10-24T09:23:30Z [ookja 0.1s] host.js running
+2026-10-24T09:23:30Z [ookja 0.1s] app.js ready
+2026-10-24T09:23:30Z [ookja 0.1s] dom ready
+2026-10-24T09:23:30Z [ookja 0.1s] window load
+2026-10-24T09:23:32Z [miwwr 10.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:32Z [ookja 2.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:34Z [miwwr 12.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:34Z [miwwr 12.0s] starting TDLib now
+2026-10-24T09:23:34Z [miwwr 12.0s] creating TDLib client
+2026-10-24T09:23:34Z [miwwr 12.0s] TDLib client created
+2026-10-24T09:23:34Z [ookja 4.0s] beat 2 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:36Z [miwwr 14.0s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:36Z [ookja 6.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:38Z [miwwr 15.9s] worker inited
+2026-10-24T09:23:38Z [miwwr 15.9s] worker fsInited
+2026-10-24T09:23:38Z [miwwr 15.9s] update updateOption
+2026-10-24T09:23:38Z [miwwr 15.9s] update updateOption
+2026-10-24T09:23:38Z [miwwr 15.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:23:38Z [miwwr 16.0s] beat 8 lag=16ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:38Z [ookja 8.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:40Z [miwwr 18.0s] beat 9 lag=-16ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:40Z [nwj8w 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=2
+2026-10-24T09:23:40Z [nwj8w 0.1s] host.js running
+2026-10-24T09:23:40Z [nwj8w 0.1s] app.js ready
+2026-10-24T09:23:40Z [nwj8w 0.1s] dom ready
+2026-10-24T09:23:40Z [nwj8w 0.1s] window load
+2026-10-24T09:23:40Z [ookja 10.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:42Z [nwj8w 2.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:42Z [ookja 12.0s] beat 6 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:42Z [ookja 12.1s] starting TDLib now
+2026-10-24T09:23:42Z [ookja 12.1s] creating TDLib client
+2026-10-24T09:23:42Z [ookja 12.1s] TDLib client created
+2026-10-24T09:23:43Z [ookja 12.8s] worker inited
+2026-10-24T09:23:43Z [ookja 12.8s] worker fsInited
+2026-10-24T09:23:43Z [ookja 12.8s] update updateOption
+2026-10-24T09:23:43Z [ookja 12.8s] update updateOption
+2026-10-24T09:23:43Z [ookja 12.8s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:23:43Z [ookja 12.9s] update updateOption
+2026-10-24T09:23:43Z [ookja 12.9s] update updateOption
+2026-10-24T09:23:43Z [ookja 12.9s] update updateOption
+2026-10-24T09:23:43Z [ookja 12.9s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:23:44Z [nwj8w 4.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:44Z [ookja 14.0s] beat 7 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:45Z [ookja 15.0s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:23:45Z [ookja 15.1s] update updateAuthorizationState authorizationStateClosed
+2026-10-24T09:23:45Z [ookja 15.1s] creating TDLib client
+2026-10-24T09:23:45Z [ookja 15.1s] TDLib client created
+2026-10-24T09:23:46Z [ookja 15.9s] worker inited
+2026-10-24T09:23:46Z [ookja 15.9s] worker fsInited
+2026-10-24T09:23:46Z [ookja 15.9s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:23:46Z [nwj8w 6.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:46Z [ookja 16.0s] beat 8 lag=1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:48Z [nwj8w 8.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:48Z [ookja 18.0s] beat 9 lag=-1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:50Z [nwj8w 10.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:52Z [nwj8w 12.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:52Z [nwj8w 12.1s] starting TDLib now
+2026-10-24T09:23:52Z [nwj8w 12.1s] creating TDLib client
+2026-10-24T09:23:52Z [nwj8w 12.1s] TDLib client created
+2026-10-24T09:23:54Z [nwj8w 14.0s] beat 7 lag=4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:56Z [nwj8w 16.0s] beat 8 lag=-4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:23:56Z [nwj8w 16.1s] worker inited
+2026-10-24T09:23:56Z [nwj8w 16.1s] worker fsInited
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateOption
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateOption
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateOption
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateOption
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateOption
+2026-10-24T09:23:56Z [nwj8w 16.1s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:23:58Z [nwj8w 18.0s] beat 9 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:23:58Z [nwj8w 18.1s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:37:28Z [a18jw 0.0s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=1
+2026-10-24T09:37:29Z [a18jw 1.7s] host.js running
+2026-10-24T09:37:30Z [a18jw 2.6s] app.js ready
+2026-10-24T09:37:30Z [a18jw 2.6s] dom ready
+2026-10-24T09:37:30Z [a18jw 2.7s] beat 1 lag=684ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:42:59Z [t6m67 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=0
+2026-10-24T09:42:59Z [t6m67 0.0s] window load
+2026-10-24T09:42:59Z [t6m67 0.0s] app.js ready
+2026-10-24T09:42:59Z [t6m67 0.0s] host.js running
+2026-10-24T09:42:59Z [t6m67 0.0s] dom ready
+2026-10-24T09:43:00Z [t6m67 1.0s] beat 1 lag=4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:00Z [i8qnv 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=0
+2026-10-24T09:43:00Z [i8qnv 0.1s] host.js running
+2026-10-24T09:43:00Z [i8qnv 0.1s] app.js ready
+2026-10-24T09:43:00Z [i8qnv 0.1s] dom ready
+2026-10-24T09:43:00Z [i8qnv 0.1s] window load
+2026-10-24T09:43:01Z [t6m67 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:01Z [i8qnv 1.0s] beat 1 lag=4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:03Z [t6m67 3.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:03Z [i8qnv 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:03Z [t6m67 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:03Z [i8qnv 3.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:04Z [t6m67 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:04Z [i8qnv 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:05Z [t6m67 6.0s] beat 6 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:05Z [i8qnv 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:06Z [t6m67 7.0s] beat 7 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:06Z [i8qnv 6.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:07Z [t6m67 8.0s] STAGE fonts on
+2026-10-24T09:43:07Z [t6m67 8.0s] beat 8 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:07Z [i8qnv 7.0s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:08Z [t6m67 9.0s] beat 9 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:08Z [i8qnv 8.0s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:08Z [i8qnv 8.0s] STAGE fonts on
+2026-10-24T09:43:09Z [t6m67 10.0s] beat 10 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:09Z [i8qnv 9.0s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:10Z [t6m67 11.0s] beat 11 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:10Z [i8qnv 10.0s] beat 10 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:11Z [t6m67 12.0s] beat 12 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:11Z [i8qnv 11.0s] beat 11 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:12Z [t6m67 13.0s] beat 13 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:12Z [i8qnv 12.0s] beat 12 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:13Z [t6m67 14.0s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:13Z [i8qnv 13.0s] beat 13 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:14Z [t6m67 15.0s] beat 15 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:14Z [i8qnv 14.0s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:15Z [t6m67 16.0s] STAGE shadows+filters on
+2026-10-24T09:43:15Z [t6m67 16.0s] beat 16 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:15Z [i8qnv 15.0s] beat 15 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:16Z [t6m67 17.0s] beat 17 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:16Z [i8qnv 16.0s] STAGE shadows+filters on
+2026-10-24T09:43:16Z [i8qnv 16.0s] beat 16 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:17Z [t6m67 18.0s] beat 18 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:17Z [3m5dt 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=2
+2026-10-24T09:43:17Z [3m5dt 0.0s] host.js running
+2026-10-24T09:43:17Z [3m5dt 0.0s] app.js ready
+2026-10-24T09:43:17Z [3m5dt 0.0s] dom ready
+2026-10-24T09:43:17Z [3m5dt 0.0s] window load
+2026-10-24T09:43:17Z [i8qnv 17.0s] beat 17 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:18Z [3m5dt 1.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:18Z [i8qnv 18.0s] beat 18 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:18Z [97vdl 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=2
+2026-10-24T09:43:19Z [97vdl 0.0s] host.js running
+2026-10-24T09:43:19Z [97vdl 0.1s] app.js ready
+2026-10-24T09:43:19Z [97vdl 0.1s] dom ready
+2026-10-24T09:43:19Z [97vdl 0.1s] window load
+2026-10-24T09:43:19Z [3m5dt 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:19Z [97vdl 1.0s] beat 1 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:20Z [3m5dt 3.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:20Z [97vdl 2.0s] beat 2 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:21Z [3m5dt 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:21Z [97vdl 3.0s] beat 3 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:22Z [3m5dt 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:22Z [97vdl 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:23Z [3m5dt 6.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:23Z [97vdl 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:24Z [3m5dt 7.0s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:24Z [97vdl 6.0s] beat 6 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:25Z [3m5dt 8.0s] STAGE fonts on
+2026-10-24T09:43:25Z [3m5dt 8.0s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:25Z [97vdl 7.0s] beat 7 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:26Z [3m5dt 9.0s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:26Z [97vdl 8.0s] beat 8 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:26Z [97vdl 8.0s] STAGE fonts on
+2026-10-24T09:43:27Z [3m5dt 10.0s] beat 10 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:27Z [97vdl 9.0s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:28Z [3m5dt 11.0s] beat 11 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:28Z [97vdl 10.0s] beat 10 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:29Z [3m5dt 12.0s] beat 12 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:29Z [97vdl 11.0s] beat 11 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:30Z [3m5dt 13.0s] beat 13 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:30Z [97vdl 12.0s] beat 12 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:31Z [3m5dt 14.0s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:31Z [97vdl 13.0s] beat 13 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:32Z [3m5dt 15.0s] beat 15 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:32Z [97vdl 14.0s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:33Z [3m5dt 16.0s] beat 16 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:33Z [3m5dt 16.0s] STAGE shadows+filters on
+2026-10-24T09:43:33Z [97vdl 15.0s] beat 15 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:34Z [3m5dt 17.0s] beat 17 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:34Z [97vdl 16.0s] STAGE shadows+filters on
+2026-10-24T09:43:34Z [97vdl 16.0s] beat 16 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:35Z [3m5dt 18.0s] beat 18 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:35Z [97vdl 17.0s] beat 17 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:43:36Z [97vdl 18.0s] beat 18 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:29Z [mkzhf 0.5s] host.js running
+2026-10-24T09:46:29Z [mkzhf 0.1s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=0
+2026-10-24T09:46:30Z [mkzhf 0.8s] app.js ready
+2026-10-24T09:46:30Z [mkzhf 0.8s] dom ready
+2026-10-24T09:46:30Z [mkzhf 0.8s] window load
+2026-10-24T09:46:30Z [mkzhf 1.1s] beat 1 lag=70ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:31Z [mkzhf 2.1s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:32Z [mkzhf 3.1s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:33Z [mkzhf 4.1s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:34Z [mkzhf 5.1s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:35Z [mkzhf 6.1s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:36Z [mkzhf 7.1s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:37Z [mkzhf 8.1s] STAGE fonts on
+2026-10-24T09:46:37Z [mkzhf 8.1s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:38Z [mkzhf 9.1s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:39Z [mkzhf 10.1s] beat 10 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:40Z [mkzhf 11.1s] beat 11 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:41Z [mkzhf 12.1s] beat 12 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:42Z [mkzhf 13.1s] beat 13 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:43Z [mkzhf 14.1s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:44Z [mkzhf 15.1s] beat 15 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:45Z [mkzhf 16.1s] beat 16 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:45Z [mkzhf 16.1s] STAGE shadows+filters on
+2026-10-24T09:46:46Z [mkzhf 17.1s] beat 17 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:47Z [mkzhf 18.1s] beat 18 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:48Z [mkzhf 19.1s] beat 19 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:49Z [mkzhf 20.1s] beat 20 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:50Z [mkzhf 21.1s] beat 21 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:51Z [mkzhf 22.1s] beat 22 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:52Z [mkzhf 23.1s] beat 23 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:53Z [mkzhf 24.1s] STAGE animations on
+2026-10-24T09:46:53Z [mkzhf 24.1s] beat 24 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:46:54Z [mkzhf 25.1s] beat 25 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:36Z [o5xbo 0.1s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=1
+2026-10-24T09:48:36Z [o5xbo 0.8s] host.js running
+2026-10-24T09:48:37Z [o5xbo 1.0s] dom ready
+2026-10-24T09:48:37Z [o5xbo 1.0s] app.js ready
+2026-10-24T09:48:37Z [o5xbo 1.0s] window load
+2026-10-24T09:48:37Z [o5xbo 1.1s] beat 1 lag=113ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:38Z [o5xbo 2.1s] beat 2 lag=-18ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:39Z [o5xbo 3.1s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:40Z [o5xbo 4.1s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:41Z [o5xbo 5.1s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:42Z [o5xbo 6.1s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:43Z [o5xbo 7.1s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:44Z [o5xbo 8.1s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:44Z [o5xbo 8.1s] STAGE fonts on
+2026-10-24T09:48:45Z [o5xbo 9.1s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:46Z [o5xbo 10.1s] beat 10 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:47Z [o5xbo 11.1s] beat 11 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:48Z [o5xbo 12.1s] beat 12 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:49Z [o5xbo 13.1s] beat 13 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:50Z [o5xbo 14.1s] beat 14 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:51Z [o5xbo 15.1s] beat 15 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:52Z [o5xbo 16.1s] STAGE shadows+filters on
+2026-10-24T09:48:52Z [o5xbo 16.1s] beat 16 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:53Z [o5xbo 17.1s] beat 17 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:54Z [o5xbo 18.1s] beat 18 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:55Z [o5xbo 19.1s] beat 19 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:56Z [o5xbo 20.1s] beat 20 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:57Z [o5xbo 21.1s] beat 21 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:58Z [o5xbo 22.1s] beat 22 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:48:59Z [o5xbo 23.1s] beat 23 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:49:00Z [o5xbo 24.1s] STAGE animations on
+2026-10-24T09:49:00Z [o5xbo 24.1s] beat 24 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:49:01Z [o5xbo 25.1s] beat 25 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:26Z [h7s4f 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=0
+2026-10-24T09:54:26Z [h7s4f 0.1s] app.js ready
+2026-10-24T09:54:26Z [h7s4f 0.1s] host.js running
+2026-10-24T09:54:26Z [h7s4f 0.1s] window load
+2026-10-24T09:54:26Z [h7s4f 0.1s] creating TDLib client
+2026-10-24T09:54:26Z [h7s4f 0.1s] dom ready
+2026-10-24T09:54:26Z [h7s4f 0.1s] TDLib client created
+2026-10-24T09:54:26Z [h7s4f 0.8s] worker inited
+2026-10-24T09:54:26Z [h7s4f 0.8s] worker fsInited
+2026-10-24T09:54:26Z [h7s4f 0.8s] update updateOption
+2026-10-24T09:54:26Z [h7s4f 0.8s] update updateOption
+2026-10-24T09:54:26Z [h7s4f 0.8s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:54:27Z [h7s4f 1.0s] beat 1 lag=7ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:28Z [h7s4f 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:29Z [h7s4f 3.0s] beat 3 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:29Z [q3nw2 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=0
+2026-10-24T09:54:29Z [q3nw2 0.1s] host.js running
+2026-10-24T09:54:29Z [q3nw2 0.1s] app.js ready
+2026-10-24T09:54:29Z [q3nw2 0.1s] creating TDLib client
+2026-10-24T09:54:29Z [q3nw2 0.1s] TDLib client created
+2026-10-24T09:54:29Z [q3nw2 0.1s] dom ready
+2026-10-24T09:54:29Z [q3nw2 0.1s] window load
+2026-10-24T09:54:30Z [h7s4f 4.0s] beat 4 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:30Z [q3nw2 1.0s] beat 1 lag=5ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:31Z [h7s4f 5.0s] beat 5 lag=-1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:31Z [q3nw2 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:32Z [q3nw2 3.0s] beat 3 lag=3ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:33Z [q3nw2 4.0s] beat 4 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:34Z [q3nw2 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:35Z [q3nw2 6.0s] beat 6 lag=-2ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:36Z [q3nw2 7.0s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:36Z [q3nw2 7.6s] worker inited
+2026-10-24T09:54:36Z [q3nw2 7.6s] worker fsInited
+2026-10-24T09:54:36Z [q3nw2 7.6s] update updateOption
+2026-10-24T09:54:36Z [q3nw2 7.6s] update updateOption
+2026-10-24T09:54:36Z [q3nw2 7.6s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:54:37Z [q3nw2 8.0s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:38Z [q3nw2 9.0s] beat 9 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:44Z [hiikx 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=2
+2026-10-24T09:54:44Z [hiikx 0.0s] host.js running
+2026-10-24T09:54:44Z [hiikx 0.0s] creating TDLib client
+2026-10-24T09:54:44Z [hiikx 0.0s] TDLib client created
+2026-10-24T09:54:44Z [hiikx 0.0s] app.js ready
+2026-10-24T09:54:44Z [hiikx 0.0s] dom ready
+2026-10-24T09:54:44Z [hiikx 0.1s] window load
+2026-10-24T09:54:45Z [hiikx 0.8s] worker inited
+2026-10-24T09:54:45Z [hiikx 0.8s] worker fsInited
+2026-10-24T09:54:45Z [hiikx 0.8s] update updateOption
+2026-10-24T09:54:45Z [hiikx 0.8s] update updateOption
+2026-10-24T09:54:45Z [hiikx 0.8s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:54:45Z [hiikx 0.9s] update updateOption
+2026-10-24T09:54:45Z [hiikx 0.9s] update updateOption
+2026-10-24T09:54:45Z [hiikx 0.9s] update updateOption
+2026-10-24T09:54:45Z [hiikx 0.9s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:54:45Z [hiikx 1.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:46Z [hiikx 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:47Z [hiikx 3.0s] beat 3 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:47Z [hiikx 3.1s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:54:47Z [hiikx 3.3s] update updateAuthorizationState authorizationStateClosed
+2026-10-24T09:54:47Z [hiikx 3.3s] creating TDLib client
+2026-10-24T09:54:47Z [hiikx 3.3s] TDLib client created
+2026-10-24T09:54:47Z [611m2 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=2
+2026-10-24T09:54:47Z [611m2 0.1s] host.js running
+2026-10-24T09:54:47Z [611m2 0.1s] creating TDLib client
+2026-10-24T09:54:47Z [611m2 0.1s] TDLib client created
+2026-10-24T09:54:47Z [611m2 0.1s] app.js ready
+2026-10-24T09:54:47Z [611m2 0.1s] dom ready
+2026-10-24T09:54:47Z [611m2 0.1s] window load
+2026-10-24T09:54:48Z [hiikx 4.0s] beat 4 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:48Z [hiikx 4.0s] worker inited
+2026-10-24T09:54:48Z [hiikx 4.0s] worker fsInited
+2026-10-24T09:54:48Z [hiikx 4.0s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:54:48Z [611m2 1.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:49Z [hiikx 5.0s] beat 5 lag=-1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:49Z [611m2 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:50Z [611m2 3.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:51Z [611m2 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:52Z [611m2 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:53Z [611m2 6.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T09:54:53Z [611m2 6.0s] worker inited
+2026-10-24T09:54:53Z [611m2 6.0s] worker fsInited
+2026-10-24T09:54:53Z [611m2 6.0s] update updateOption
+2026-10-24T09:54:53Z [611m2 6.0s] update updateOption
+2026-10-24T09:54:53Z [611m2 6.0s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T09:54:53Z [611m2 6.1s] update updateOption
+2026-10-24T09:54:53Z [611m2 6.1s] update updateOption
+2026-10-24T09:54:53Z [611m2 6.1s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T09:54:53Z [611m2 6.1s] update updateOption
+2026-10-24T09:54:54Z [611m2 7.0s] beat 7 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T09:54:56Z [611m2 8.4s] update updateAuthorizationState authorizationStateLoggingOut
+2026-10-24T09:54:56Z [611m2 8.6s] update updateAuthorizationState authorizationStateClosed
+2026-10-24T09:54:56Z [611m2 8.6s] creating TDLib client
+2026-10-24T09:54:56Z [611m2 8.6s] TDLib client created
+2026-10-24T09:55:03Z [611m2 15.4s] worker inited
+2026-10-24T09:55:03Z [611m2 15.4s] worker fsInited
+2026-10-24T09:55:03Z [611m2 15.4s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:00:57Z [6tpep 0.1s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=0
+2026-10-24T10:00:58Z [6tpep 1.0s] host.js running
+2026-10-24T10:00:58Z [6tpep 1.3s] creating TDLib client
+2026-10-24T10:00:58Z [6tpep 1.4s] TDLib client created
+2026-10-24T10:00:59Z [6tpep 2.0s] app.js ready
+2026-10-24T10:00:59Z [6tpep 2.0s] dom ready
+2026-10-24T10:00:59Z [6tpep 2.0s] beat 1 lag=984ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:00:59Z [6tpep 2.5s] beat 2 lag=-523ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:00:59Z [6tpep 2.6s] window load
+2026-10-24T10:01:00Z [6tpep 3.1s] beat 3 lag=-405ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:01:01Z [6tpep 4.1s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:01:02Z [6tpep 5.1s] beat 5 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:01:03Z [6tpep 6.1s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:01:04Z [6tpep 7.1s] beat 7 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:01:04Z [6tpep 7.5s] worker inited
+2026-10-24T10:01:04Z [6tpep 7.5s] worker fsInited
+2026-10-24T10:01:04Z [6tpep 7.5s] update updateOption
+2026-10-24T10:01:04Z [6tpep 7.5s] update updateOption
+2026-10-24T10:01:04Z [6tpep 7.5s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:01:06Z [6tpep 9.0s] beat 8 lag=992ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:01:08Z [6tpep 10.7s] beat 9 lag=685ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:02:38Z [6tpep 101.5s] update updateOption
+2026-10-24T10:02:38Z [6tpep 101.5s] update updateOption
+2026-10-24T10:02:38Z [6tpep 101.5s] update updateOption
+2026-10-24T10:02:38Z [6tpep 101.5s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T10:02:41Z [6tpep 104.1s] update updateAuthorizationState authorizationStateWaitOtherDeviceConfirmation
+2026-10-24T10:02:55Z [6tpep 117.9s] update updateAuthorizationState authorizationStateWaitPassword
+2026-10-24T10:03:24Z [6tpep 147.7s] update updateAuthorizationState authorizationStateReady
+2026-10-24T10:13:00Z [uwmmd 0.1s] dom ready
+2026-10-24T10:13:00Z [uwmmd 0.1s] host.js running
+2026-10-24T10:13:00Z [uwmmd 0.1s] app.js ready
+2026-10-24T10:13:00Z [uwmmd 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=0
+2026-10-24T10:13:00Z [uwmmd 0.1s] TDLib client created
+2026-10-24T10:13:00Z [uwmmd 0.1s] creating TDLib client
+2026-10-24T10:13:00Z [uwmmd 0.1s] window load
+2026-10-24T10:13:01Z [uwmmd 1.0s] beat 1 lag=4ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:02Z [uwmmd 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:03Z [uwmmd 3.0s] beat 3 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:04Z [uwmmd 4.0s] beat 4 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:05Z [uwmmd 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:06Z [uwmmd 5.4s] worker inited
+2026-10-24T10:13:06Z [uwmmd 5.4s] worker fsInited
+2026-10-24T10:13:06Z [uwmmd 5.4s] update updateOption
+2026-10-24T10:13:06Z [uwmmd 5.4s] update updateOption
+2026-10-24T10:13:06Z [uwmmd 5.4s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:13:06Z [uwmmd 6.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:07Z [p0ygn 0.1s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=0
+2026-10-24T10:13:07Z [p0ygn 0.1s] host.js running
+2026-10-24T10:13:07Z [p0ygn 0.1s] dom ready
+2026-10-24T10:13:07Z [p0ygn 0.2s] TDLib client created
+2026-10-24T10:13:07Z [p0ygn 0.2s] creating TDLib client
+2026-10-24T10:13:07Z [p0ygn 0.2s] window load
+2026-10-24T10:13:07Z [p0ygn 0.1s] app.js ready
+2026-10-24T10:13:07Z [p0ygn 0.8s] worker inited
+2026-10-24T10:13:07Z [uwmmd 7.0s] beat 7 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:07Z [p0ygn 0.8s] worker fsInited
+2026-10-24T10:13:07Z [p0ygn 0.8s] update updateOption
+2026-10-24T10:13:07Z [p0ygn 0.8s] update updateOption
+2026-10-24T10:13:07Z [p0ygn 0.8s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:13:08Z [p0ygn 1.1s] beat 1 lag=84ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:09Z [p0ygn 2.1s] beat 2 lag=-1ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:10Z [p0ygn 3.1s] beat 3 lag=1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:11Z [p0ygn 4.1s] beat 4 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:12Z [p0ygn 5.1s] beat 5 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:19Z [nx3lf 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/64.0.3240.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=2089MB ls=3
+2026-10-24T10:13:19Z [nx3lf 0.0s] host.js running
+2026-10-24T10:13:19Z [nx3lf 0.0s] creating TDLib client
+2026-10-24T10:13:19Z [nx3lf 0.0s] TDLib client created
+2026-10-24T10:13:19Z [nx3lf 0.0s] app.js ready
+2026-10-24T10:13:19Z [nx3lf 0.0s] dom ready
+2026-10-24T10:13:19Z [nx3lf 0.1s] window load
+2026-10-24T10:13:20Z [nx3lf 1.0s] beat 1 lag=1ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:21Z [nx3lf 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:22Z [nx3lf 3.0s] beat 3 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:23Z [nx3lf 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:24Z [nx3lf 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:13:24Z [nx3lf 5.1s] worker inited
+2026-10-24T10:13:24Z [nx3lf 5.1s] worker fsInited
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateOption
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateOption
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateOption
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateOption
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T10:13:24Z [nx3lf 5.1s] update updateOption
+2026-10-24T10:13:25Z [nx3lf 6.0s] beat 6 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:25Z [qa6z6 0.0s] start Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/69.0.3494.0 Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=8 heap=0MB ls=3
+2026-10-24T10:13:25Z [qa6z6 0.1s] host.js running
+2026-10-24T10:13:25Z [qa6z6 0.1s] creating TDLib client
+2026-10-24T10:13:25Z [qa6z6 0.1s] TDLib client created
+2026-10-24T10:13:25Z [qa6z6 0.1s] app.js ready
+2026-10-24T10:13:25Z [qa6z6 0.1s] dom ready
+2026-10-24T10:13:25Z [qa6z6 0.1s] window load
+2026-10-24T10:13:26Z [qa6z6 0.6s] worker inited
+2026-10-24T10:13:26Z [qa6z6 0.6s] worker fsInited
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateOption
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateOption
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateOption
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateOption
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateOption
+2026-10-24T10:13:26Z [qa6z6 0.6s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T10:13:26Z [qa6z6 1.0s] beat 1 lag=2ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:27Z [qa6z6 2.0s] beat 2 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:28Z [qa6z6 3.0s] beat 3 lag=-1ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:29Z [qa6z6 4.0s] beat 4 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:13:30Z [qa6z6 5.0s] beat 5 lag=0ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:17:13Z [qwhnu 0.1s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=0
+2026-10-24T10:17:14Z [qwhnu 1.7s] host.js running
+2026-10-24T10:17:14Z [qwhnu 1.9s] beat 1 lag=853ms intro=1 tdweb=1 host=1 ui=0 mode=boot
+2026-10-24T10:17:15Z [qwhnu 2.4s] app.js ready
+2026-10-24T10:17:15Z [qwhnu 2.4s] dom ready
+2026-10-24T10:17:15Z [qwhnu 2.5s] beat 2 lag=-399ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:17:15Z [qwhnu 2.5s] window load
+2026-10-24T10:17:15Z [qwhnu 2.6s] creating TDLib client
+2026-10-24T10:17:15Z [qwhnu 2.6s] TDLib client created
+2026-10-24T10:17:16Z [qwhnu 3.1s] beat 3 lag=-362ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:17:17Z [qwhnu 4.1s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:17:18Z [qwhnu 5.1s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:17:19Z [qwhnu 6.1s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:17:19Z [qwhnu 7.0s] worker inited
+2026-10-24T10:17:20Z [qwhnu 7.1s] worker fsInited
+2026-10-24T10:17:20Z [qwhnu 7.1s] update updateOption
+2026-10-24T10:17:20Z [qwhnu 7.1s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:17:20Z [qwhnu 7.1s] update updateOption
+2026-10-24T10:17:20Z [qwhnu 7.4s] beat 7 lag=326ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:17:21Z [qwhnu 8.5s] beat 8 lag=114ms intro=1 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:17:22Z [qwhnu 9.9s] beat 9 lag=416ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:18:29Z [qwhnu 76.7s] update updateOption
+2026-10-24T10:18:29Z [qwhnu 76.7s] update updateOption
+2026-10-24T10:18:29Z [qwhnu 76.7s] update updateOption
+2026-10-24T10:18:29Z [qwhnu 76.8s] update updateAuthorizationState authorizationStateWaitPhoneNumber
+2026-10-24T10:18:33Z [qwhnu 80.9s] update updateFatalError [ 0][t 0][1792837112.800000190][Binlog.cpp:397][!Binlog /flixgram/dbfs/td.binlog]	Truncate binlog "/flixgram/dbfs/td.binlog" from size 12196 to size 1
+2026-10-24T10:20:48Z [90s1w 0.0s] start Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36 wasm=object worker=function idb=object mse=function cores=4 mem=1 heap=368MB ls=3
+2026-10-24T10:20:50Z [90s1w 1.5s] host.js running
+2026-10-24T10:20:50Z [90s1w 1.6s] creating TDLib client
+2026-10-24T10:20:50Z [90s1w 1.6s] TDLib client created
+2026-10-24T10:20:50Z [90s1w 1.7s] beat 1 lag=651ms intro=1 tdweb=1 host=1 ui=0 mode=boot
+2026-10-24T10:20:50Z [90s1w 2.2s] app.js ready
+2026-10-24T10:20:50Z [90s1w 2.2s] dom ready
+2026-10-24T10:20:50Z [90s1w 2.3s] beat 2 lag=-352ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:50Z [90s1w 2.3s] window load
+2026-10-24T10:20:51Z [90s1w 3.0s] beat 3 lag=-274ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:52Z [90s1w 4.0s] beat 4 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:53Z [90s1w 5.0s] beat 5 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:54Z [90s1w 6.0s] beat 6 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:55Z [90s1w 7.0s] beat 7 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:56Z [90s1w 8.0s] beat 8 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:57Z [90s1w 9.0s] beat 9 lag=0ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:58Z [90s1w 10.0s] beat 10 lag=15ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:59Z [90s1w 10.7s] worker inited
+2026-10-24T10:20:59Z [90s1w 10.8s] worker fsInited
+2026-10-24T10:20:59Z [90s1w 10.8s] update updateOption
+2026-10-24T10:20:59Z [90s1w 10.8s] update updateAuthorizationState authorizationStateWaitTdlibParameters
+2026-10-24T10:20:59Z [90s1w 10.8s] update updateOption
+2026-10-24T10:20:59Z [90s1w 11.0s] beat 11 lag=-15ms intro=1 tdweb=1 host=1 ui=1 mode=boot
+2026-10-24T10:20:59Z [90s1w 11.1s] update updateOption
+2026-10-24T10:20:59Z [90s1w 11.1s] update updateOption
+2026-10-24T10:20:59Z [90s1w 11.1s] update updateOption
+2026-10-24T10:20:59Z [90s1w 11.1s] update updateAuthorizationState authorizationStateWaitOtherDeviceConfirmation
+2026-10-24T10:21:00Z [90s1w 12.3s] update updateAuthorizationState authorizationStateWaitOtherDeviceConfirmation
+2026-10-24T10:21:01Z [90s1w 12.4s] beat 12 lag=402ms intro=0 tdweb=1 host=1 ui=1 mode=gate
+2026-10-24T10:21:12Z [90s1w 24.2s] update updateAuthorizationState authorizationStateWaitPassword
+2026-10-24T10:21:37Z [90s1w 48.5s] update updateAuthorizationState authorizationStateReady
+2026-10-24T10:21:45Z [90s1w 56.7s] play http://127.0.0.1:0/f/4116?m=video%2Fmp4 at 0
+2026-10-24T10:21:45Z [90s1w 57.3s] file 4116 size=848985246 expected=848985246 path=yes
+2026-10-24T10:22:01Z [90s1w 73.0s] play http://127.0.0.1:0/f/4122?m=video%2Fmp4 at 0
+2026-10-24T10:22:01Z [90s1w 73.0s] file 4122 size=2091857115 expected=2091857115 path=no
+2026-10-24T10:22:09Z [90s1w 81.1s] play http://127.0.0.1:0/f/4067?m=video%2Fx-matroska at 0
+2026-10-24T10:22:10Z [90s1w 81.4s] file 4067 size=288856279 expected=288856279 path=no
+2026-10-24T10:22:15Z [90s1w 87.0s] play http://127.0.0.1:0/f/4116?m=video%2Fmp4 at 0
+2026-10-24T10:22:15Z [90s1w 87.0s] file 4116 size=848985246 expected=848985246 path=yes
+2026-10-24T10:22:21Z [90s1w 93.3s] play http://127.0.0.1:0/f/4116?m=video%2Fmp4 at 0
+2026-10-24T10:22:21Z [90s1w 93.4s] file 4116 size=848985246 expected=848985246 path=no
+2026-10-24T10:22:40Z [90s1w 111.9s] play http://127.0.0.1:0/f/4631?m=video%2Fmp4 at 0
+2026-10-24T10:22:40Z [90s1w 112.2s] file 4631 size=1362890417 expected=1362890417 path=no
+2026-10-24T10:23:05Z [90s1w 136.4s] play http://127.0.0.1:0/f/4645?m=video%2Fmp4 at 0
+2026-10-24T10:23:05Z [90s1w 136.7s] file 4645 size=161055309 expected=161055309 path=yes
+2026-10-24T10:23:18Z [90s1w 149.9s] play http://127.0.0.1:0/f/4789?m=video%2Fmp4 at 0
+2026-10-24T10:23:18Z [90s1w 150.0s] file 4789 size=336793484 expected=336793484 path=no
+2026-10-24T10:23:21Z [90s1w 152.4s] play http://127.0.0.1:0/f/4795?m=video%2Fmp4 at 0
+2026-10-24T10:23:21Z [90s1w 152.6s] file 4795 size=358288334 expected=358288334 path=no
