@@ -21,19 +21,33 @@ function deliver(o) {
   window.__td([o]);
 }
 
+const flog = window.flog || (() => {});
+flog('host.js running');
+let seenUpdates = 0;
+
 function makeClient() {
   const TdClient = tdweb.default || tdweb;
-  return new TdClient({
+  flog('creating TDLib client');
+  const c = new TdClient({
     instanceName: 'flixgram',
     jsLogVerbosityLevel: 'error',
     logVerbosityLevel: 1,
     useDatabase: true,
     mode: 'wasm',
     onUpdate: (u) => {
+      if (seenUpdates++ < 6 || u['@type'] === 'updateAuthorizationState' || u['@type'] === 'updateFatalError') {
+        flog('update ' + u['@type'] + (u.authorization_state ? ' ' + u.authorization_state['@type'] : '') + (u.error ? ' ' + String(u.error).slice(0, 150) : ''));
+      }
       if (u['@type'] === 'updateFile') files.onUpdate(u.file);
       deliver(u);
     },
   });
+  try {
+    c.worker.addEventListener('message', (e) => { const t = e.data && e.data['@type']; if (t === 'inited' || t === 'fsInited') flog('worker ' + t); });
+    c.worker.addEventListener('error', (e) => flog('WORKER ERROR ' + (e.message || '') + ' ' + (e.filename || '') + ':' + (e.lineno || '')));
+  } catch (e) { flog('no worker hook ' + e.message); }
+  flog('TDLib client created');
+  return c;
 }
 
 function td(query) {
@@ -131,6 +145,7 @@ window.NovaHost = {
     });
   },
   ready() {
+    flog('app.js ready');
     jsReady = true;
     const b = queue.splice(0);
     if (b.length && window.__td) window.__td(b);

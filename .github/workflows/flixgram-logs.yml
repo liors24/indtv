@@ -1,0 +1,23 @@
+name: Fetch Flixgram TV start-up log
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the log lines from ntfy and keep them on the flixgram-logs branch
+        run: |
+          mkdir out && cd out
+          curl -s "https://ntfy.sh/flixgram-diag-l24tv/json?poll=1&since=24h" | jq -r '"\(.time|todate) \(.message)"' > log.txt || true
+          wc -l log.txt
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add log.txt
+          git commit -q -m "log $(date -u +%FT%TZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/flixgram-logs

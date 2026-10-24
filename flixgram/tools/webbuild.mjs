@@ -34,7 +34,11 @@ const cssMin = await esbuild.transform(css, { loader: 'css', minify: mode !== 'd
 fs.writeFileSync(`${out}/app.css`, cssMin.code);
 let html = fs.readFileSync(`${root}/web-src/index.html`, 'utf8');
 if (mode === 'dev') { html = html.replace('<!--MOCK-->', '<script src="mock.js"></script>'); fs.copyFileSync(`${root}/mock/mock.js`, `${out}/mock.js`); }
-else if (tizen) html = html.replace('<!--MOCK-->', '<script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>');
+else if (tizen) {
+  fs.copyFileSync(`${root}/tizen/log.js`, `${out}/log.js`);
+  html = html.replace('<!--MOCK-->', '<script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>')
+    .replace('<link rel="stylesheet" href="app.css">', '<script src="log.js"></script><link rel="stylesheet" href="app.css">');
+}
 else html = html.replace('<!--MOCK-->', '');
 fs.writeFileSync(`${out}/index.html`, html);
 fs.copyFileSync(`${root}/web-src/logo.svg`, `${out}/logo.svg`);
