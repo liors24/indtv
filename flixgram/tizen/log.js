@@ -22,13 +22,8 @@
     n++;
     var intro = document.getElementById('intro');
     flog('beat ' + n + ' lag=' + lag + 'ms intro=' + (intro ? 1 : 0) + ' tdweb=' + (window.tdweb ? 1 : 0) + ' host=' + (window.NovaHost ? 1 : 0) + ' ui=' + (window.NOVA ? 1 : 0) + ' mode=' + ((document.getElementById('app') || {}).dataset || {}).mode);
-    if (n >= 70) clearInterval(hb);
+    if (n >= 40 || (!intro && n >= 5)) clearInterval(hb);
   }, 1000);
-  // switch the interface's features on one by one; the last stage logged before the beats stop is the culprit
-  var stages = [['tz-nofont', 'fonts'], ['tz-nofx', 'shadows+filters'], ['tz-nomotion', 'animations'], ['tz-noamb', 'ambient']];
-  stages.forEach(function (st, i) {
-    setTimeout(function () { flog('STAGE ' + st[1] + ' on'); document.documentElement.classList.remove(st[0]); }, 8000 * (i + 1));
-  });
   document.addEventListener('DOMContentLoaded', function () { flog('dom ready'); });
   window.addEventListener('load', function () { flog('window load'); });
 })();

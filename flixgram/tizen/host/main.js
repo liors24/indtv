@@ -225,5 +225,4 @@ document.addEventListener('visibilitychange', () => {
   else window.NOVA.lifecycle('resume');
 });
 
-// diagnostic build: the interface runs alone for 12 s before TDLib starts, to see which one stops the TV
-setTimeout(() => { flog('STAGE TDLib on'); client = makeClient(); }, 40000);
+client = makeClient();

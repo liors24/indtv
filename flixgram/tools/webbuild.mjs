@@ -38,7 +38,7 @@ else if (tizen) {
   fs.copyFileSync(`${root}/tizen/log.js`, `${out}/log.js`);
   html = html.replace('<!--MOCK-->', '<script src="tdweb.js"></script><script src="mp4box.min.js"></script><script src="host.js"></script>')
     .replace('<link rel="stylesheet" href="app.css">', '<script src="log.js"></script><link rel="stylesheet" href="app.css">')
-    .replace('<html lang="he" dir="rtl">', '<html lang="he" dir="rtl" class="tz-nofont tz-nofx tz-nomotion tz-noamb">');
+    .replace('<html lang="he" dir="rtl">', '<html lang="he" dir="rtl" class="tizen">');
 }
 else html = html.replace('<!--MOCK-->', '');
 fs.writeFileSync(`${out}/index.html`, html);

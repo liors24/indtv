@@ -908,8 +908,7 @@ html.fast .nf-card.is-focus .nf-art { animation: none; }
 .t-calm .tile { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 .nf-cap, .bb-meta, .nf-meta { text-align: right; } .nf-cap { unicode-bidi: plaintext; }
 
-/* Samsung diagnostic build: features switched on one at a time to find what stops the TV (tizen/log.js) */
-html.tz-nofont, html.tz-nofont * { font-family: sans-serif !important; }
-html.tz-nofx *, html.tz-nofx *::before, html.tz-nofx *::after { filter: none !important; box-shadow: none !important; text-shadow: none !important; }
-html.tz-nomotion *, html.tz-nomotion *::before, html.tz-nomotion *::after { animation: none !important; transition: none !important; }
-html.tz-noamb #ambient, html.tz-noamb #vignette { display: none !important; }
+/* Samsung TVs: the intro beam must not grow into a huge blurred layer (scaleY(140) of a shadow) —
+   on a 1 GB TV that froze the whole app on the logo. It just fades there. */
+html.tizen .intro-beam { animation-name: beamTv; box-shadow: none; }
+@keyframes beamTv { 0% { transform: scaleX(0); opacity: 1; } 55% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
