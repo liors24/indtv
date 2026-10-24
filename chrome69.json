@@ -1,0 +1,187 @@
+{
+ "label": "chrome69",
+ "steps": [
+  {
+   "k": "engine",
+   "v": "HeadlessChrome/69.0.3494.0"
+  },
+  {
+   "k": "first-launch t=3s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "first-launch t=6s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "first-launch t=9s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "first-launch t=12s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "first-launch t=15s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "first-launch t=18s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "מחברים את הטלוויזיה לטלגרם"
+   }
+  },
+  {
+   "k": "console.warning",
+   "v": "__syscall_getsockname 8"
+  },
+  {
+   "k": "with-keys t=3s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "with-keys t=6s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "with-keys t=9s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "with-keys t=12s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "with-keys t=15s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "with-keys t=18s",
+   "v": {
+    "url": "/index.html",
+    "diag": "",
+    "intro": false,
+    "mode": "gate",
+    "title": "סורקים, וזהו"
+   }
+  },
+  {
+   "k": "mse",
+   "v": "video/mp4; codecs=\"avc1.64001f\"=false video/mp4; codecs=\"vp09.00.21.08\"=true audio/mp4; codecs=\"mp4a.40.2\"=false audio/mp4; codecs=\"fLaC\"=false"
+  },
+  {
+   "k": "console.error",
+   "v": "[0:00:01.024] [BoxParser] Parsing of box 'dfLa' read 38 more bytes than the indicated box data size, seeking backwards"
+  },
+  {
+   "k": "player after start@20s",
+   "v": {
+    "st": {
+     "active": true,
+     "prepared": true,
+     "buffering": false,
+     "pos": 25910,
+     "dur": 90000,
+     "playing": true,
+     "speed": 1,
+     "muted": false,
+     "w": 640,
+     "h": 360
+    },
+    "ev": [
+     "buffering",
+     "buffering",
+     "prepared",
+     "ready"
+    ]
+   }
+  },
+  {
+   "k": "player after seek 70s",
+   "v": {
+    "st": {
+     "active": true,
+     "prepared": true,
+     "buffering": false,
+     "pos": 74000,
+     "dur": 90000,
+     "playing": true,
+     "speed": 1,
+     "muted": false,
+     "w": 640,
+     "h": 360
+    },
+    "ev": [
+     "prepared",
+     "ready",
+     "buffering",
+     "ready"
+    ]
+   }
+  }
+ ]
+}
