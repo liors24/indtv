@@ -6,7 +6,9 @@ import { store } from './util.js';
 import { progress } from './components.js';
 
 const DELAY = 1500;
-let timer = 0, poll = 0;
+const FULL_AFTER = 1500;   // then the picture opens up to the whole screen, like a streaming service
+let timer = 0, poll = 0, fullTimer = 0, swapTimer = 0;
+let kept = null;         // the row that stays visible over the full-screen picture
 let cur = null;        // item previewing
 let shown = false;     // the picture is on screen
 let handed = false;    // given over to the player
@@ -23,6 +25,8 @@ function unframe() { if (framed) { framed.classList.remove('pv-frame'); framed =
 const root = () => document.documentElement;
 
 export function enabled() { return store.get('preview', true) !== false; }
+export function fullEnabled() { return store.get('previewFull', true) !== false; }
+export function setFullEnabled(on) { store.set('previewFull', !!on); if (!on) unfull(); }
 export function setEnabled(on) { store.set('preview', !!on); if (!on) stop(); }
 
 /** Called when a video gets the focus (hero). */
@@ -65,9 +69,37 @@ function begin(item) {
     if (s.active && s.prepared && s.playing && !s.buffering && !shown) {
       shown = true;
       root().classList.add('pv-on');
+      if (fullEnabled()) fullTimer = setTimeout(() => goFull(item), FULL_AFTER);
     }
   }, 200);
 }
+
+// From the frame to the whole screen: cover the frame for a moment, switch the video to full size
+// underneath, then let the room fade away so the picture fills the screen behind the focused row.
+function goFull(item) {
+  if (!cur || cur !== item || root().classList.contains('playing')) return;
+  const keep = framed && framed.closest('[data-row]');
+  if (keep) { kept = keep; keep.classList.add('pv-keep'); }
+  if (root().classList.contains('pv-box')) {
+    root().classList.add('pv-swap');
+    swapTimer = setTimeout(() => {
+      if (!cur || cur !== item) return;
+      td.player.aspect('zoom');
+      swapTimer = setTimeout(() => { if (cur === item) root().classList.add('pv-full'); }, 160);
+    }, 200);
+  } else {
+    root().classList.add('pv-full');
+  }
+}
+
+function unfull() {
+  clearTimeout(fullTimer);
+  clearTimeout(swapTimer);
+  root().classList.remove('pv-swap', 'pv-full');
+  if (kept) { kept.classList.remove('pv-keep'); kept = null; }
+}
+
+export function isFull() { return root().classList.contains('pv-full'); }
 
 /** The player opens this item: hand over the running picture instead of starting again. */
 export function take(item) {
@@ -76,6 +108,7 @@ export function take(item) {
   const ok = shown;
   handed = ok;
   clearInterval(poll);
+  unfull();
   root().classList.remove('pv-load', 'pv-on', 'pv-box'); unframe();
   if (!ok) { stop(); return false; }
   cur = null;
@@ -85,6 +118,7 @@ export function take(item) {
 export function stop() {
   clearTimeout(timer);
   clearInterval(poll);
+  unfull();
   root().classList.remove('pv-load', 'pv-on', 'pv-box'); unframe();
   if (!cur) return;
   const it = cur;

@@ -267,6 +267,10 @@ export function move(dir) {
 
 export function select() {
   if (!current) return;
+  // a short press-in, so OK feels physical
+  const pressed = current;
+  pressed.classList.add('press');
+  setTimeout(() => pressed.classList.remove('press'), 170);
   if (current._onselect) current._onselect();
   else if (current.tagName === 'INPUT' || current.tagName === 'TEXTAREA') current.focus();
   else current.click();

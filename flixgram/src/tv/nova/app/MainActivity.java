@@ -71,6 +71,8 @@ public class MainActivity extends Activity implements Td.Listener, Player.Events
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         if (Build.VERSION.SDK_INT >= 21) s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         if (Build.VERSION.SDK_INT >= 23) s.setOffscreenPreRaster(true); // smoother scrolling: raster ahead of time
+        // the interface is the whole app: keep its renderer at full priority so animations stay smooth
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
         s.setRenderPriority(WebSettings.RenderPriority.HIGH);
         web.setVerticalScrollBarEnabled(false);
         web.setHorizontalScrollBarEnabled(false);

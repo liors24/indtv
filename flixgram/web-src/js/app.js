@@ -144,6 +144,7 @@ document.addEventListener('keydown', (e) => {
 let backArmed = 0;
 window.NOVA = {
   back() {
+    if (preview.isFull()) { preview.stop(); return true; }   // leave the full-screen preview first
     const active = document.activeElement;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) { active.blur(); return true; }
     if (modalOpen()) { closeModal(); return true; }

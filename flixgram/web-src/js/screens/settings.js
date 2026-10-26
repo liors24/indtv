@@ -58,6 +58,12 @@ export function settingsScreen(app) {
       pvRow.querySelector('.toggle').classList.toggle('on', v);
     }, { toggle: preview.enabled(), explain: 'כשעוצרים על סרטון לשנייה וחצי, הוא מתחיל להתנגן בשקט מאחורי המסך. לחיצה על OK ממשיכה אותו מאותה שנייה, עם קול. התצוגה מורידה מעט נתונים מטלגרם בזמן הדפדוף.' });
     list.appendChild(pvRow);
+    const fullRow = row('תצוגה מקדימה במסך מלא', '', () => {
+      const v = !preview.fullEnabled();
+      preview.setFullEnabled(v);
+      fullRow.querySelector('.toggle').classList.toggle('on', v);
+    }, { toggle: preview.fullEnabled(), explain: 'שנייה וחצי אחרי שהתצוגה המקדימה מתחילה, היא נפתחת לכל המסך מאחורי השורה, כמו בנטפליקס. כל תזוזה בשלט מחזירה את המסך.' });
+    list.appendChild(fullRow);
     const themeName = () => (THEMES.find((x) => x.id === theme()) || THEMES[0]).label;
     const themeRow = row('ערכת עיצוב', themeName(), () => {
       sheet('ערכת עיצוב', THEMES.map((x) => ({ label: x.label, sub: x.sub, value: x.id, selected: x.id === theme() })), (t) => {

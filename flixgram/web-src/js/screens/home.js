@@ -193,6 +193,11 @@ export function homeScreen(app) {
     if (!S.pick) {
       rows.appendChild(emptyState('עוד אין כאן סרטונים', 'ברגע שיעלו סרטונים לערוצים ולקבוצות שלכם הם יופיעו כאן. אפשר גם לבחור ערוץ בספרייה.', button('לספרייה', () => app.go('library'), { primary: true })));
     }
+    if (firstRender) {
+      // the rows rise into place one after another
+      Array.prototype.slice.call(rows.children, 0, 7).forEach((r, i) => { r.style.setProperty('--i', i); r.classList.add('enter'); });
+      setTimeout(() => Array.prototype.forEach.call(rows.querySelectorAll('.enter'), (r) => r.classList.remove('enter')), 1400);
+    }
     const f = focused();
     if (app.current === 'home' && (firstRender || !f || !document.body.contains(f))) focusFirst(rows);
     firstRender = false;
