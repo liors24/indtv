@@ -975,8 +975,9 @@ html.pv-full .pv-frame .nf-title { text-shadow: 0 2px 24px rgba(0, 0, 0, 0.8); }
 /* =====================================================================
    Modern look (evening sky) — glass surfaces, one friendly gradient, quick soft motion
    ===================================================================== */
-.t-calm body { background: radial-gradient(120% 90% at 85% -10%, #1d2140 0%, var(--velvet) 55%); }
-html.t-calm, .t-calm #ambient { background-color: var(--velvet); }
+/* the sky glow lives on the room layer (#ambient), never on html/body: those must turn transparent
+   while a video plays, because the picture is drawn underneath the page */
+html.t-calm:not(.playing):not(.pv-on) #ambient { background: radial-gradient(120% 90% at 85% -10%, #1d2140 0%, var(--velvet) 55%); }
 .t-calm #topbar { background: linear-gradient(rgba(var(--bg-rgb), 0.9), rgba(var(--bg-rgb), 0)); }
 .t-calm .brand { font-weight: 700; letter-spacing: 0.04em; }
 
@@ -1022,7 +1023,7 @@ html.t-calm, .t-calm #ambient { background-color: var(--velvet); }
    Samsung TVs (html.tizen): the same look with cheaper effects — only opacity and movement are animated
    ===================================================================== */
 html.tizen #ambient .amb-layer { display: none; }
-html.tizen.t-calm body { background: var(--velvet); }
+html.tizen.t-calm:not(.playing):not(.pv-on) #ambient { background: var(--velvet); }
 html.tizen img.mini, html.tizen .vw-mini { filter: none !important; }
 html.tizen .bb-art img.thumb.ok { animation: none; }
 html.tizen .nf-card.is-focus .nf-art { animation: tvOpen 220ms var(--out); }

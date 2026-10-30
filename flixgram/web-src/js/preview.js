@@ -24,10 +24,11 @@ function unframe() { if (framed) { framed.classList.remove('pv-frame'); framed =
 
 const root = () => document.documentElement;
 
-export function enabled() { return store.get('preview', true) !== false; }
+// off unless turned on in Settings (a separate key, so earlier choices don't switch it back on)
+export function enabled() { return store.get('previewOn', false) === true; }
 export function fullEnabled() { return store.get('previewFull', true) !== false; }
 export function setFullEnabled(on) { store.set('previewFull', !!on); if (!on) unfull(); }
-export function setEnabled(on) { store.set('preview', !!on); if (!on) stop(); }
+export function setEnabled(on) { store.set('previewOn', !!on); if (!on) stop(); }
 
 /** Called when a video gets the focus (hero). */
 export function rest(item, frame) {
