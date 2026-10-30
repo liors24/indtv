@@ -1,9 +1,9 @@
-// Visual themes. 'calm' (soft slate, Netflix-like home) is the default; 'marquee' is the cinema sign look.
+// Visual theme: one modern streaming design ('calm'). The html class t-calm scopes its styles.
 import { store } from './util.js';
 
+// The cinema-sign look ("marquee") was retired: everyone gets the modern streaming design.
 export const THEMES = [
-  { id: 'calm', label: 'ערב רגוע', sub: 'צבעים רכים ושקטים, תמונה גדולה בראש המסך' },
-  { id: 'marquee', label: 'מרקיזה', sub: 'שלט קולנוע מואר, ענבר ובורדו' },
+  { id: 'calm', label: 'Flixgram', sub: 'עיצוב מודרני ורך' },
 ];
 
 export function theme() {
@@ -16,6 +16,7 @@ export function theme() {
 export function applyTheme(t) {
   t = t || theme();
   const cl = document.documentElement.classList;
+  cl.remove('t-marquee');
   THEMES.forEach((x) => cl.toggle('t-' + x.id, x.id === t));
 }
 

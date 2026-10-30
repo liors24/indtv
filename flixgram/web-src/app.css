@@ -681,17 +681,20 @@ html.pv-on .screen.home .hero::before { background: rgba(var(--bg-rgb), 0.35); }
    ===================================================================== */
 .hero-art { display: none; }
 html.t-calm {
-  /* a darkened screening room: ink with a little of the logo's plum, warm white letters,
-     and the projector's peach as the one accent (progress, kickers, the selected tab) */
-  --velvet: #121019; --velvet-2: #1b1824; --velvet-3: #252130;
-  --lamp: #f4efe9; --lamp-rgb: 244, 239, 233;
-  --amber: #ffc8a6; --amber-rgb: 255, 200, 166;
-  --neon: #ffb88f; --haze: #a8a1b4;
-  --dust: rgba(255, 200, 166, 0.12);
-  --bg-rgb: 18, 16, 25;
-  --sea: #ffb88f;
+  /* evening sky: deep indigo with soft, friendly light — peach, rose and lavender as one gradient
+     that marks what you're on and what's playing; warm white letters */
+  --velvet: #0f1220; --velvet-2: #171b2c; --velvet-3: #212639;
+  --lamp: #f6f4ff; --lamp-rgb: 246, 244, 255;
+  --amber: #ffb4a2; --amber-rgb: 255, 180, 162;
+  --neon: #ff8fab; --haze: #a7accb;
+  --dust: rgba(255, 143, 171, 0.12);
+  --bg-rgb: 15, 18, 32;
+  --sea: #ff9eb5;
+  --grad: linear-gradient(120deg, #ffb199 0%, #ff8fab 48%, #b49cff 100%);
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-line: rgba(255, 255, 255, 0.09);
   --out: cubic-bezier(0.16, 1, 0.3, 1);
-  --glide: cubic-bezier(0.2, 0.85, 0.25, 1);
+  --glide: cubic-bezier(0.22, 0.9, 0.24, 1);
 }
 /* one family everywhere */
 .t-calm .brand, .t-calm .hero-title, .t-calm .ep, .t-calm .conv-head h2, .t-calm .search-input, .t-calm .acct-name,
@@ -968,3 +971,62 @@ html.pv-full .pv-frame { box-shadow: none !important; }
 html.pv-full .pv-keep .nf-desc { opacity: 1; }
 html.pv-full .pv-frame .nf-shade, html.pv-full .pv-frame .badge { opacity: 0; transition: opacity 400ms; }
 html.pv-full .pv-frame .nf-title { text-shadow: 0 2px 24px rgba(0, 0, 0, 0.8); }
+
+/* =====================================================================
+   Modern look (evening sky) — glass surfaces, one friendly gradient, quick soft motion
+   ===================================================================== */
+.t-calm body { background: radial-gradient(120% 90% at 85% -10%, #1d2140 0%, var(--velvet) 55%); }
+html.t-calm, .t-calm #ambient { background-color: var(--velvet); }
+.t-calm #topbar { background: linear-gradient(rgba(var(--bg-rgb), 0.9), rgba(var(--bg-rgb), 0)); }
+.t-calm .brand { font-weight: 700; letter-spacing: 0.04em; }
+
+/* tabs: the current one wears the gradient; the focused one is bright white */
+.t-calm .nav-item { border-radius: 999px; transition: background-color 200ms var(--out), color 200ms, transform 200ms var(--out); }
+.t-calm .nav-item.sel { background: var(--grad); color: #1a1530; }
+.t-calm .nav-item.is-focus { background: #fff; color: #1a1530; transform: scale(1.06); box-shadow: 0 10px 30px -10px rgba(255, 143, 171, 0.55); }
+
+/* headings */
+.t-calm .shelf-title { font-weight: 700; letter-spacing: -0.01em; }
+.t-calm .shelf-meta { color: var(--haze); }
+.bb-kicker, .t-calm .screen.home .hero-sub { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 600; }
+
+/* surfaces are frosted glass with a hairline edge */
+.t-calm .tile { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); color: var(--lamp); }
+.t-calm .tile.is-focus { background: #fff; color: #1a1530; transform: scale(1.07); box-shadow: 0 18px 40px -14px rgba(255, 143, 171, 0.5); }
+.t-calm .nf-btn { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); }
+.t-calm .nf-btn.is-focus { background: #fff; color: #1a1530; box-shadow: 0 16px 40px -12px rgba(255, 143, 171, 0.55); }
+.t-calm .nf-more .nf-art { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); }
+.t-calm .badge, .t-calm .seen-badge { background: rgba(15, 18, 32, 0.66); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.t-calm .bb { box-shadow: 0 0 0 1px var(--glass-line), 0 40px 90px -40px rgba(0, 0, 0, 0.8); }
+
+/* focus: a clean white edge with a soft rosy glow */
+.t-calm .nf-card.is-focus .nf-art { box-shadow: 0 0 0 3px #fff, 0 26px 60px -22px rgba(255, 143, 171, 0.45); }
+.t-calm .card::before { box-shadow: 0 0 0 3px #fff, 0 24px 48px -16px rgba(255, 143, 171, 0.4); }
+
+/* progress and the player's bar use the gradient */
+.t-calm .prog i, .t-calm .pl-fill { background: var(--grad); }
+.t-calm .pl-knob { background: #fff; box-shadow: 0 0 0 6px rgba(255, 143, 171, 0.3); }
+.t-calm .prog.done i { background: #7be0a6 !important; }
+
+/* switching screens: a quick fade with a hint of depth */
+.t-calm .screen.on { animation: screenSwap 260ms var(--out); }
+@keyframes screenSwap { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* snappier movement everywhere */
+.t-calm .rail-track { transition: transform 340ms var(--glide); }
+.t-calm .rows, .t-calm .lib-content { transition: transform 380ms var(--glide); }
+.t-calm .nf-card.is-focus .nf-art { animation-duration: 300ms; }
+.t-calm .nf-desc.on { transition-delay: 60ms; }
+
+/* =====================================================================
+   Samsung TVs (html.tizen): the same look with cheaper effects — only opacity and movement are animated
+   ===================================================================== */
+html.tizen #ambient .amb-layer { display: none; }
+html.tizen.t-calm body { background: var(--velvet); }
+html.tizen img.mini, html.tizen .vw-mini { filter: none !important; }
+html.tizen .bb-art img.thumb.ok { animation: none; }
+html.tizen .nf-card.is-focus .nf-art { animation: tvOpen 220ms var(--out); }
+@keyframes tvOpen { from { opacity: 0.6; } to { opacity: 1; } }
+html.tizen.t-calm .nf-card.is-focus .nf-art { box-shadow: 0 0 0 3px #fff; }
+html.tizen.t-calm .tile.is-focus, html.tizen.t-calm .nf-btn.is-focus, html.tizen.t-calm .nav-item.is-focus { box-shadow: none; }
+html.tizen .bb-info > *, html.tizen .rows > .enter { animation-duration: 360ms; }

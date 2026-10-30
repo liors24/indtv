@@ -155,7 +155,7 @@ export class MseSession {
           sb.addEventListener('updateend', () => this.drain(lane));
           sb.addEventListener('error', () => this.fail('media', 'source buffer error'));
           this.lanes.push(lane);
-          this.mp4.setSegmentOptions(p.track.id, lane, { nbSamples: 100 });
+          this.mp4.setSegmentOptions(p.track.id, lane, { nbSamples: 48 }   /* small first fragment: the picture appears sooner */);
         });
         this.mp4.initializeSegmentation('per-track').forEach((s) => { s.user.queue.push({ buf: s.buffer, init: true }); this.drain(s.user); });
         const r = this.mp4.seek(this.startSec, true);

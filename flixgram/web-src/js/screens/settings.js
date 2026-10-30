@@ -71,7 +71,7 @@ export function settingsScreen(app) {
         themeRow._value.textContent = themeName();
       });
     }, { explain: 'המראה של כל האפליקציה. ״ערב רגוע״ נעים לעיניים בצפייה ארוכה; ״מרקיזה״ הוא שלט הקולנוע המואר.' });
-    list.appendChild(themeRow);
+    if (THEMES.length > 1) list.appendChild(themeRow);
     const sp = store.get('speed', 1);
     const speedRow = row('מהירות ברירת מחדל', sp === 1 ? 'רגילה' : sp + 'x', () => {
       sheet('מהירות ברירת מחדל', [0.75, 1, 1.25, 1.5, 2].map((s) => ({ label: s === 1 ? 'רגילה' : s + 'x', value: s, selected: s === store.get('speed', 1) })), (s) => {

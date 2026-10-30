@@ -285,7 +285,7 @@ window.addEventListener('nova:playerclosed', () => {
 const intro = (() => {
   const el = $('#intro');
   let finished = false;
-  const minEnd = Date.now() + 1500;
+  const minEnd = Date.now() + 900;
   return {
     done() {
       if (finished) return;
