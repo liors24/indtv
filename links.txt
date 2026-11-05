@@ -1,0 +1,4 @@
+is.gd flixgram -> https://is.gd/flixgram
+v.gd flixgram -> https://v.gd/flixgram
+check https://is.gd/flixgram -> 301 https://github.com/liors24/indtv/releases/download/flixgram/Flixgram.apk
+check https://v.gd/flixgram -> 301 https://github.com/liors24/indtv/releases/download/flixgram/Flixgram.apk
