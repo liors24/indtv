@@ -1,0 +1,36 @@
+name: Short link for Flixgram APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create short links (is.gd, v.gd) and keep the result on the flixgram-shortlink branch
+        run: |
+          mkdir out && cd out
+          URL="https://github.com/liors24/indtv/releases/download/flixgram/Flixgram.apk"
+          for name in flixgram flixgramtv flixgram24 flixtv24; do
+            r=$(curl -s "https://is.gd/create.php?format=simple&url=$URL&shorturl=$name")
+            echo "is.gd $name -> $r" >> links.txt
+            case "$r" in https://*) break;; esac
+          done
+          for name in flixgram flixgramtv flixgram24; do
+            r=$(curl -s "https://v.gd/create.php?format=simple&url=$URL&shorturl=$name")
+            echo "v.gd $name -> $r" >> links.txt
+            case "$r" in https://*) break;; esac
+          done
+          for l in $(grep -o 'https://[a-z.]*gd/[A-Za-z0-9_]*' links.txt); do
+            echo "check $l -> $(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' $l)" >> links.txt
+          done
+          cat links.txt
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add links.txt
+          git commit -q -m "short links"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/flixgram-shortlink
