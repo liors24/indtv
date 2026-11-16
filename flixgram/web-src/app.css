@@ -681,20 +681,20 @@ html.pv-on .screen.home .hero::before { background: rgba(var(--bg-rgb), 0.35); }
    ===================================================================== */
 .hero-art { display: none; }
 html.t-calm {
-  /* evening sky: deep indigo with soft, friendly light — peach, rose and lavender as one gradient
-     that marks what you're on and what's playing; warm white letters */
-  --velvet: #0f1220; --velvet-2: #171b2c; --velvet-3: #212639;
-  --lamp: #f6f4ff; --lamp-rgb: 246, 244, 255;
-  --amber: #ffb4a2; --amber-rgb: 255, 180, 162;
-  --neon: #ff8fab; --haze: #a7accb;
-  --dust: rgba(255, 143, 171, 0.12);
-  --bg-rgb: 15, 18, 32;
-  --sea: #ff9eb5;
-  --grad: linear-gradient(120deg, #ffb199 0%, #ff8fab 48%, #b49cff 100%);
-  --glass: rgba(255, 255, 255, 0.07);
-  --glass-line: rgba(255, 255, 255, 0.09);
-  --out: cubic-bezier(0.16, 1, 0.3, 1);
-  --glide: cubic-bezier(0.22, 0.9, 0.24, 1);
+  /* moonlit: deep night-teal room, soft white letters, mint marks what you're on,
+     a warm apricot only for what is new */
+  --velvet: #0A1314; --velvet-2: #122022; --velvet-3: #1A2C2E;
+  --lamp: #EAF4F1; --lamp-rgb: 234, 244, 241;
+  --amber: #7FE3C4; --amber-rgb: 127, 227, 196;
+  --neon: #FFB68A; --haze: #8FA8A4;
+  --dust: rgba(127, 227, 196, 0.12);
+  --bg-rgb: 10, 19, 20;
+  --sea: #7FE3C4;
+  --mint: #7FE3C4; --apricot: #FFB68A; --ink: #0A1314; --soft: #B9CCC8;
+  --glass: rgba(234, 244, 241, 0.12);
+  --glass-line: rgba(234, 244, 241, 0.08);
+  --out: cubic-bezier(0.2, 0.85, 0.25, 1);
+  --glide: cubic-bezier(0.2, 0.85, 0.25, 1);
 }
 /* one family everywhere */
 .t-calm .brand, .t-calm .hero-title, .t-calm .ep, .t-calm .conv-head h2, .t-calm .search-input, .t-calm .acct-name,
@@ -973,51 +973,68 @@ html.pv-full .pv-frame .nf-shade, html.pv-full .pv-frame .badge { opacity: 0; tr
 html.pv-full .pv-frame .nf-title { text-shadow: 0 2px 24px rgba(0, 0, 0, 0.8); }
 
 /* =====================================================================
-   Modern look (evening sky) — glass surfaces, one friendly gradient, quick soft motion
+   Moonlit (approved prototype) — Rubik, night-teal room, mint focus, quick soft motion
    ===================================================================== */
-/* the sky glow lives on the room layer (#ambient), never on html/body: those must turn transparent
-   while a video plays, because the picture is drawn underneath the page */
-html.t-calm:not(.playing):not(.pv-on) #ambient { background: radial-gradient(120% 90% at 85% -10%, #1d2140 0%, var(--velvet) 55%); }
+@font-face { font-family: 'Rubik'; src: url(fonts/Rubik.ttf); font-weight: 300 900; }
+html.t-calm, html.t-calm body, html.t-calm button, html.t-calm input,
+html.t-calm .brand, html.t-calm .hero-title, html.t-calm .bb-title, html.t-calm .shelf-title, html.t-calm .nav-item,
+html.t-calm .gate-title, html.t-calm .pl-title, html.t-calm .intro-word, html.t-calm .ep, html.t-calm .search-input,
+html.t-calm .lib-title, html.t-calm .acct-name, html.t-calm .set-detail h2, html.t-calm .empty-title, html.t-calm .un-t {
+  font-family: 'Rubik', 'Plex', system-ui, sans-serif;
+}
+/* the room's glow lives on #ambient, never on html/body (those turn transparent while a video plays) */
+html.t-calm:not(.playing):not(.pv-on) #ambient { background: radial-gradient(80% 70% at 28% 18%, #183436 0%, #0F2224 40%, var(--velvet) 75%); }
 .t-calm #topbar { background: linear-gradient(rgba(var(--bg-rgb), 0.9), rgba(var(--bg-rgb), 0)); }
-.t-calm .brand { font-weight: 700; letter-spacing: 0.04em; }
+.t-calm .brand { font-weight: 700; letter-spacing: 0.02em; }
+.t-calm .brand img { border-radius: 14px; }
 
-/* tabs: the current one wears the gradient; the focused one is bright white */
-.t-calm .nav-item { border-radius: 999px; transition: background-color 200ms var(--out), color 200ms, transform 200ms var(--out); }
-.t-calm .nav-item.sel { background: var(--grad); color: #1a1530; }
-.t-calm .nav-item.is-focus { background: #fff; color: #1a1530; transform: scale(1.06); box-shadow: 0 10px 30px -10px rgba(255, 143, 171, 0.55); }
+/* tabs: a pill bar; the current tab is lit softly, the focused one is solid white */
+.t-calm #nav { padding: 6px; border-radius: 999px; background: rgba(18, 32, 34, 0.75); }
+.t-calm .nav-item { border-radius: 999px; color: var(--soft); transition: background-color 180ms var(--out), color 180ms, transform 180ms var(--out); }
+.t-calm .nav-item.sel { background: rgba(234, 244, 241, 0.14); color: var(--lamp); }
+.t-calm .nav-item.is-focus { background: #fff; color: var(--ink); transform: scale(1.06); box-shadow: none; }
 
-/* headings */
-.t-calm .shelf-title { font-weight: 700; letter-spacing: -0.01em; }
+/* headings and small labels */
+.t-calm .shelf-title { font-weight: 600; letter-spacing: -0.01em; }
 .t-calm .shelf-meta { color: var(--haze); }
-.bb-kicker, .t-calm .screen.home .hero-sub { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 600; }
+.bb-kicker, .t-calm .screen.home .hero-sub {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px; border-radius: 999px;
+  background: rgba(127, 227, 196, 0.14); color: var(--mint); font-weight: 600; font-size: 20px;
+}
+.bb-kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mint); }
+.t-calm .bb-title { font-weight: 700; letter-spacing: -0.02em; text-shadow: none; }
+.t-calm .bb-meta { color: #C6D6D3; font-weight: 500; }
 
-/* surfaces are frosted glass with a hairline edge */
-.t-calm .tile { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); color: var(--lamp); }
-.t-calm .tile.is-focus { background: #fff; color: #1a1530; transform: scale(1.07); box-shadow: 0 18px 40px -14px rgba(255, 143, 171, 0.5); }
-.t-calm .nf-btn { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); }
-.t-calm .nf-btn.is-focus { background: #fff; color: #1a1530; box-shadow: 0 16px 40px -12px rgba(255, 143, 171, 0.55); }
-.t-calm .nf-more .nf-art { background: var(--glass); box-shadow: inset 0 0 0 1px var(--glass-line); }
-.t-calm .badge, .t-calm .seen-badge { background: rgba(15, 18, 32, 0.66); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+/* surfaces */
+.t-calm .tile { background: var(--velvet-2); box-shadow: inset 0 0 0 1px var(--glass-line); color: var(--lamp); }
+.t-calm .tile.is-focus { background: #fff; color: var(--ink); transform: scale(1.06); box-shadow: 0 18px 44px -16px rgba(127, 227, 196, 0.5); }
+.t-calm .nf-btn { background: var(--glass); box-shadow: none; }
+.t-calm .nf-btn.is-focus { background: #fff; color: var(--ink); transform: scale(1.06); box-shadow: 0 0 0 4px var(--mint), 0 18px 50px -14px rgba(127, 227, 196, 0.55); }
+.t-calm .nf-more .nf-art { background: var(--velvet-2); box-shadow: inset 0 0 0 1px var(--glass-line); }
+.t-calm .badge, .t-calm .seen-badge { background: rgba(10, 19, 20, 0.72); box-shadow: none; }
+.t-calm .seen-badge .ic { color: var(--mint); }
 .t-calm .bb { box-shadow: 0 0 0 1px var(--glass-line), 0 40px 90px -40px rgba(0, 0, 0, 0.8); }
+.t-calm .chip, .t-calm .src { transition: background-color 180ms, color 180ms, transform 180ms var(--out); }
 
-/* focus: a clean white edge with a soft rosy glow */
-.t-calm .nf-card.is-focus .nf-art { box-shadow: 0 0 0 3px #fff, 0 26px 60px -22px rgba(255, 143, 171, 0.45); }
-.t-calm .card::before { box-shadow: 0 0 0 3px #fff, 0 24px 48px -16px rgba(255, 143, 171, 0.4); }
+/* focus on pictures: a mint edge with a soft mint glow */
+.t-calm .nf-card.is-focus .nf-art { box-shadow: 0 0 0 4px var(--mint), 0 22px 60px -18px rgba(127, 227, 196, 0.5); }
+.t-calm .card::before { box-shadow: 0 0 0 4px var(--mint), 0 22px 60px -18px rgba(127, 227, 196, 0.45); }
 
-/* progress and the player's bar use the gradient */
-.t-calm .prog i, .t-calm .pl-fill { background: var(--grad); }
-.t-calm .pl-knob { background: #fff; box-shadow: 0 0 0 6px rgba(255, 143, 171, 0.3); }
-.t-calm .prog.done i { background: #7be0a6 !important; }
+/* progress, watched marks and the player use mint */
+.t-calm .prog i, .t-calm .pl-fill, .t-calm .prog.done i { background: var(--mint) !important; }
+.t-calm .pl-knob { background: #fff; box-shadow: 0 0 0 6px rgba(127, 227, 196, 0.35); }
+.t-calm .pl-btn { background: var(--glass); color: var(--lamp); border-radius: 50%; }
+.t-calm .pl-btn.is-focus, .t-calm .pl-pill.is-focus { background: #fff; color: var(--ink); transform: scale(1.06); box-shadow: 0 0 0 4px var(--mint); }
+.t-calm .pl-pill { background: var(--glass); }
 
-/* switching screens: a quick fade with a hint of depth */
-.t-calm .screen.on { animation: screenSwap 260ms var(--out); }
-@keyframes screenSwap { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
-
-/* snappier movement everywhere */
+/* motion: screens fade in from a hint of depth, rows glide, OK presses in */
+.t-calm .screen.on { animation: moonIn 240ms var(--out); }
+@keyframes moonIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
 .t-calm .rail-track { transition: transform 340ms var(--glide); }
 .t-calm .rows, .t-calm .lib-content { transition: transform 380ms var(--glide); }
-.t-calm .nf-card.is-focus .nf-art { animation-duration: 300ms; }
+.t-calm .nf-card.is-focus .nf-art { animation-duration: 280ms; }
 .t-calm .nf-desc.on { transition-delay: 60ms; }
+.press { transform: scale(0.94) !important; transition: transform 90ms var(--out) !important; }
 
 /* =====================================================================
    Samsung TVs (html.tizen): the same look with cheaper effects — only opacity and movement are animated
